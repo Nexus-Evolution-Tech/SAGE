@@ -2,14 +2,40 @@
   width: 2500px;
   padding: 20px;
   font-family: Arial, sans-serif;
+  padding-top: 7rem;
 }
 
 .title {
-  padding-top: 4rem;
   text-align: center;
   color: #8b0000;
   font-size: 36px;
-  margin-bottom: 30px;
+}
+
+.titleContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+}
+
+.addPeople {
+  padding-block: 0.3rem;
+  padding-inline: 0.5rem;
+  background-color: var(--red);
+  border: none;
+  border-radius: 3px;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.addPeople:hover{
+  background-color: var(--white);
+  border: 1px solid var(--red);
+  color: var(--red);
+}
+
+.div {
+  padding: 1rem;
 }
 
 .section {
@@ -40,10 +66,10 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
-.verMais:hover{
+.verMais:hover {
   transform: translateX(5px);
 }
 
@@ -104,3 +130,33 @@
   background-color: #0056b3;
 }
 
+.opcoesContainer {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background-color: white;
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  z-index: 10;
+}
+
+.opcoesContainer button {
+  padding: 8px 10px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  text-align: left;
+  transition: all .3s ease;
+}
+
+.opcoesContainer button:hover {
+  background-color: var(--primary-color-dark);
+  color: var(--red);
+  border: 1px solid var(--red);
+}

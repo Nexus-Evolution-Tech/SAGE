@@ -1,0 +1,137 @@
+.cadastroContainer {
+  display: flex;
+  padding: 20px 40px;
+  font-family: Arial, sans-serif;
+  gap: 2rem;
+  width: 1200px;
+  margin-top: 7rem;
+
+}
+
+.fotoSection {
+  width: 240px;
+  background: #fafafa;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.subtitle{
+    text-align: center;
+    padding-bottom: .5rem;
+}
+
+.fotoPreview {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.btnGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.btnGroup button {
+  padding: 8px;
+  border: none;
+  background: #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dadosSection {
+  flex: 1;
+  background: #fafafa;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  color: darkred;
+}
+
+.exportar {
+  background: none;
+  border: none;
+  color: darkred;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dadosForm {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.inputGroup label {
+  font-size: 14px;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.inputGroup input,
+.inputGroup select {
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 20px;
+}
+
+.inputRow .inputGroup {
+  flex: 1;
+}
+
+.extras {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #ddd;
+  margin-top: 30px;
+  padding-top: 20px;
+}
+
+.qr,
+.rfid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qrImg,
+.rfidImg {
+  width: 100px;
+  height: auto;
+  margin: 10px 0;
+}
+
+.rfidLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.message{
+  resize: none;
+  padding: .5rem
+}

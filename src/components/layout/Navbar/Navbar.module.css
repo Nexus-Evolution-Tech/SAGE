@@ -1,0 +1,81 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: transparent;
+  padding: 0.2em;
+  width: 100%;
+  position: fixed;
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.scrolled {
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.navbar img {
+  height: 70px;
+  margin-right: 80px;
+}
+
+.list {
+  display: flex;
+  list-style: none;
+  align-items: center;
+  gap: 1.5em;
+  margin-right: -130px;
+  margin-left: 160px;
+}
+
+.list li a {
+  color: #333;
+  text-decoration: none;
+  font-size: 0.9em;
+  transition: 0.5s;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.list li a:hover {
+  color: #b70808;
+}
+
+.active {
+  background-color: #b70808;
+  color: white !important;
+}
+
+.inactive {
+  color: #333;
+}
+
+.activeGear {
+  background-color: #b70808;
+  color: white !important;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+/* Garante que o ícone fique branco quando o botão está ativo */
+.activeGear .iconGear {
+  color: white !important;
+}
+
+.inactiveGear {
+  color: #000;
+}
+
+.icon {
+  margin-right: 10px;
+}
+
+.iconGear {
+  color: #000;
+}

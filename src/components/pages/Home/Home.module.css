@@ -1,0 +1,146 @@
+:root {
+    --white: #FFFFFF;
+    --black: #000000;
+    --primary-color: #B70808;
+    --gray: #5B5B5B;
+    --lightGray: #aeaeae;
+    --green: #008001;
+    --light-green: #A4C284;
+    --extra-light-green: #F5F5C7;
+    --red: #970404;
+    --light-red: #CA4C4C;
+    --extra-light-red: #EFA5A5;
+  }
+
+body{
+  background-color: var(--white);
+}
+
+.titleContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.title{
+    margin-top: .5em;
+    color: var(--primary-color);
+    font-size: 2.3em;
+    margin-bottom: 1em;
+}
+
+.userImage{
+    height: 130px;
+    margin-right: 1.5em;
+    margin-left: 1em;
+}
+
+.accessCard{
+    background-color: var(--white);
+    padding: 1.5em;
+    display: flex;
+    align-items: center;
+    width: 1200px;
+    border-bottom-right-radius: 350px;
+    border-top-left-radius: 30px;
+    border-bottom-left-radius: 30px;
+    border-top-right-radius: 30px;
+    margin-bottom: 1.5em;
+}
+
+.date{
+    margin-bottom: .9em;
+    font-size: .8em;
+}
+
+.name{
+    color: var(--primary-color);
+    margin-bottom: .3em;
+    font-size: 1.9em;
+}
+
+.accessRequired{
+    margin-top: .8em;
+    color: var(--red);
+}
+
+.iconCheck{
+    background-color: var(--extra-light-green);
+    color: var(--green);
+    padding-inline: .3em;
+    border: 1px solid var(--light-green);
+    border-top-left-radius: 50%;
+    border-bottom-left-radius: 50%;
+    height: .5em;
+    margin-left: .5em;
+}
+
+.iconCross{
+    background-color: var(--extra-light-red);
+    color: var(--red);
+    padding-inline: .3em;
+    border: 1px solid var(--light-red);
+    border-top-right-radius: 50%;
+    border-bottom-right-radius: 50%;
+    height: .5em;
+}
+
+
+.tableContainer {
+    overflow-x: auto; 
+    padding: 20px; 
+    background-color: var(--white);
+    border-radius: 10px;
+  }
+  
+
+  .accessTable {
+    width: 100%; 
+    border-collapse: separate; 
+    border-spacing: 0; 
+    border-radius: 10px; 
+    overflow: hidden; 
+    background-color: white; 
+    border: 1px solid var(--gray);
+  }
+  
+
+  .accessTable th, .accessTable td {
+    padding: 12px; 
+    text-align: left; 
+  }
+  
+
+  .accessTable tr:not(:last-child) th, 
+  .accessTable tr:not(:last-child) td {
+    border-bottom: 1px solid var(--gray); 
+  }
+  
+
+  .accessTable th:not(:last-child), 
+  .accessTable td:not(:last-child) {
+    border-right: 1px solid var(--gray); 
+  }
+  
+
+  .accessTable th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  
+
+  .accessRequired {
+    color: darkorange; 
+    font-weight: bold;
+  }
+  
+  .accessGranted {
+    color: green; 
+    font-weight: bold;
+  }
+  
+  .accessDenied {
+    color: red;
+    font-weight: bold;
+  }
+  

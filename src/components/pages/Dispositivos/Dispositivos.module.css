@@ -1,0 +1,160 @@
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+  margin-bottom: 20px; 
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; 
+  padding: 20px; 
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap; 
+  background-color: var(--white);
+  padding: 20px; 
+  justify-content: flex-start;
+  gap: 20px; 
+  width: 90%; 
+  max-width: 1200px; 
+}
+
+.cardContainer {
+  background-color: rgb(246, 245, 245);
+  padding: 15px; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px; 
+  width: calc(
+    33.33% - 20px
+  );
+  min-width: 200px; 
+  box-sizing: border-box;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.cardContainer img {
+  max-width: 80%;
+  height: auto;
+  margin-top: 10px;
+  margin-bottom: 10px; 
+}
+
+.iconButton {
+  color: var(--red);
+  height: auto;
+  padding: 10px 15px;
+  background-color: var(--white);
+  cursor: pointer;
+  border: none;
+  margin-top: 20px;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.icon {
+  font-size: 1.2em;
+}
+
+.cardTitle {
+  color: var(--red);
+  font-size: 1.2em;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.cardModel {
+  font-size: 0.9em;
+  color: #555;
+  margin-bottom: 3px;
+  text-align: center;
+}
+
+.cardArea {
+  font-size: 0.8em;
+  color: #777;
+  text-align: center;
+}
+
+.cardContainer p {
+  font-size: 0.85em;
+  margin-top: 5px;
+  text-align: center;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.formContainer {
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  z-index: 1001;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+}
+
+.formContainer h2 {
+  margin-top: 0;
+  text-align: center;
+  color: var(--red);
+}
+
+.formContainer form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.formContainer label {
+  font-weight: bold;
+  margin-bottom: 5px; 
+}
+
+.formContainer input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%; 
+  box-sizing: border-box; 
+}
+
+.formContainer button {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%; 
+}
+
+.formContainer button[type="submit"] {
+  background-color: var(--red);
+  color: white;
+}
+
+.formContainer button[type="button"] {
+  background-color: #ccc;
+}
+

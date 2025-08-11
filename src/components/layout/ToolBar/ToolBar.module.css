@@ -1,0 +1,54 @@
+.container {
+  background-color: var(--primary-color);
+  padding: 1.3rem;
+  margin-left: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+   position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 999;
+  width: 85%;
+}
+
+.toolButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-right: 2rem;
+  margin-left: 450px;
+}
+
+.toolButtons {
+  font-size: 5px;
+}
+
+.icon {
+  font-size: 1.5rem;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.iconUser {
+  font-size: 1.5rem;
+  color: var(--white);
+}
+
+.toolLink {
+  cursor: pointer;
+}
+
+.icon:hover {
+  color: rgb(147, 147, 147);
+}
+
+.toolLinkUser {
+  padding-left: 2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}

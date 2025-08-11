@@ -19,6 +19,9 @@ import Tabelas from "././components/pages/Tabelas/Tabelas";
 import Formulario from "./components/pages/Formulario/Formulario";
 import Turmas from "./components/pages/Turmas/Turmas";
 import Adicionar from "./components/pages/Adicionar/Adicionar";
+import Inicio from "./components/pages/Inicio/Inicio";
+import ToolBar from "./components/layout/ToolBar/ToolBar";
+
 
 function AppContent() {
   const location = useLocation();
@@ -29,11 +32,14 @@ function AppContent() {
         <Navbar />
       )}
 
+      <ToolBar />
+
       <div className="content">
         <Container customClass="min-height">
           <Routes>
             <Route path="/pessoas" element={<Pessoas />} />
             <Route path="/" element={<Home />} />
+            <Route path="/inicio" element={<Inicio />} />
             <Route path="/departamentos" element={<Departamentos />} />
             <Route path="/dispositivos" element={<Dispositivos />} />
             <Route path="/settings" element={<Settings />} />

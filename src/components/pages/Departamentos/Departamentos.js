@@ -18,12 +18,12 @@ function Departamentos() {
 
   const formatarTurma = (id) => {
     const turmas = {
-      1: "1° Ano A",
-      2: "1° Ano B",
-      3: "2° Ano A",
-      4: "2° Ano B",
-      5: "3° Ano A",
-      6: "3° Ano B",
+      9: "1° Ano A",
+      10: "1° Ano B",
+      11: "2° Ano A",
+      12: "2° Ano B",
+      13: "3° Ano A",
+      14: "3° Ano B",
     };
     return turmas[id] || `Turma ${id}`;
   };

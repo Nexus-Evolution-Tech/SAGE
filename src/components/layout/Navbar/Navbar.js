@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
-import Container from "../Container/Container";
 import styles from "./Navbar.module.css";
 import logo from "../../../img/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -24,10 +23,10 @@ function Navbar() {
 
   return (
     <nav className={styles.navbar} ref={navRef}>
-      <Container>
-        <NavLink to="/">
-          <img src={logo} alt="Logo" />
-        </NavLink>
+      <NavLink to="/" className={styles.logoLink}>
+        <img src={logo} alt="Logo" className={styles.logo} />
+      </NavLink>
+      <div className={styles.scrollableContainer}> 
         <ul className={styles.list}>
           {navLinks.map((link) => (
             <li key={link.to}>
@@ -38,22 +37,22 @@ function Navbar() {
                 }
               >
                 <FontAwesomeIcon icon={link.icon} className={styles.icon} />
-                {link.label}
+                <span className={styles.linkLabel}>{link.label}</span>
               </NavLink>
             </li>
           ))}
-          <li>
-            <NavLink
-              to={settingsLink.to}
-              className={({ isActive }) =>
-                isActive ? styles.activeGear : styles.inactiveGear
-              }
-            >
-              <FontAwesomeIcon icon={settingsLink.icon} className={styles.iconGear} />
-            </NavLink>
-          </li>
         </ul>
-      </Container>
+      </div>
+      <NavLink
+        to={settingsLink.to}
+        className={({ isActive }) =>
+          isActive
+            ? `${styles.settingsLink} ${styles.activeGear}`
+            : styles.settingsLink
+        }
+      >
+        <FontAwesomeIcon icon={settingsLink.icon} className={styles.iconGear} />
+      </NavLink>
     </nav>
   );
 }

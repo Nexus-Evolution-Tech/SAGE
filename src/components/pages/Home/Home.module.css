@@ -1,146 +1,173 @@
-:root {
-    --white: #FFFFFF;
-    --black: #000000;
-    --primary-color: #B70808;
-    --gray: #5B5B5B;
-    --lightGray: #aeaeae;
-    --green: #008001;
-    --light-green: #A4C284;
-    --extra-light-green: #F5F5C7;
-    --red: #970404;
-    --light-red: #CA4C4C;
-    --extra-light-red: #EFA5A5;
-  }
-
-body{
-  background-color: var(--white);
+.monitoramentoContainer {
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5;
+  padding: 2rem;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.titleContainer{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.pageTitle {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #c9302c; /* Vermelho escuro */
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-.title{
-    margin-top: .5em;
-    color: var(--primary-color);
-    font-size: 2.3em;
-    margin-bottom: 1em;
+/* Estilos para o card superior */
+.accessCard {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 5px solid #c9302c;
 }
 
-.userImage{
-    height: 130px;
-    margin-right: 1.5em;
-    margin-left: 1em;
+.profileInfo {
+  display: flex;
+  align-items: center;
 }
 
-.accessCard{
-    background-color: var(--white);
-    padding: 1.5em;
-    display: flex;
-    align-items: center;
-    width: 1200px;
-    border-bottom-right-radius: 350px;
-    border-top-left-radius: 30px;
-    border-bottom-left-radius: 30px;
-    border-top-right-radius: 30px;
-    margin-bottom: 1.5em;
+.profilePicture {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1.5rem;
+  overflow: hidden;
 }
 
-.date{
-    margin-bottom: .9em;
-    font-size: .8em;
+.profilePicture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.name{
-    color: var(--primary-color);
-    margin-bottom: .3em;
-    font-size: 1.9em;
+.profileDetails h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
 }
 
-.accessRequired{
-    margin-top: .8em;
-    color: var(--red);
+.profileDetails p {
+  margin: 0.2rem 0;
+  color: #666;
+  font-size: 0.9rem;
 }
 
-.iconCheck{
-    background-color: var(--extra-light-green);
-    color: var(--green);
-    padding-inline: .3em;
-    border: 1px solid var(--light-green);
-    border-top-left-radius: 50%;
-    border-bottom-left-radius: 50%;
-    height: .5em;
-    margin-left: .5em;
+.dateTime {
+  font-size: 0.8rem;
+  color: #888;
 }
 
-.iconCross{
-    background-color: var(--extra-light-red);
-    color: var(--red);
-    padding-inline: .3em;
-    border: 1px solid var(--light-red);
-    border-top-right-radius: 50%;
-    border-bottom-right-radius: 50%;
-    height: .5em;
+.accessStatus {
+  text-align: right;
 }
 
+.requiredText {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #c9302c;
+  margin-bottom: 0.5rem;
+}
 
+.actionButtons button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: transform 0.2s;
+}
+
+.actionButtons button:hover {
+  transform: scale(1.1);
+}
+
+.check {
+  color: green;
+}
+
+.times {
+  color: #c9302c;
+}
+
+/* Estilos para a tabela */
 .tableContainer {
-    overflow-x: auto; 
-    padding: 20px; 
-    background-color: var(--white);
-    border-radius: 10px;
-  }
-  
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
 
-  .accessTable {
-    width: 100%; 
-    border-collapse: separate; 
-    border-spacing: 0; 
-    border-radius: 10px; 
-    overflow: hidden; 
-    background-color: white; 
-    border: 1px solid var(--gray);
-  }
-  
+.accessTable {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  .accessTable th, .accessTable td {
-    padding: 12px; 
-    text-align: left; 
-  }
-  
+.accessTable thead th {
+  background-color: #f7f7f7;
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: bold;
+  color: #555;
+  font-size: 1rem;
+}
 
-  .accessTable tr:not(:last-child) th, 
-  .accessTable tr:not(:last-child) td {
-    border-bottom: 1px solid var(--gray); 
-  }
-  
+.accessTable tbody td {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: top;
+}
 
-  .accessTable th:not(:last-child), 
-  .accessTable td:not(:last-child) {
-    border-right: 1px solid var(--gray); 
-  }
-  
+.accessTable tbody tr:hover {
+  background-color: #f9f9f9;
+}
 
-  .accessTable th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-  }
-  
+.profileName {
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
 
-  .accessRequired {
-    color: darkorange; 
-    font-weight: bold;
-  }
-  
-  .accessGranted {
-    color: green; 
-    font-weight: bold;
-  }
-  
-  .accessDenied {
-    color: red;
-    font-weight: bold;
-  }
-  
+.profileSubtitle {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0;
+}
+
+/* Estilos para os badges de status */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.8rem;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.statusBadge.required {
+  background-color: #c9302c;
+  color: #fff;
+}
+
+.statusBadge.authorized {
+  background-color: #28a745; /* Verde */
+}
+
+.statusBadge.denied {
+  background-color: #dc3545; /* Vermelho */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

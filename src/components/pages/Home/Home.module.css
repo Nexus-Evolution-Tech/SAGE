@@ -1,20 +1,33 @@
+:root {
+    --white: #FFFFFF;
+    --black: #000000;
+    --primary-color: #B70808;
+    --gray: #5B5B5B;
+    --lightGray: #aeaeae;
+    --green: #008001;
+    --light-green: #A4C284;
+    --extra-light-green: #F5F5C7;
+    --red: #970404;
+    --light-red: #CA4C4C;
+    --extra-light-red: #EFA5A5;
+  }
+
 .monitoramentoContainer {
   font-family: Arial, sans-serif;
-  background-color: #f0f2f5;
-  padding: 2rem;
+  padding: 6rem 0;
   min-height: 100vh;
   box-sizing: border-box;
+  margin-left: 250px;
 }
 
 .pageTitle {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #c9302c; /* Vermelho escuro */
+  color: #c9302c; 
   text-align: center;
   margin-bottom: 2rem;
 }
 
-/* Estilos para o card superior */
 .accessCard {
   background-color: #fff;
   border-radius: 10px;
@@ -67,6 +80,14 @@
   color: #888;
 }
 
+.filterContainer{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 1rem;
+  padding-bottom: 1rem;
+}
+
 .accessStatus {
   text-align: right;
 }
@@ -99,7 +120,6 @@
   color: #c9302c;
 }
 
-/* Estilos para a tabela */
 .tableContainer {
   background-color: #fff;
   border-radius: 10px;
@@ -144,7 +164,6 @@
   margin: 0;
 }
 
-/* Estilos para os badges de status */
 .statusBadge {
   display: inline-flex;
   align-items: center;
@@ -161,11 +180,11 @@
 }
 
 .statusBadge.authorized {
-  background-color: #28a745; /* Verde */
+  background-color: #28a745; 
 }
 
 .statusBadge.denied {
-  background-color: #dc3545; /* Vermelho */
+  background-color: #dc3545; 
   color: #fff;
   display: flex;
   align-items: center;

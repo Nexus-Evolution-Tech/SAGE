@@ -1,8 +1,9 @@
 import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faFilter, faTimes, faListOl } from "@fortawesome/free-solid-svg-icons";
 import userPlaceholder from "../../../img/user.png"; // Mock para a foto de perfil
 import { useEffect, useState } from "react";
+
 
 // Dados de exemplo para a tabela
 const accessLogs = [
@@ -13,8 +14,8 @@ const accessLogs = [
     perfil: "Aluno (1° A)",
     area: "Portaria Principal",
     dispositivo: "Catraca Esquerda (IDBlock)",
-    autorizacao: "Acesso requerido",
-    status: "required",
+    autorizacao: "Acesso Negado",
+    status: "denied",
   },
   {
     id: 2,
@@ -82,16 +83,16 @@ function Monitoramento() {
             <p>Dispositivo: Catraca Esquerda (IDBlock)</p>
           </div>
         </div>
-        <div className={styles.accessStatus}>
-          <p className={styles.requiredText}>Acesso requerido</p>
-          <div className={styles.actionButtons}>
-            <button className={`${styles.actionButton} ${styles.check}`}>
-              <FontAwesomeIcon icon={faCheck} />
-            </button>
-            <button className={`${styles.actionButton} ${styles.times}`}>
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-          </div>
+      </div>
+
+      <div className={styles.filterContainer}>
+        <div className={styles.filterButton}>
+        
+          <FontAwesomeIcon icon={faListOl} className={styles.deniedIcon} />
+          <p className={styles.itemsText}>Itens por página</p>
+        </div>
+        <div className={styles.filterButton}>
+          <FontAwesomeIcon icon={faFilter} className={styles.deniedIcon} />
         </div>
       </div>
 
@@ -118,10 +119,15 @@ function Monitoramento() {
                 <td>{log.area}</td>
                 <td>{log.dispositivo}</td>
                 <td>
-                  <span className={`${styles.statusBadge} ${styles[log.status]}`}>
+                  <span
+                    className={`${styles.statusBadge} ${styles[log.status]}`}
+                  >
                     {log.autorizacao}
                     {log.status === "denied" && (
-                      <FontAwesomeIcon icon={faTimes} className={styles.deniedIcon} />
+                      <FontAwesomeIcon
+                        icon={faTimes}
+                        className={styles.deniedIcon}
+                      />
                     )}
                   </span>
                 </td>

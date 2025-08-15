@@ -6,17 +6,8 @@ const navLinks = [
   { to: "/departamentos", label: "Departamentos", icon: faBuilding },
   // Links para testar o scroll
   { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
-  { to: "/dispositivos", label: "Dispositivos", icon: faBuilding },
+  { to: "/regras", label: "Regras", icon: faBuilding },
+  { to: "/horarios", label: "Horários", icon: faBuilding },
 ];
 
 export const settingsLink = { to: "/settings", icon: faGear };

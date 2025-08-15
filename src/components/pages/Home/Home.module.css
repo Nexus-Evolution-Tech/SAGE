@@ -88,6 +88,13 @@
   padding-bottom: 1rem;
 }
 
+.filterButton{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .accessStatus {
   text-align: right;
 }
@@ -189,4 +196,18 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.dropdown {
+  padding: 0.4rem 0.6rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.dropdown:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }

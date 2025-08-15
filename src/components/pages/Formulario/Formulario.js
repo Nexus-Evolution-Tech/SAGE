@@ -192,7 +192,7 @@ function Formulario() {
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Curso", "curso_id")}
-              {renderCampo("Gênero", "genero")}
+              {renderCampo("Data de Nascimento", "data_nascimento")}
             </div>
             <div className={styles.inputRow}>
               <div className={styles.inputGroup}>

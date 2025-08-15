@@ -1,11 +1,9 @@
 import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilter, faTimes, faListOl } from "@fortawesome/free-solid-svg-icons";
-import userPlaceholder from "../../../img/user.png"; // Mock para a foto de perfil
+import userPlaceholder from "../../../img/user.png";
 import { useEffect, useState } from "react";
 
-
-// Dados de exemplo para a tabela
 const accessLogs = [
   {
     id: 1,
@@ -51,6 +49,7 @@ const accessLogs = [
 
 function Monitoramento() {
   const [currentDateTime, setCurrentDateTime] = useState("");
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -70,7 +69,7 @@ function Monitoramento() {
     <div className={styles.monitoramentoContainer}>
       <h1 className={styles.pageTitle}>Monitoramento</h1>
 
-      {/* Card superior de acesso */}
+      {/* Card superior */}
       <div className={styles.accessCard}>
         <div className={styles.profileInfo}>
           <div className={styles.profilePicture}>
@@ -85,18 +84,31 @@ function Monitoramento() {
         </div>
       </div>
 
+      {/* Filtros */}
       <div className={styles.filterContainer}>
         <div className={styles.filterButton}>
-        
           <FontAwesomeIcon icon={faListOl} className={styles.deniedIcon} />
           <p className={styles.itemsText}>Itens por página</p>
+
+          {/* Dropdown */}
+          <select
+            className={styles.dropdown}
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
         </div>
+
         <div className={styles.filterButton}>
           <FontAwesomeIcon icon={faFilter} className={styles.deniedIcon} />
         </div>
       </div>
 
-      {/* Tabela de logs de acesso */}
+      {/* Tabela */}
       <div className={styles.tableContainer}>
         <table className={styles.accessTable}>
           <thead>
@@ -109,7 +121,7 @@ function Monitoramento() {
             </tr>
           </thead>
           <tbody>
-            {accessLogs.map((log) => (
+            {accessLogs.slice(0, itemsPerPage).map((log) => (
               <tr key={log.id}>
                 <td>{log.dataHora}</td>
                 <td>

@@ -21,6 +21,8 @@ import Turmas from "./components/pages/Turmas/Turmas";
 import Adicionar from "./components/pages/Adicionar/Adicionar";
 import Inicio from "./components/pages/Inicio/Inicio";
 import ToolBar from "./components/layout/ToolBar/ToolBar";
+import Regras from "./components/pages/Regras/Regras";
+import Horarios from "./components/pages/Horarios/Horarios";
 
 
 function AppContent() {
@@ -49,6 +51,8 @@ function AppContent() {
             <Route path="/formulario/:tipo/:id" element={<Formulario />} />
             <Route path="/turmas" element={<Turmas />} />
             <Route path="/adicionar/:tipo" element={<Adicionar />} />
+            <Route path="/regras" element={<Regras />} />
+            <Route path="/horarios" element={<Horarios />} />
           </Routes>
         </Container>
       </div>

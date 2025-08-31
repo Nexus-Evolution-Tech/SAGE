@@ -1,15 +1,17 @@
+body {
+  background-color: #EEF1F5;
+}
+
 .container {
-  background-color: var(--primary-color);
-  padding: 1.3rem;
+  background-color: transparent;
+  padding: 1rem;
   margin-left: 250px;
   display: flex;
   align-items: center;
   justify-content: end;
-   position: fixed;
   left: 0;
   top: 0;
   z-index: 999;
-  width: 85%;
 }
 
 .toolButtons {
@@ -27,8 +29,11 @@
 
 .icon {
   font-size: 1.5rem;
-  color: var(--white);
+  color: var(--primary-color);
   transition: all 0.3s ease;
+  background-color: #fff;
+  padding: .6rem;
+  border-radius: 50%;
 }
 
 .iconUser {

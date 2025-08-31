@@ -84,13 +84,11 @@ function Monitoramento() {
         </div>
       </div>
 
-      {/* Filtros */}
       <div className={styles.filterContainer}>
         <div className={styles.filterButton}>
           <FontAwesomeIcon icon={faListOl} className={styles.deniedIcon} />
           <p className={styles.itemsText}>Itens por página</p>
 
-          {/* Dropdown */}
           <select
             className={styles.dropdown}
             value={itemsPerPage}

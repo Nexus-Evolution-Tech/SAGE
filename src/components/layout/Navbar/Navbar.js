@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Navbar.module.css";
+
 import logo from "../../../img/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import navLinks, { settingsLink } from "./NavLinks.js";
+import navLinks, { settingsLink, userLink } from "./NavLinks.js";
 
 function Navbar() {
   const navRef = useRef(null);
@@ -26,7 +27,13 @@ function Navbar() {
       <NavLink to="/" className={styles.logoLink}>
         <img src={logo} alt="Logo" className={styles.logo} />
       </NavLink>
-      <div className={styles.scrollableContainer}> 
+
+      <div className={styles.mainNav}>
+        <div className={styles.navTitleContainer}>
+          <div className={styles.navTitle}>Páginas</div>
+          <hr className={styles.divider} />
+        </div>
+
         <ul className={styles.list}>
           {navLinks.map((link) => (
             <li key={link.to}>
@@ -43,16 +50,29 @@ function Navbar() {
           ))}
         </ul>
       </div>
-      <NavLink
-        to={settingsLink.to}
-        className={({ isActive }) =>
-          isActive
-            ? `${styles.settingsLink} ${styles.activeGear}`
-            : styles.settingsLink
-        }
-      >
-        <FontAwesomeIcon icon={settingsLink.icon} className={styles.iconGear} />
-      </NavLink>
+
+      <div className={styles.bottomNav}>
+        <NavLink
+          to={settingsLink.to}
+          className={({ isActive }) =>
+            isActive
+              ? `${styles.bottomLink} ${styles.activeBottom}`
+              : styles.bottomLink
+          }
+        >
+          <FontAwesomeIcon icon={settingsLink.icon} className={styles.icon} />
+        </NavLink>
+        <NavLink
+          to={userLink.to}
+          className={({ isActive }) =>
+            isActive
+              ? `${styles.bottomLink} ${styles.activeBottom}`
+              : styles.bottomLink
+          }
+        >
+          <FontAwesomeIcon icon={userLink.icon} className={styles.icon} />
+        </NavLink>
+      </div>
     </nav>
   );
 }

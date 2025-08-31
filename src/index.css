@@ -10,7 +10,6 @@
 html,
 body,
 #root {
-  background-color: var(--white);
   height: 100%;
   margin: 0;
   padding: 0;

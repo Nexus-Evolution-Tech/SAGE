@@ -6,27 +6,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Departamentos() {
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
-
   const [dados, setDados] = useState({
     turmas: [],
     professores: [],
     administracao: [],
     terceirizados: [],
   });
-
   const navigate = useNavigate();
-
-  const formatarTurma = (id) => {
-    const turmas = {
-      9: "1° Ano A",
-      10: "1° Ano B",
-      11: "2° Ano A",
-      12: "2° Ano B",
-      13: "3° Ano A",
-      14: "3° Ano B",
-    };
-    return turmas[id] || `Turma ${id}`;
-  };
 
   const formatarData = (dataISO) => {
     if (!dataISO) return "";
@@ -91,7 +77,22 @@ function Departamentos() {
           const pessoasComFoto = await Promise.all(
             pessoas.slice(0, 3).map(async (pessoa) => {
               const foto = await buscarFoto(pessoa.id);
-              return { ...pessoa, foto };
+
+              let empresaNome = "";
+              if (key === "terceirizados" && pessoa.empresa_id) {
+                try {
+                  const resEmpresa = await fetch(
+                    `http://localhost:3000/empresas/${pessoa.empresa_id}`
+                  );
+                  const jsonEmpresa = await resEmpresa.json();
+                  // acessar o primeiro item do array
+                  empresaNome = jsonEmpresa[0]?.nome || "";
+                } catch (err) {
+                  console.error("Erro ao buscar empresa:", err);
+                }
+              }
+
+              return { ...pessoa, foto, empresa: empresaNome };
             })
           );
 
@@ -145,16 +146,17 @@ function Departamentos() {
                   />
                 </td>
                 {"rm" in p && <td>{p.rm}</td>}
-                {"rg" in p && <td>{p.rg}</td>}
                 <td>{p.email}</td>
                 <td>{formatarTelefone(p.telefone)}</td>
                 {"data_nascimento" in p && (
                   <td>{formatarData(p.data_nascimento)}</td>
                 )}
-                {"turma_id" in p && <td>{formatarTurma(p.turma_id)}</td>}
-                {"empresa" in p && <td>{p.empresa}</td>}
+                {"divisao" in p && <td>{p.divisao}</td>}
                 {"cnpj" in p && <td>{p.cnpj}</td>}
-                {"cargo" in p && <td>{p.cargo}</td>}
+                {tipo === "administracao" && "cargo" in p && <td>{p.cargo}</td>}
+                {tipo === "terceirizados" && "empresa" in p && (
+                  <td>{p.empresa}</td>
+                )}
                 {"trabalhaNaADM" in p && (
                   <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
                 )}
@@ -176,26 +178,34 @@ function Departamentos() {
 
   return (
     <div className={styles.container}>
-       <div className={styles.titleContainer}>
+      <div className={styles.titleContainer}>
         <div className={styles.div}></div>
-      <h1 className={styles.title}>Departamentos</h1>
-      <div style={{ position: "relative" }}>
-        <button
-          className={styles.addPeople}
-          onClick={() => setMostrarOpcoes(!mostrarOpcoes)}
-        >
-          <FontAwesomeIcon icon={faPlus} className={styles.iconSearch} />
-        </button>
-        {mostrarOpcoes && (
-          <div className={styles.opcoesContainer}>
-            <button onClick={() => navigate("/adicionar/ALUNO")}>Aluno</button>
-            <button onClick={() => navigate("/adicionar/PROFESSOR")}>Professor</button>
-            <button onClick={() => navigate("/adicionar/ADMINISTRADOR")}>Administrador</button>
-            <button onClick={() => navigate("/adicionar/TERCEIRIZADO")}>Terceirizado</button>
-          </div>
-        )}
+        <h1 className={styles.title}>Departamentos</h1>
+        <div style={{ position: "relative" }}>
+          <button
+            className={styles.addPeople}
+            onClick={() => setMostrarOpcoes(!mostrarOpcoes)}
+          >
+            <FontAwesomeIcon icon={faPlus} className={styles.iconSearch} />
+          </button>
+          {mostrarOpcoes && (
+            <div className={styles.opcoesContainer}>
+              <button onClick={() => navigate("/adicionar/ALUNO")}>
+                Aluno
+              </button>
+              <button onClick={() => navigate("/adicionar/PROFESSOR")}>
+                Professor
+              </button>
+              <button onClick={() => navigate("/adicionar/ADMINISTRADOR")}>
+                Administrador
+              </button>
+              <button onClick={() => navigate("/adicionar/TERCEIRIZADO")}>
+                Terceirizado
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
 
       <Section
         title="Turmas"
@@ -205,11 +215,10 @@ function Departamentos() {
           "Nome",
           "Foto",
           "RM",
-          "RG",
           "Email Institucional",
           "Telefone",
           "Data de Nascimento",
-          "Turma",
+          "Divisão",
           "Mais",
         ]}
         data={dados.turmas}
@@ -221,7 +230,6 @@ function Departamentos() {
         columns={[
           "Nome",
           "Foto",
-          "RG",
           "Email",
           "Telefone",
           "Data de Nascimento",
@@ -237,7 +245,6 @@ function Departamentos() {
         columns={[
           "Nome",
           "Foto",
-          "RG",
           "Email",
           "Telefone",
           "Data de Nascimento",
@@ -250,7 +257,15 @@ function Departamentos() {
         title="Terceirizados"
         subtitle="Tabela de Terceirizados"
         tipo="terceirizados"
-        columns={["Nome", "Foto", "RG", "Email", "Telefone", "Empresa", "Mais"]}
+        columns={[
+          "Nome",
+          "Foto",
+          "Email",
+          "Telefone",
+          "Data de Nascimento",
+          "Empresa",
+          "Mais",
+        ]}
         data={dados.terceirizados}
       />
     </div>

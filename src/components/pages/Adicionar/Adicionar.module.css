@@ -4,7 +4,8 @@
   font-family: Arial, sans-serif;
   gap: 2rem;
   width: 1200px;
-  margin-top: 7rem;
+  margin-top: 1rem;
+  padding-left: 200px;
 
 }
 
@@ -43,6 +44,14 @@
   cursor: pointer;
 }
 
+button {
+  padding: 8px;
+  border: none;
+  background: #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 .dadosSection {
   flex: 1;
   background: #fafafa;
@@ -57,15 +66,31 @@
 }
 
 .header h2 {
-  color: darkred;
+  color: var(--primary-color);
+}
+
+.imageButton{
+  padding: 8px;
+  border: none;
+  background: var(--primary-color);
+  color: var(--white);
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .exportar {
-  background: none;
+    padding: 8px;
   border: none;
-  color: darkred;
-  font-weight: bold;
+  background: var(--primary-color);
+  color: var(--white);
+  border-radius: 6px;
   cursor: pointer;
+  transition: all .3s ease;
+}
+
+.exportar:hover{
+    background: var(--red);
+
 }
 
 .dadosForm {

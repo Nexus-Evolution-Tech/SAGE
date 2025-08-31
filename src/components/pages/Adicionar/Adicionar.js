@@ -1,189 +1,204 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import styles from "./Adicionar.module.css";
 
 function Adicionar() {
   const { tipo } = useParams();
-  const navigate = useNavigate();
-  const fileInputRef = useRef();
-  const videoRef = useRef();
-  const canvasRef = useRef();
-  const [showCamera, setShowCamera] = useState(false);
-  const [fotoBase64, setFotoBase64] = useState(null);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({ tipo });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [todasTurmas, setTodasTurmas] = useState([]);
+  const [todosCursos, setTodosCursos] = useState([]);
+  const [todasEscolas, setTodasEscolas] = useState([]);
 
-  const campos = {
-    ALUNO: ["nome", "rg", "cpf", "telefone", "email", "data_nascimento", "genero", "rm", "periodo", "divisao", "turma_id", "curso_id"],
-    PROFESSOR: ["nome", "rg", "cpf", "telefone", "email", "data_nascimento", "genero", "siape", "disciplina_id"],
-    ADMINISTRADOR: ["nome", "rg", "cpf", "telefone", "email", "data_nascimento", "genero", "cargo", "entrada", "saida"],
-    TERCEIRIZADO: ["nome", "rg", "cpf", "telefone", "email", "data_nascimento", "genero", "empresa_id", "funcao", "entrada", "saida"]
-  };
+  const statusOptions = [
+    { value: "CANCELADO", label: "CANCELADO" },
+    { value: "CONCLUIDO", label: "CONCLUIDO" },
+    { value: "DESISTENTE", label: "DESISTENTE" },
+    { value: "EM CURSO", label: "EM CURSO" },
+    { value: "RETIDO", label: "RETIDO" },
+    { value: "TRANCADO", label: "TRANCADO" },
+    { value: "TRANSFERENCIA EXPEDIDA", label: "TRANSFERENCIA EXPEDIDA" },
+    { value: "SUSPENSO", label: "SUSPENSO" },
+  ];
+  const divOptions = [
+    { value: "DIV A", label: "DIV A" },
+    { value: "DIV B", label: "DIV B" },
+  ];
+
+  useEffect(() => {
+    const buscarDados = async () => {
+      try {
+        if (tipo === 'ALUNO') {
+          const turmasRes = await fetch(`http://localhost:3000/turmas`);
+          setTodasTurmas(await turmasRes.json());
+
+          const cursosRes = await fetch(`http://localhost:3000/cursos`);
+          setTodosCursos(await cursosRes.json());
+
+          const escolasRes = await fetch(`http://localhost:3000/escolas`);
+          setTodasEscolas(await escolasRes.json());
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+      }
+    };
+    buscarDados();
+  }, [tipo]);
 
   const handleInputChange = (campo, valor) => {
-    setFormData(prev => ({ ...prev, [campo]: valor }));
+    setFormData((prev) => ({ ...prev, [campo]: valor }));
   };
 
-  const handleUpload = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => setFotoBase64(reader.result);
-    reader.readAsDataURL(file);
-  };
+  const handleSalvar = async (e) => {
+  if (e) e.preventDefault();
+  setLoading(true);
+  setMessage("");
 
-  const handleSelecionarArquivo = (e) => {
-    const file = e.target.files[0];
-    if (file) handleUpload(file);
-  };
+  // Converte "" em null
+  let payload = Object.fromEntries(
+    Object.entries(formData).map(([key, value]) => [
+      key,
+      value === "" ? null : value,
+    ])
+  );
 
-  const iniciarCamera = async () => {
-    setShowCamera(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-    } catch {
-      alert("Erro ao acessar a câmera");
-    }
-  };
+  // Se não houver foto, define foto_exemplo.png
+  if (!payload.foto) {
+    payload.foto = "foto_exemplo.png";
+  }
 
-  const tirarFoto = () => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, 300, 300);
-    canvas.toBlob((blob) => {
-      if (blob) handleUpload(blob);
-    });
-    const tracks = video.srcObject.getTracks();
-    tracks.forEach(track => track.stop());
-    setShowCamera(false);
-  };
-
-  const gerarDadosCompletos = () => {
-    const base = {
-      ...formData,
-      foto: fotoBase64 || "",
-      tipo: tipo,
-      status: "ATIVO",
-      senha_acesso: "$2b$10$senha_fake_criptografada",
-      qr_code: "QR1234567890FAKE",
-      cartao_rfid: "RFID1234567890FAKE",
-      unidade_id: null,
-    };
-
-    // Ajustes específicos
-    if (tipo === "ALUNO") {
-      base.turma_id = parseInt(base.turma_id || 1);
-      base.curso_id = parseInt(base.curso_id || 1);
-      base.responsavel_id = null;
-    }
-
-    if (tipo === "PROFESSOR") {
-      base.disciplina_id = parseInt(base.disciplina_id || 1);
-      base.siape = base.siape || "123456";
-    }
-
-    if (tipo === "ADMINISTRADOR") {
-      base.cargo = base.cargo || "COORDENADOR_PEDAGOGICO";
-      base.entrada = base.entrada || "08:00:00";
-      base.saida = base.saida || "17:00:00";
-    }
-
-    if (tipo === "TERCEIRIZADO") {
-      base.funcao = base.funcao || "FAXINEIRO";
-      base.entrada = base.entrada || "08:00:00";
-      base.saida = base.saida || "17:00:00";
-      base.empresa_id = base.empresa_id ? parseInt(base.empresa_id) : null;
-    }
-
-    return base;
-  };
-
-  const handleSalvar = async () => {
-  const obrigatorios = campos[tipo] || [];
-  const incompletos = obrigatorios.filter(c => !formData[c]);
-  if (incompletos.length > 0) return alert("Preencha todos os campos obrigatórios!");
-
-  if (!fotoBase64) return alert("Adicione uma foto!");
-
-  const fotoNome = `pessoa_${Date.now()}.jpg`;
-
-  const dadosPessoa = {
-    ...formData,
-    foto: fotoNome,
-    tipo,
-    status: "ATIVO",
-    senha_acesso: "senha123", // senha em texto normal segundo seu exemplo
-    qr_code: "QR123456FAKE",
-    cartao_rfid: "RFID123456FAKE",
-    unidade_id: null
-  };
+  console.log("Payload final:", payload);
 
   try {
-    // 1. Cria a pessoa
-    const res = await fetch("http://localhost:3000/pessoas", {
+    const response = await fetch("http://localhost:3000/pessoas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dadosPessoa)
+      body: JSON.stringify(payload),
     });
 
-    const response = await res.json();
-    const idPessoa = response.pessoa.idPessoa;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Erro detalhado:", errorText);
+      throw new Error("Erro ao adicionar aluno.");
+    }
 
-    // 2. Upload da foto com ID gerado
-    const blob = await (await fetch(fotoBase64)).blob();
-    const formDataUpload = new FormData();
-    formDataUpload.append("foto", blob, fotoNome);
-    formDataUpload.append("id", idPessoa);
-
-    await fetch(`http://localhost:3000/pessoas/upload/${idPessoa}`, {
-      method: "POST",
-      body: formDataUpload
-    });
-
-    alert("Pessoa cadastrada com sucesso!");
-    navigate("/");
+    setMessage(`${tipo} adicionado com sucesso!`);
+    setFormData({ tipo }); // limpa formulário
   } catch (err) {
-    console.error(err);
-    alert("Erro ao cadastrar.");
+    console.error("Erro ao salvar:", err);
+    setMessage("Erro ao salvar aluno.");
+  } finally {
+    setLoading(false);
   }
 };
 
-
-  const renderCampos = () => campos[tipo]?.map(campo => (
-    <div className={styles.inputGroup} key={campo}>
-      <label>{campo.replace(/_/g, ' ').toUpperCase()}</label>
-      <input type="text" value={formData[campo] || ""} onChange={(e) => handleInputChange(campo, e.target.value)} />
+  const renderCampo = (label, campo, type = "text") => (
+    <div className={styles.inputGroup}>
+      <label>{label}</label>
+      <input
+        type={type}
+        value={formData[campo] || ""}
+        onChange={(e) => handleInputChange(campo, e.target.value)}
+      />
     </div>
-  )) || <p>Tipo inválido</p>;
+  );
+
+  const renderDropdown = (label, campo, options, labelField = "nome") => (
+    <div className={styles.inputGroup}>
+      <label>{label}</label>
+      <select
+        value={formData[campo] || ""}
+        onChange={(e) => handleInputChange(campo, e.target.value)}
+      >
+        <option value="">Selecione...</option>
+        {options.map((opt) => (
+          <option key={opt.id || opt.value} value={opt.id || opt.value}>
+            {opt[labelField] || opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  const renderCamposEspecificos = () => {
+    switch (tipo) {
+      case "ALUNO":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderCampo("RA", "ra")}
+              {renderCampo("RM (Matrícula)", "rm")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("RG", "rg")}
+              {renderCampo("CPF", "cpf")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderDropdown("Escola", "unidade_id", todasEscolas)}
+              {renderDropdown("Curso", "curso_id", todosCursos)}
+              {renderDropdown("Turma", "turma_id", todasTurmas)}
+            </div>
+            <div className={styles.inputRow}>
+              {renderDropdown("Divisão", "divisao", divOptions, "label")}
+              {renderDropdown("Status", "status", statusOptions, "label")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Email Institucional", "email")}
+              {renderCampo("Telefone", "telefone")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Data de Nascimento", "data_nascimento", "date")}
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.subtitle}>Dados do Responsável</label>
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Nome do Responsável", "responsavel_nome")}
+              {renderCampo("RG", "responsavel_rg")}
+              {renderCampo("CPF", "responsavel_cpf")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Telefone", "responsavel_telefone")}
+              {renderCampo("Email", "responsavel_email")}
+              {renderCampo("Data de Nascimento", "responsavel_data_nascimento", "date")}
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className={styles.cadastroContainer}>
       <aside className={styles.fotoSection}>
         <h3 className={styles.subtitle}>Foto</h3>
-        {fotoBase64 ? (
-          <img src={fotoBase64} className={styles.fotoPreview} />
-        ) : <p>Nenhuma foto selecionada</p>}
-        <div className={styles.btnGroup}>
-          <input type="file" accept="image/*" ref={fileInputRef} style={{ display: "none" }} onChange={handleSelecionarArquivo} />
-          <button onClick={() => fileInputRef.current.click()}>Selecionar arquivo</button>
-          <button onClick={iniciarCamera}>Tirar foto</button>
-        </div>
-        {showCamera && (
-          <div className={styles.camera}>
-            <video ref={videoRef} width="300" height="300" autoPlay />
-            <button onClick={tirarFoto}>Capturar</button>
-            <canvas ref={canvasRef} width="300" height="300" style={{ display: "none" }} />
-          </div>
-        )}
+        <input className={styles.imageButton}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleInputChange("foto", e.target.files[0]?.name)}
+        />
       </aside>
 
       <section className={styles.dadosSection}>
         <div className={styles.header}>
-          <h2>Informações - {tipo}</h2>
-          <button className={styles.exportar} onClick={handleSalvar}>Salvar</button>
+          <h2>Adicionar {tipo}</h2>
+          <button
+            className={styles.exportar}
+            onClick={handleSalvar}
+            disabled={loading}
+          >
+            {loading ? "Salvando..." : "Salvar"}
+          </button>
         </div>
-        <form className={styles.dadosForm}>
-          {renderCampos()}
+
+        <form className={styles.dadosForm} onSubmit={handleSalvar}>
+          <div className={styles.inputRow}>{renderCampo("Nome", "nome")}</div>
+          {renderCamposEspecificos()}
         </form>
+        {message && <p className={styles.message}>{message}</p>}
       </section>
     </div>
   );

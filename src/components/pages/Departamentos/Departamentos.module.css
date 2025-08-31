@@ -1,14 +1,14 @@
 .container {
-  width: 3500px;
-  padding: 20px;
+  width: 4500px;
   font-family: Arial, sans-serif;
-  padding-top: 7rem;
-  margin-left: 200px;
+  padding-top: 1rem;
+  padding-left: 180px;
+  padding-right: 20px;
 }
 
 .title {
   text-align: center;
-  color: #8b0000;
+  color: var(--primary-color);
   font-size: 36px;
 }
 
@@ -22,11 +22,12 @@
 .addPeople {
   padding-block: 0.3rem;
   padding-inline: 0.5rem;
-  background-color: var(--red);
+  background-color: var(--primary-color);
   border: none;
   border-radius: 3px;
   color: var(--white);
   transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .addPeople:hover{
@@ -40,13 +41,13 @@
 }
 
 .section {
+  width: 1100px;
   margin-bottom: 20px;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 15px;
   background-color: #fdfdfd;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  
 }
 
 .sectionHeader {
@@ -56,13 +57,13 @@
 }
 
 .sectionHeader h2 {
-  color: #8b0000;
+  color: var(--primary-color);
   margin: 0;
 }
 
 .verMais {
   text-decoration: none;
-  color: #1a73e8;
+  color: var(--primary-color);
   font-weight: bold;
   font-size: 14px;
   border: none;
@@ -78,7 +79,7 @@
 .subtitle {
   margin: 10px 0;
   color: #444;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .table {
@@ -92,26 +93,12 @@
   border: 1px solid #ddd;
   padding: 10px;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .table th {
   background-color: #f2f2f2;
   font-weight: bold;
-}
-
-.btn {
-  background-color: #d9534f;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  font-size: 14px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background-color: #c9302c;
 }
 
 .fotoMiniatura {
@@ -120,24 +107,25 @@
   object-fit: cover;
 }
 .verBtn {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--white);
   padding: 4px 10px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s;
+  font-size: 13px;
 }
 .verBtn:hover {
-  background-color: #0056b3;
+  background-color: var(--red);
 }
 
 .opcoesContainer {
   position: absolute;
   top: 50px;
   right: 0;
-  background-color: white;
-  box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+  background-color: var(--white);
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -149,12 +137,13 @@
 .opcoesContainer button {
   padding: 8px 10px;
   background-color: var(--primary-color);
-  color: white;
+  color: var(--white);
   border: none;
   cursor: pointer;
   border-radius: 5px;
   text-align: left;
   transition: all .3s ease;
+  border: 1px solid transparent;
 }
 
 .opcoesContainer button:hover {

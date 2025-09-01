@@ -1,12 +1,12 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import styles from './Formulario.module.css';
+import styles from "./Formulario.module.css";
 
 function Formulario() {
   const { id } = useParams();
   const [pessoa, setPessoa] = useState(null);
   const [formData, setFormData] = useState({});
-  const [fotoUrl, setFotoUrl] = useState('foto_exemplo.png'); // valor padrão
+  const [fotoUrl, setFotoUrl] = useState("foto_exemplo.png"); // valor padrão
 
   const [cursoNome, setCursoNome] = useState("");
   const [turmaNome, setTurmaNome] = useState("");
@@ -16,6 +16,7 @@ function Formulario() {
 
   const [showCamera, setShowCamera] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [novaFoto, setNovaFoto] = useState(null);
 
   const [todasTurmas, setTodasTurmas] = useState([]);
   const statusOptions = [
@@ -66,7 +67,7 @@ function Formulario() {
 
         const fotoRes = await fetch(`http://localhost:3000/pessoas/url/${id}`);
         const fotoData = await fotoRes.json();
-        setFotoUrl(fotoData.url || 'foto_exemplo.png');
+        setFotoUrl(fotoData.url || "foto_exemplo.png");
 
         if (pessoaData.tipo === "ALUNO") {
           const turmasRes = await fetch(`http://localhost:3000/turmas`);
@@ -98,7 +99,10 @@ function Formulario() {
           );
           const respData = await respRes.json();
           setResponsavel(respData[0] || null);
-        } else if (pessoaData.tipo === "TERCEIRIZADO" && pessoaData.empresa_id) {
+        } else if (
+          pessoaData.tipo === "TERCEIRIZADO" &&
+          pessoaData.empresa_id
+        ) {
           const empresaRes = await fetch(
             `http://localhost:3000/empresas/${pessoaData.empresa_id}`
           );
@@ -129,7 +133,7 @@ function Formulario() {
 
       const res = await fetch(`http://localhost:3000/pessoas/url/${id}`);
       const data = await res.json();
-      setFotoUrl(data.url || 'foto_exemplo.png'); 
+      setFotoUrl(data.url || "foto_exemplo.png");
       console.log("Foto atualizada com sucesso!");
     } catch (error) {
       console.error("Erro ao enviar a foto:", error);
@@ -138,7 +142,10 @@ function Formulario() {
 
   const handleSelecionarArquivo = (e) => {
     const file = e.target.files[0];
-    if (file) handleUpload(file);
+    if (file) {
+      setNovaFoto(file); // apenas guarda no estado
+      setFotoUrl(URL.createObjectURL(file)); // pré-visualização
+    }
   };
 
   const iniciarCamera = async () => {
@@ -175,19 +182,38 @@ function Formulario() {
   };
 
   const handleSalvar = async () => {
-    try {
-      await fetch(`http://localhost:3000/pessoas/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+  try {
+    // Atualiza os dados da pessoa
+    await fetch(`http://localhost:3000/pessoas/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    // Se uma nova foto foi selecionada, faz o upload
+    if (novaFoto) {
+      const formDataUpload = new FormData();
+      formDataUpload.append("foto", novaFoto);
+
+      await fetch(`http://localhost:3000/pessoas/upload/${id}`, {
+        method: "POST",
+        body: formDataUpload,
       });
-      console.log("Pessoa atualizada com sucesso!");
-      setEditMode(false);
-      setPessoa(formData);
-    } catch (error) {
-      console.error("Erro ao atualizar pessoa:", error);
+
+      const res = await fetch(`http://localhost:3000/pessoas/url/${id}`);
+      const data = await res.json();
+      setFotoUrl(data.url || "foto_exemplo.png");
+      setNovaFoto(null); // limpa depois de salvar
     }
-  };
+
+    console.log("Pessoa atualizada com sucesso!");
+    setEditMode(false);
+    setPessoa(formData);
+  } catch (error) {
+    console.error("Erro ao atualizar pessoa:", error);
+  }
+};
+
 
   if (!pessoa) return <p className={styles.loading}>Carregando dados...</p>;
 
@@ -206,7 +232,9 @@ function Formulario() {
   const renderDropdown = (label, campo, options, displayValue) => {
     const currentDisplayValue = displayValue || formData[campo] || "";
     const selectedOption = options.find((opt) => opt.value === formData[campo]);
-    const displayLabel = selectedOption ? selectedOption.label : currentDisplayValue;
+    const displayLabel = selectedOption
+      ? selectedOption.label
+      : currentDisplayValue;
 
     return (
       <div className={styles.inputGroup}>
@@ -247,17 +275,47 @@ function Formulario() {
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Email Institucional", "email")}
-              {renderCampo("Telefone", "telefone", formatarTelefone(pessoa?.telefone))}
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Período", "turno", turnoNome)}
-              {renderCampo("Data de Nascimento", "data_nascimento", formatarData(pessoa?.data_nascimento))}
+              {renderCampo(
+                "Data de Nascimento",
+                "data_nascimento",
+                formatarData(pessoa?.data_nascimento)
+              )}
             </div>
-            <div className={styles.inputRow}>
-              {renderCampo("Nome do Responsável", "resp_nome", responsavel?.nome)}
-              {renderCampo("Email do Responsável", "resp_email", responsavel?.email)}
-              {renderCampo("Telefone do Responsável", "resp_telefone", formatarTelefone(responsavel?.telefone))}
-            </div>
+
+            {/* Exibição dos dados do responsável */}
+            {responsavel && (
+              <>
+                <h3 className={styles.subtitle}>Responsável</h3>
+                <div className={styles.inputRow}>
+                  {renderCampo(
+                    "Nome do Responsável",
+                    "resp_nome",
+                    responsavel?.nome,
+                    true
+                  )}
+                  {renderCampo(
+                    "Email do Responsável",
+                    "resp_email",
+                    responsavel?.email,
+                    true
+                  )}
+                  {renderCampo(
+                    "Telefone do Responsável",
+                    "resp_telefone",
+                    formatarTelefone(responsavel?.telefone),
+                    true
+                  )}
+                </div>
+              </>
+            )}
           </>
         );
       case "TERCEIRIZADO":
@@ -265,43 +323,162 @@ function Formulario() {
           <>
             <div className={styles.inputRow}>
               {renderCampo("ID", "id")}
-              {renderCampo("Status", "status")}
-              {renderCampo("RG", "rg")}
-            </div>
-            <div className={styles.inputRow}>
+              {renderCampo("Tipo", "tipo")}
               {renderCampo("Empresa", "empresa", empresaNome)}
-              {renderCampo("Função", "funcao")}
-              {renderCampo("Entrada", "entrada")}
-              {renderCampo("Saída", "saida")}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo("Telefone", "telefone", formatarTelefone(pessoa?.telefone))}
-              {renderCampo("Email", "email")}
-              {renderCampo("Data de Nascimento", "data_nascimento", formatarData(pessoa?.data_nascimento))}
+              {renderCampo("Tipo de Contrato", "tipo_contrato")}
+              {renderCampo(
+                "Data de Admissão",
+                "data_saida",
+                formatarData(pessoa?.data_admissao)
+              )}
+              {renderCampo(
+                "Data de Saída",
+                "data_saida",
+                formatarData(pessoa?.data_saida)
+              )}
             </div>
-            <div className={styles.inputRow}>{renderCampo("Gênero", "genero")}</div>
+            <div className={styles.inputRow}>
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
+              {renderCampo("Email", "email")}
+              {renderCampo(
+                "Data de Nascimento",
+                "data_nascimento",
+                formatarData(pessoa?.data_nascimento)
+              )}
+            </div>
           </>
         );
       case "PROFESSOR":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderCampo("ID", "id")}
+              {renderCampo("Tipo", "tipo")}
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Tipo de Contrato", "tipo_contrato")}
+              {renderCampo(
+                "Data de Admissão",
+                "data_admissao",
+                formatarData(pessoa?.data_admissao)
+              )}
+              {renderCampo(
+                "Data de Saída",
+                "data_saida",
+                formatarData(pessoa?.data_saida)
+              )}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
+              {renderCampo("Email", "email")}
+              {renderCampo(
+                "Data de Nascimento",
+                "data_nascimento",
+                formatarData(pessoa?.data_nascimento)
+              )}
+            </div>
+          </>
+        );
+      case "PROFADM":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderCampo("ID", "id")}
+              {renderCampo("Tipo", "tipo")}
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Tipo de Contrato", "tipo_contrato")}
+              {renderCampo(
+                "Data de Admissão",
+                "data_admissao",
+                formatarData(pessoa?.data_admissao)
+              )}
+              {renderCampo(
+                "Data de Saída",
+                "data_saida",
+                formatarData(pessoa?.data_saida)
+              )}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
+              {renderCampo("Email", "email")}
+              {renderCampo(
+                "Data de Nascimento",
+                "data_nascimento",
+                formatarData(pessoa?.data_nascimento)
+              )}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Cargo", "cargo")}
+             
+            </div>
+          </>
+        );
       case "ADMINISTRADOR":
         return (
           <>
             <div className={styles.inputRow}>
               {renderCampo("ID", "id")}
               {renderCampo("Tipo", "tipo")}
-              {renderCampo("Telefone", "telefone", formatarTelefone(pessoa?.telefone))}
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Tipo de Contrato", "tipo_contrato")}
-              {renderCampo("Data de Admissão", "data_saida", formatarData(pessoa?.data_admissao))}
-              {renderCampo("Data de Saída", "data_saida", formatarData(pessoa?.data_saida))}
+              {renderCampo(
+                "Data de Admissão",
+                "data_saida",
+                formatarData(pessoa?.data_admissao)
+              )}
+              {renderCampo(
+                "Data de Saída",
+                "data_saida",
+                formatarData(pessoa?.data_saida)
+              )}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo("Telefone", "telefone", formatarTelefone(pessoa?.telefone))}
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
               {renderCampo("Email", "email")}
-              {renderCampo("Data de Nascimento", "data_nascimento", formatarData(pessoa?.data_nascimento))}
+              {renderCampo(
+                "Data de Nascimento",
+                "data_nascimento",
+                formatarData(pessoa?.data_nascimento)
+              )}
             </div>
-            <div className={styles.inputRow}>{renderCampo("Cargo", "cargo")}</div>
+            <div className={styles.inputRow}>
+              {renderCampo("Cargo", "cargo")}
+            </div>
           </>
         );
       default:
@@ -313,8 +490,12 @@ function Formulario() {
     <div className={styles.cadastroContainer}>
       <aside className={styles.fotoSection}>
         <h3 className={styles.subtitle}>Foto</h3>
-        <img src={fotoUrl} alt="Foto de perfil" className={styles.fotoPreview} />
-        {editMode && (
+        <img
+          src={fotoUrl}
+          alt="Foto de perfil"
+          className={styles.fotoPreview}
+        />
+        {(editMode || fotoUrl === "foto_exemplo.png") && (
           <div className={styles.btnGroup}>
             <input
               type="file"
@@ -323,15 +504,23 @@ function Formulario() {
               onChange={handleSelecionarArquivo}
               style={{ display: "none" }}
             />
-            <button onClick={() => fileInputRef.current.click()}>Selecionar arquivo</button>
+            <button onClick={() => fileInputRef.current.click()}>
+              Selecionar arquivo
+            </button>
             <button onClick={iniciarCamera}>Tirar foto</button>
           </div>
         )}
+
         {showCamera && (
           <div className={styles.camera}>
             <video ref={videoRef} width="300" height="300" autoPlay />
             <button onClick={tirarFoto}>Capturar</button>
-            <canvas ref={canvasRef} width="300" height="300" style={{ display: "none" }} />
+            <canvas
+              ref={canvasRef}
+              width="300"
+              height="300"
+              style={{ display: "none" }}
+            />
           </div>
         )}
         <h3 className={styles.subtitle}>QR Code</h3>
@@ -340,7 +529,10 @@ function Formulario() {
           alt="QR Code"
           className={styles.fotoPreview}
         />
-        <button className={styles.qrButton} onClick={() => console.log("Gerar QR Code")}>
+        <button
+          className={styles.qrButton}
+          onClick={() => console.log("Gerar QR Code")}
+        >
           Gerar QR Code
         </button>
       </aside>
@@ -354,7 +546,10 @@ function Formulario() {
               <p className={styles.textBackground}>Salvar</p>
             </button>
           ) : (
-            <button className={styles.actionButton} onClick={() => setEditMode(true)}>
+            <button
+              className={styles.actionButton}
+              onClick={() => setEditMode(true)}
+            >
               Editar
             </button>
           )}

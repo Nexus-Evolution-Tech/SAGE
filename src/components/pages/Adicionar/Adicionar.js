@@ -6,10 +6,13 @@ function Adicionar() {
   const { tipo } = useParams();
   const [formData, setFormData] = useState({ tipo });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
+  const [modalType, setModalType] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
   const [todasTurmas, setTodasTurmas] = useState([]);
   const [todosCursos, setTodosCursos] = useState([]);
   const [todasEscolas, setTodasEscolas] = useState([]);
+  const [todasEmpresas, setTodasEmpresas] = useState([]);
 
   const statusOptions = [
     { value: "CANCELADO", label: "CANCELADO" },
@@ -21,24 +24,52 @@ function Adicionar() {
     { value: "TRANSFERENCIA EXPEDIDA", label: "TRANSFERENCIA EXPEDIDA" },
     { value: "SUSPENSO", label: "SUSPENSO" },
   ];
+
   const divOptions = [
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
   ];
 
+  const contratOptions = [
+    { value: "DETERMINADO", label: "DETERMINADO" },
+    { value: "INDETERMINADO", label: "INDETERMINADO" },
+  ];
+
+  const funcaoOptions = [
+    { value: "VIGILANTE", label: "VIGILANTE" },
+    { value: "AUXILIAR_LIMPEZA", label: "AUXILIAR_LIMPEZA" },
+    { value: "SEGURANCA", label: "SEGURANCA" },
+    { value: "SERVICOS_GERAIS", label: "SERVICOS_GERAIS" },
+    { value: "TECNICO_MANUTENCAO", label: "TECNICO_MANUTENCAO" },
+    { value: "JARDINEIRO", label: "JARDINEIRO" },
+    { value: "CANTINEIRO", label: "CANTINEIRO" },
+    { value: "COZINHEIRO", label: "COZINHEIRO" },
+    { value: "OUTRO", label: "OUTRO" },
+  ];
+
+  const traduzErro = (erro) => {
+    if (!erro) return "Erro desconhecido.";
+    if (erro.includes("Duplicate entry")) return "Registro duplicado.";
+    if (erro.includes("Data truncated")) return "Formato de dado inválido.";
+    if (erro.includes("Cannot add or update a child row"))
+      return "Erro de relacionamento (chave estrangeira).";
+    return erro;
+  };
+
   useEffect(() => {
     const buscarDados = async () => {
       try {
-        if (tipo === 'ALUNO') {
-          const turmasRes = await fetch(`http://localhost:3000/turmas`);
-          setTodasTurmas(await turmasRes.json());
+        const turmasRes = await fetch(`http://localhost:3000/turmas`);
+        setTodasTurmas(await turmasRes.json());
 
-          const cursosRes = await fetch(`http://localhost:3000/cursos`);
-          setTodosCursos(await cursosRes.json());
+        const cursosRes = await fetch(`http://localhost:3000/cursos`);
+        setTodosCursos(await cursosRes.json());
 
-          const escolasRes = await fetch(`http://localhost:3000/escolas`);
-          setTodasEscolas(await escolasRes.json());
-        }
+        const empresasRes = await fetch(`http://localhost:3000/empresas`);
+        setTodasEmpresas(await empresasRes.json());
+
+        const escolasRes = await fetch(`http://localhost:3000/escolas`);
+        setTodasEscolas(await escolasRes.json());
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       }
@@ -50,48 +81,73 @@ function Adicionar() {
     setFormData((prev) => ({ ...prev, [campo]: valor }));
   };
 
+  const formatDate = (date) => {
+    if (!date) return null;
+    return new Date(date).toISOString().split("T")[0]; 
+  };
+
   const handleSalvar = async (e) => {
-  if (e) e.preventDefault();
-  setLoading(true);
-  setMessage("");
+    if (e) e.preventDefault();
+    setLoading(true);
+    setMessage("");
+    setModalType(null);
 
-  // Converte "" em null
-  let payload = Object.fromEntries(
-    Object.entries(formData).map(([key, value]) => [
-      key,
-      value === "" ? null : value,
-    ])
-  );
+    let payload = Object.fromEntries(
+      Object.entries(formData).map(([key, value]) => [
+        key,
+        value === "" ? null : value,
+      ])
+    );
 
-  // Se não houver foto, define foto_exemplo.png
-  if (!payload.foto) {
-    payload.foto = "foto_exemplo.png";
-  }
-
-  console.log("Payload final:", payload);
-
-  try {
-    const response = await fetch("http://localhost:3000/pessoas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Erro detalhado:", errorText);
-      throw new Error("Erro ao adicionar aluno.");
+    if (!payload.foto) {
+      payload.foto = "foto_exemplo.png";
     }
 
-    setMessage(`${tipo} adicionado com sucesso!`);
-    setFormData({ tipo }); // limpa formulário
-  } catch (err) {
-    console.error("Erro ao salvar:", err);
-    setMessage("Erro ao salvar aluno.");
-  } finally {
-    setLoading(false);
-  }
-};
+    payload.data_nascimento = formatDate(payload.data_nascimento);
+    payload.data_admissao = formatDate(payload.data_admissao);
+    payload.data_saida = formatDate(payload.data_saida);
+    payload.responsavel_data_nascimento = formatDate(
+      payload.responsavel_data_nascimento
+    );
+
+    if (tipo === "TERCEIRIZADO") {
+      payload.empresa_id = payload.empresa;
+      delete payload.empresa;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3000/pessoas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let errorMsg = "Erro ao adicionar.";
+        try {
+          const errorJson = await response.json();
+          errorMsg = `${errorJson.message}: ${traduzErro(errorJson.erro)}`;
+        } catch {
+          errorMsg = await response.text();
+        }
+        console.error("Erro detalhado:", errorMsg);
+        setMessage(errorMsg);
+        setModalType("error");
+        return;
+      }
+
+      setMessage(`${tipo} adicionado com sucesso!`);
+      setModalType("success");
+      setFormData({ tipo });
+      setFotoPreview(null);
+    } catch (err) {
+      console.error("Erro ao salvar:", err);
+      setMessage("Erro inesperado ao salvar.");
+      setModalType("error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderCampo = (label, campo, type = "text") => (
     <div className={styles.inputGroup}>
@@ -162,7 +218,45 @@ function Adicionar() {
             <div className={styles.inputRow}>
               {renderCampo("Telefone", "responsavel_telefone")}
               {renderCampo("Email", "responsavel_email")}
-              {renderCampo("Data de Nascimento", "responsavel_data_nascimento", "date")}
+              {renderCampo(
+                "Data de Nascimento",
+                "responsavel_data_nascimento",
+                "date"
+              )}
+            </div>
+          </>
+        );
+      case "PROFESSOR":
+      case "PROFADM":
+      case "ADMINISTRADOR":
+      case "TERCEIRIZADO":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderDropdown("Escola", "unidade_id", todasEscolas)}
+              {renderCampo("Matrícula", "matricula")}
+              {tipo === "TERCEIRIZADO" && renderCampo("RG", "rg")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("CPF", "cpf")}
+              {tipo === "TERCEIRIZADO"
+                ? renderDropdown("Empresa", "empresa", todasEmpresas)
+                : renderCampo("RG", "rg")}
+              {tipo === "TERCEIRIZADO"
+                ? renderDropdown("Função", "funcao", funcaoOptions)
+                : renderCampo("Cargo", "cargo")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderDropdown("Tipo de Contrato", "tipo_contrato", contratOptions)}
+              {renderCampo("Data de Admissão", "data_admissao", "date")}
+              {renderCampo("Data de Saída", "data_saida", "date")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Email", "email")}
+              {renderCampo("Telefone", "telefone")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Data de Nascimento", "data_nascimento", "date")}
             </div>
           </>
         );
@@ -173,15 +267,6 @@ function Adicionar() {
 
   return (
     <div className={styles.cadastroContainer}>
-      <aside className={styles.fotoSection}>
-        <h3 className={styles.subtitle}>Foto</h3>
-        <input className={styles.imageButton}
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleInputChange("foto", e.target.files[0]?.name)}
-        />
-      </aside>
-
       <section className={styles.dadosSection}>
         <div className={styles.header}>
           <h2>Adicionar {tipo}</h2>
@@ -198,8 +283,26 @@ function Adicionar() {
           <div className={styles.inputRow}>{renderCampo("Nome", "nome")}</div>
           {renderCamposEspecificos()}
         </form>
-        {message && <p className={styles.message}>{message}</p>}
       </section>
+
+      {modalType && (
+        <div className={styles.modalOverlay}>
+          <div
+            className={`${styles.modalContent} ${
+              modalType === "success" ? styles.success : styles.error
+            }`}
+          >
+            <h3>{modalType === "success" ? "Sucesso" : "Erro"}</h3>
+            <p>{message}</p>
+            <button
+              className={styles.closeButton}
+              onClick={() => setModalType(null)}
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

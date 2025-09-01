@@ -1,4 +1,4 @@
-# Sistema de Controle de Acesso por Catraca - ETEC  de Taboão da Serra
+# SAGE - Sistema de Automação e Gerenciamento Escolar - ETEC  de Taboão da Serra
 
 ## Descrição do Projeto
 Este projeto tem como objetivo desenvolver um **sistema de controle de acesso por catraca** para a **ETEC  de Taboão da Serra**, garantindo um ambiente mais seguro e organizado. A solução será projetada para atender às necessidades da escola, permitindo o gerenciamento eficiente da entrada e saída de alunos, professores e funcionários.

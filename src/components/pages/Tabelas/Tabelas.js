@@ -5,7 +5,7 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Tabelas() {
-  const { tipo } = useParams();
+  const { tipo, turmaId } = useParams(); // agora pega turmaId
   const navigate = useNavigate();
   const [dados, setDados] = useState([]);
   const [busca, setBusca] = useState("");
@@ -27,8 +27,12 @@ function Tabelas() {
 
   const formatarTurma = (id) => {
     const turmas = {
-      1: "1° Ano A", 2: "1° Ano B", 3: "2° Ano A",
-      4: "2° Ano B", 5: "3° Ano A", 6: "3° Ano B",
+      1: "1° Ano A",
+      2: "1° Ano B",
+      3: "2° Ano A",
+      4: "2° Ano B",
+      5: "3° Ano A",
+      6: "3° Ano B",
     };
     return turmas[id] || `Turma ${id}`;
   };
@@ -42,36 +46,78 @@ function Tabelas() {
 
   useEffect(() => {
     const fetchData = async () => {
-      let url = "";
+      try {
+        // Professores = PROFESSOR + PROFADM
+        if (tipo === "professores") {
+          const profRes = await fetch("http://localhost:3000/pessoas/tipo/PROFESSOR");
+          const prof = (await profRes.json()).map((p) => ({ ...p, trabalhaNaADM: false }));
 
-      if (tipo === "professores") {
-        const profRes = await fetch("http://localhost:3000/pessoas/tipo/PROFESSOR");
-        const prof = (await profRes.json()).map(p => ({ ...p, trabalhaNaADM: false }));
+          const profadmRes = await fetch("http://localhost:3000/pessoas/tipo/PROFADM");
+          const profadm = (await profadmRes.json()).map((p) => ({ ...p, trabalhaNaADM: true }));
 
-        const profadmRes = await fetch("http://localhost:3000/pessoas/tipo/PROFADM");
-        const profadm = (await profadmRes.json()).map(p => ({ ...p, trabalhaNaADM: true }));
+          setDados([...prof, ...profadm]);
+          return;
+        }
 
-        setDados([...prof, ...profadm]);
-        return;
+        // Se for turmas e tiver turmaId → buscar apenas os alunos dessa turma
+        if (tipo === "turmas" && turmaId) {
+          const res = await fetch(`http://localhost:3000/turmas/${turmaId}/alunos`);
+          const alunos = await res.json();
+          setDados(alunos);
+          return;
+        }
+
+        // Outros tipos
+        const sigla = tipoMap[tipo]?.toUpperCase();
+        if (!sigla) return;
+
+        const url = `http://localhost:3000/pessoas/tipo/${sigla}`;
+        const res = await fetch(url);
+        let data = await res.json();
+
+        // Terceirizados → buscar empresa
+        if (tipo === "terceirizados") {
+          const cacheEmpresas = new Map();
+
+          data = await Promise.all(
+            data.map(async (p) => {
+              if (!p.empresa_id) return { ...p, empresa: "", cnpj: "" };
+
+              if (cacheEmpresas.has(p.empresa_id)) {
+                const emp = cacheEmpresas.get(p.empresa_id) || {};
+                return { ...p, empresa: emp.nome || "", cnpj: emp.cnpj || "" };
+              }
+
+              try {
+                const r = await fetch(`http://localhost:3000/empresas/${p.empresa_id}`);
+                const j = await r.json();
+                const emp = Array.isArray(j) ? j[0] : j;
+                cacheEmpresas.set(p.empresa_id, emp || {});
+                return { ...p, empresa: emp?.nome || "", cnpj: emp?.cnpj || "" };
+              } catch (err) {
+                console.error("Erro ao buscar empresa:", err);
+                return { ...p, empresa: "", cnpj: "" };
+              }
+            })
+          );
+        }
+
+        setDados(data);
+      } catch (err) {
+        console.error("Erro ao buscar dados:", err);
       }
-
-      url = `http://localhost:3000/pessoas/tipo/${tipoMap[tipo]?.toUpperCase()}`;
-      if (!url) return;
-
-      const res = await fetch(url);
-      const data = await res.json();
-      setDados(data);
     };
 
     fetchData();
-  }, [tipo]);
+  }, [tipo, turmaId]);
 
-  const dadosFiltrados = dados.filter((p) =>
-    p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
-    p.email?.toLowerCase().includes(busca.toLowerCase()) ||
-    p.rm?.toString().includes(busca) ||
-    p.rg?.toString().includes(busca) ||
-    p.telefone?.includes(busca)
+  const dadosFiltrados = dados.filter(
+    (p) =>
+      p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+      p.email?.toLowerCase().includes(busca.toLowerCase()) ||
+      p.rm?.toString().includes(busca) ||
+      p.rg?.toString().includes(busca) ||
+      p.telefone?.includes(busca)
   );
 
   const handleVerMais = (id) => {
@@ -80,7 +126,11 @@ function Tabelas() {
 
   const commonHeader = (
     <div className={styles.header}>
-      <h2 className={styles.title}>{tipo.charAt(0).toUpperCase() + tipo.slice(1)}</h2>
+      <h2 className={styles.title}>
+        {tipo === "turmas" && turmaId
+          ? `Alunos da Turma ${formatarTurma(turmaId)}`
+          : tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+      </h2>
       <div className={styles.searchContainer}>
         <input
           type="search"
@@ -93,7 +143,9 @@ function Tabelas() {
           <FontAwesomeIcon icon={faSearch} className={styles.iconSearch} />
         </button>
       </div>
-      <button className={styles.filterBtn} onClick={toggleModal}>Filtrar</button>
+      <button className={styles.filterBtn} onClick={toggleModal}>
+        Filtrar
+      </button>
     </div>
   );
 
@@ -109,7 +161,14 @@ function Tabelas() {
               <td>{formatarData(p.data_nascimento)}</td>
               <td>{formatarTelefone(p.telefone)}</td>
               <td>{formatarTurma(p.turma_id)}</td>
-              <td><button className={styles.verMais} onClick={() => handleVerMais(p.id)}>Ver mais informações</button></td>
+              <td>
+                <button
+                  className={styles.verMais}
+                  onClick={() => handleVerMais(p.id)}
+                >
+                  Ver informações
+                </button>
+              </td>
             </>
           )}
           {tipo === "professores" && (
@@ -117,7 +176,14 @@ function Tabelas() {
               <td>{p.email}</td>
               <td>{formatarTelefone(p.telefone)}</td>
               <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
-              <td><button className={styles.verMais} onClick={() => handleVerMais(p.id)}>Ver mais informações</button></td>
+              <td>
+                <button
+                  className={styles.verMais}
+                  onClick={() => handleVerMais(p.id)}
+                >
+                  Ver informações
+                </button>
+              </td>
             </>
           )}
           {tipo === "administracao" && (
@@ -126,7 +192,14 @@ function Tabelas() {
               <td>{p.email}</td>
               <td>{formatarTelefone(p.telefone)}</td>
               <td>{p.cargo}</td>
-              <td><button className={styles.verMais} onClick={() => handleVerMais(p.id)}>Ver mais informações</button></td>
+              <td>
+                <button
+                  className={styles.verMais}
+                  onClick={() => handleVerMais(p.id)}
+                >
+                  Ver informações
+                </button>
+              </td>
             </>
           )}
           {tipo === "terceirizados" && (
@@ -135,8 +208,14 @@ function Tabelas() {
               <td>{p.email}</td>
               <td>{formatarTelefone(p.telefone)}</td>
               <td>{p.empresa}</td>
-              <td>{p.cnpj}</td>
-              <td><button className={styles.verMais} onClick={() => handleVerMais(p.id)}>Ver mais informações</button></td>
+              <td>
+                <button
+                  className={styles.verMais}
+                  onClick={() => handleVerMais(p.id)}
+                >
+                  Ver informações
+                </button>
+              </td>
             </>
           )}
         </tr>
@@ -145,32 +224,62 @@ function Tabelas() {
     return (
       <>
         {commonHeader}
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              {tipo === "turmas" && <>
-                <th>RM</th><th>Email</th><th>Data de Nascimento</th><th>Telefone</th><th>Turma</th><th>Mais informações</th>
-              </>}
-              {tipo === "professores" && <>
-                <th>Email</th><th>Telefone</th><th>Trabalha na ADM?</th><th>Mais informações</th>
-              </>}
-              {tipo === "administracao" && <>
-                <th>RG</th><th>Email</th><th>Telefone</th><th>Cargo</th><th>Mais informações</th>
-              </>}
-              {tipo === "terceirizados" && <>
-                <th>RG</th><th>Email</th><th>Telefone</th><th>Empresa</th><th>CNPJ</th><th>Mais informações</th>
-              </>}
-            </tr>
-          </thead>
-          <tbody>
-            {dadosFiltrados.length > 0 ? renderRows() : (
+        <div className={styles.tabeContainer}>
+          <table className={styles.table}>
+            <thead>
               <tr>
-                <td colSpan="10" className={styles.noResults}>Nenhum resultado correspondente.</td>
+                <th>Nome</th>
+                {tipo === "turmas" && (
+                  <>
+                    <th>RM</th>
+                    <th>Email</th>
+                    <th>Data de Nascimento</th>
+                    <th>Telefone</th>
+                    <th>Turma</th>
+                    <th>Mais informações</th>
+                  </>
+                )}
+                {tipo === "professores" && (
+                  <>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Trabalha na ADM?</th>
+                    <th>Mais informações</th>
+                  </>
+                )}
+                {tipo === "administracao" && (
+                  <>
+                    <th>RG</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Cargo</th>
+                    <th>Mais informações</th>
+                  </>
+                )}
+                {tipo === "terceirizados" && (
+                  <>
+                    <th>RG</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Empresa</th>
+                    <th>Mais informações</th>
+                  </>
+                )}
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {dadosFiltrados.length > 0 ? (
+                renderRows()
+              ) : (
+                <tr>
+                  <td colSpan="10" className={styles.noResults}>
+                    Nenhum resultado correspondente.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </>
     );
   };
@@ -183,7 +292,9 @@ function Tabelas() {
           <div className={styles.modal}>
             <h3>Filtros</h3>
             <p>Configurações de filtro serão adicionadas aqui.</p>
-            <button className={styles.closeBtn} onClick={toggleModal}>Fechar</button>
+            <button className={styles.closeBtn} onClick={toggleModal}>
+              Fechar
+            </button>
           </div>
         </div>
       )}

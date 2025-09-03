@@ -14,7 +14,6 @@
 
 .monitoramentoContainer {
   font-family: Arial, sans-serif;
-  padding: 6rem 0;
   min-height: 100vh;
   box-sizing: border-box;
   margin-left: 250px;
@@ -23,7 +22,7 @@
 .pageTitle {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #c9302c; 
+  color: var(--primary-color); 
   text-align: center;
   margin-bottom: 2rem;
 }
@@ -37,7 +36,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 5px solid #c9302c;
+  border-left: 5px solid var(--primary-color);
+  border-bottom-right-radius: 300px;
 }
 
 .profileInfo {
@@ -80,20 +80,62 @@
   color: #888;
 }
 
-.filterContainer{
+.filterContainer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-inline: 1rem;
-  padding-bottom: 1rem;
+  gap: 1.5rem;
+  padding: 0.8rem 1.2rem;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
 }
 
-.filterButton{
+.filterButton {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
+
+.filterButton:hover {
+  background-color: #f1f1f1;
+  border-color: var(--primary-color);
+}
+
+.itemsText {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #444;
+}
+
+.dropdown {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border 0.2s ease-in-out;
+}
+
+.dropdown:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(2, 25, 50, 0.2);
+}
+
+.deniedIcon {
+  font-size: 1rem;
+  color: var(--primary-color);
+}
+
 
 .accessStatus {
   text-align: right;
@@ -182,7 +224,7 @@
 }
 
 .statusBadge.required {
-  background-color: #c9302c;
+  background-color: var(--red);
   color: #fff;
 }
 

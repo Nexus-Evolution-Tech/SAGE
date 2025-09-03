@@ -2,68 +2,86 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--red);
-  margin-bottom: 20px; 
+  color: var(--primary-color);
+  margin-bottom: 20px;
 }
 
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; 
-  padding: 20px; 
+  justify-content: flex-start;
+  padding: 20px;
 }
 
 .cards {
   display: flex;
-  flex-wrap: wrap; 
   background-color: var(--white);
-  padding: 20px; 
+  padding: 20px;
   justify-content: flex-start;
-  gap: 20px; 
-  width: 90%; 
-  max-width: 1200px; 
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+  border-radius: 8px;
 }
 
 .cardContainer {
   background-color: rgb(246, 245, 245);
-  padding: 15px; 
+  padding: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 10px; 
-  width: calc(
-    33.33% - 20px
-  );
-  min-width: 200px; 
+  border-radius: 10px;
+  width: calc(33.33% - 20px);
+  min-width: 200px;
   box-sizing: border-box;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cardContainer:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .cardContainer img {
   max-width: 80%;
   height: auto;
   margin-top: 10px;
-  margin-bottom: 10px; 
+  margin-bottom: 10px;
 }
 
 .iconButton {
   color: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   height: auto;
-  padding: 10px 15px;
+  padding: 10px 25px;
   background-color: var(--white);
   cursor: pointer;
   border: none;
-  margin-top: 20px;
   font-size: 1em;
-  display: flex;
-  align-items: center;
   gap: 5px;
 }
 
 .icon {
   font-size: 1.2em;
+}
+.iconRed {
+  font-size: 1.2em;
+  color: red;
+}
+
+.buttonContainer {
+  display: flex;
+  align-items: center;
+}
+
+.buttonText {
+  white-space: nowrap;
 }
 
 .cardTitle {
@@ -98,7 +116,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); 
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,13 +124,13 @@
 }
 
 .formContainer {
-  background-color: white;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  background-color: var(--white);
+  padding: 20px 30px;
+  border-radius: 32px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   z-index: 1001;
   width: 90%;
-  max-width: 500px;
+  max-width: 600px;
   position: relative;
 }
 
@@ -130,23 +148,16 @@
 
 .formContainer label {
   font-weight: bold;
-  margin-bottom: 5px; 
+  margin-bottom: 5px;
 }
 
 .formContainer input {
-  padding: 10px;
+  padding: 5px;
+  margin-top: 5px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  width: 100%; 
-  box-sizing: border-box; 
-}
-
-.formContainer button {
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  width: 100%; 
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .formContainer button[type="submit"] {
@@ -154,7 +165,129 @@
   color: white;
 }
 
-.formContainer button[type="button"] {
+/* .formContainer button[type="button"] {
   background-color: #ccc;
+} */
+
+.sideContainer {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  padding-top: 2rem;
+}
+
+.infoContainer {
+  margin-top: 0.2rem;
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #bdbdbd;
+  border-radius: 8px;
+}
+
+.infoContainerRow {
+  margin-top: 0.2rem;
+  padding: 0.5rem 0.5rem;
+  width: 135px;
+  border: 1px solid #bdbdbd;
+  border-radius: 8px;
+}
+
+.cardsRow {
+  display: flex;
+  padding-top: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.titleContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closeButton {
+  padding: none;
+  background: transparent;
+}
+
+.dataContainer {
+  padding: 1rem;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+}
+
+.testContainer {
+  padding-top: 1rem;
+}
+
+.testButtonsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.testButtonsRoww {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 10px;
+}
+
+
+
+.status {
+  color: red;
+}
+
+.reloadButton {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.catraca {
+  height: 250px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+
+.dropContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.selectInput {
+  appearance: none; 
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 7px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  font-size: 0.95rem;
+  color: #333;
+  width: 100%;
+  cursor: pointer;
+
+  transition: all 0.2s ease-in-out;
+}
+
+.selectInput:hover {
+  border-color: var(--primary-color);
+  background-color: #fff;
+}
+
+
+.selectInput {
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23333' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 18px;
 }
 

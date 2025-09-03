@@ -1,0 +1,81 @@
+.section {
+  width: 1000px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #fdfdfd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sectionHeader h2 {
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.verMais {
+  text-decoration: none;
+  color: var(--primary-color);
+  font-weight: bold;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.verMais:hover {
+  transform: translateX(5px);
+}
+
+.subtitle {
+  margin: 10px 0;
+  color: #444;
+  font-size: 14px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.fotoMiniatura {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}
+
+.verBtn {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 13px;
+}
+
+.verBtn:hover {
+  background-color: var(--red);
+}

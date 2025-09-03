@@ -200,6 +200,7 @@ function Adicionar() {
               {renderDropdown("Status", "status", statusOptions, "label")}
             </div>
             <div className={styles.inputRow}>
+              {renderCampo("Cartão Rfid", "cartao_rfid")}
               {renderCampo("Email Institucional", "email")}
               {renderCampo("Telefone", "telefone")}
             </div>

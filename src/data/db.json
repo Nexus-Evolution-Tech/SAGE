@@ -1,0 +1,12 @@
+[
+  {
+    "nome": "Catraca 1",
+    "modelo": "CT-500",
+    "endereco": "192.168.0.10",
+    "porta": 8080,
+    "usuario": "admin",
+    "senha": "1234",
+    "area_id": null,
+    "numero_serial": "1234567"
+  }
+]

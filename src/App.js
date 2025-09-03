@@ -23,6 +23,7 @@ import Inicio from "./components/pages/Inicio/Inicio";
 import ToolBar from "./components/layout/ToolBar/ToolBar";
 import Regras from "./components/pages/Regras/Regras";
 import Horarios from "./components/pages/Horarios/Horarios";
+import Areas from "./components/pages/Areas/Areas";
 
 function AppContent() {
   const location = useLocation();
@@ -48,11 +49,13 @@ function AppContent() {
             <Route path="/monitoramento" element={<Monitoramento />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/tabelas/:tipo" element={<Tabelas />} />
+            <Route path="/tabelas/:tipo/:turmaId" element={<Tabelas />} />
             <Route path="/formulario/:tipo/:id" element={<Formulario />} />
             <Route path="/turmas" element={<Turmas />} />
             <Route path="/adicionar/:tipo" element={<Adicionar />} />
             <Route path="/regras" element={<Regras />} />
             <Route path="/horarios" element={<Horarios />} />
+            <Route path="/areas" element={<Areas />} />
           </Routes>
         </Container>
       </div>

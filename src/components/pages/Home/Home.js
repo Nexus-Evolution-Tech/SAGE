@@ -80,11 +80,13 @@ function Monitoramento() {
             <h3>Fulano Oliveira</h3>
             <p>Área: Portaria Princ.</p>
             <p>Dispositivo: Catraca Esquerda (IDBlock)</p>
+            <br/>
+            <p>Acesso Requerido</p>
           </div>
         </div>
       </div>
 
-      <div className={styles.filterContainer}>
+      {/* <div className={styles.filterContainer}>
         <div className={styles.filterButton}>
           <FontAwesomeIcon icon={faListOl} className={styles.deniedIcon} />
           <p className={styles.itemsText}>Itens por página</p>
@@ -104,7 +106,7 @@ function Monitoramento() {
         <div className={styles.filterButton}>
           <FontAwesomeIcon icon={faFilter} className={styles.deniedIcon} />
         </div>
-      </div>
+      </div> */}
 
       {/* Tabela */}
       <div className={styles.tableContainer}>

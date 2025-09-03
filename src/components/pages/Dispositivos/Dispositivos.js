@@ -1,7 +1,12 @@
 import styles from "./Dispositivos.module.css";
 import catracaPlaceholder from "../../../img/catraca.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCirclePlus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCirclePlus,
+  faRotateLeft,
+  faXmark,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 
 function Dispositivos() {
@@ -9,6 +14,7 @@ function Dispositivos() {
   const [statusDispositivos, setStatusDispositivos] = useState({});
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState(null); // <-- novo estado
   const [newDeviceData, setNewDeviceData] = useState({
     nome: "",
     modelo: "",
@@ -20,14 +26,18 @@ function Dispositivos() {
 
   const fetchDispositivos = async () => {
     try {
-      const responseDispositivos = await fetch("http://localhost:3000/dispositivos");
+      const responseDispositivos = await fetch(
+        "http://localhost:3000/dispositivos"
+      );
       if (!responseDispositivos.ok) {
         throw new Error(`Erro HTTP! Status: ${responseDispositivos.status}`);
       }
       const dataDispositivos = await responseDispositivos.json();
       setDispositivos(dataDispositivos);
 
-      const responseStatus = await fetch(`http://localhost:3000/dispositivos/status`);
+      const responseStatus = await fetch(
+        `http://localhost:3000/dispositivos/status`
+      );
       if (!responseStatus.ok) {
         throw new Error(`Erro HTTP ao buscar status: ${responseStatus.status}`);
       }
@@ -65,13 +75,27 @@ function Dispositivos() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Erro ao adicionar dispositivo: ${response.status} - ${errorData.message || 'Erro desconhecido'}`);
+        throw new Error(
+          `Erro ao adicionar dispositivo: ${response.status} - ${
+            errorData.message || "Erro desconhecido"
+          }`
+        );
       }
 
       const novoDispositivo = await response.json();
-      setDispositivos((prevDispositivos) => [...prevDispositivos, novoDispositivo]);
+      setDispositivos((prevDispositivos) => [
+        ...prevDispositivos,
+        novoDispositivo,
+      ]);
 
-      setNewDeviceData({ nome: "", modelo: "", endereco: "", porta: "", usuario: "", senha: "" });
+      setNewDeviceData({
+        nome: "",
+        modelo: "",
+        endereco: "",
+        porta: "",
+        usuario: "",
+        senha: "",
+      });
       setShowForm(false);
       setStatusDispositivos((prevStatus) => ({
         ...prevStatus,
@@ -84,8 +108,24 @@ function Dispositivos() {
     }
   };
 
+  const handleCardClick = (device) => {
+    setSelectedDevice(device);
+  };
+
+  const closeModal = () => {
+    setSelectedDevice(null);
+  };
+
+  const closeAddModal = () => {
+    setShowForm(false);
+  };
+
   if (error) {
-    return <div className={styles.container}>Erro ao carregar dispositivos: {error}</div>;
+    return (
+      <div className={styles.container}>
+        Erro ao carregar dispositivos: {error}
+      </div>
+    );
   }
 
   return (
@@ -93,7 +133,11 @@ function Dispositivos() {
       <h1 className={styles.title}>Dispositivos</h1>
       <div className={styles.cards}>
         {dispositivos.map((dispositivo) => (
-          <div key={dispositivo.id} className={styles.cardContainer}>
+          <div
+            key={dispositivo.id}
+            className={styles.cardContainer}
+            onClick={() => handleCardClick(dispositivo)} // clique abre modal
+          >
             <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
             <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
             <p className={styles.cardArea}>ID: {dispositivo.id}</p>
@@ -102,21 +146,166 @@ function Dispositivos() {
             ) : (
               <img src={catracaPlaceholder} alt="catraca placeholder" />
             )}
-            <p>Status: {statusDispositivos[dispositivo.id] || "Carregando..."}</p>
-            <p>
-              Endereço: {dispositivo.endereco}:{dispositivo.porta}
-            </p>
-            <p>Usuário: {dispositivo.usuario}</p>
           </div>
         ))}
 
-        <button onClick={() => setShowForm(!showForm)} className={styles.iconButton}>
-          <FontAwesomeIcon icon={faCirclePlus} className={styles.icon} />
-          Adicionar dispositivo
-        </button>
+        <div className={styles.buttonContainer}>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className={styles.iconButton}
+          >
+            <FontAwesomeIcon icon={faCirclePlus} className={styles.icon} />
+            <p className={styles.buttonText}>Adicionar dispositivo</p>
+          </button>
+        </div>
       </div>
 
+      {selectedDevice && (
+        <div className={styles.overlay}>
+          <div className={styles.formContainer}>
+            <div className={styles.titleContainer}>
+              <button className={styles.closeButton}>
+                <FontAwesomeIcon icon={faTrash} className={styles.iconRed} />
+              </button>
+              <h2>Detalhes do Dispositivo</h2>
+              <button className={styles.closeButton} onClick={closeModal}>
+                <FontAwesomeIcon icon={faXmark} className={styles.icon} />
+              </button>
+            </div>
+            <div className={styles.sideContainer}>
+              <div className={styles.sidePhotoContainer}>
+                <img
+                  src={catracaPlaceholder}
+                  alt="Catraca"
+                  className={styles.catraca}
+                />
+              </div>
+
+              <div className={styles.dataContainer}>
+                <strong>Nome do Dispositivo</strong>
+                <div className={styles.infoContainer}>
+                  <p>{selectedDevice.nome}</p>
+                </div>
+
+                <div className={styles.cardsRow}>
+                  <div className={styles.inputContainer}>
+                    <strong>Modelo</strong>
+                    <div className={styles.infoContainerRow}>
+                      <p>{selectedDevice.modelo}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.inputContainer}>
+                    <strong>Usuário</strong>
+                    <div className={styles.infoContainerRow}>
+                      <p>{selectedDevice.usuario}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.testContainer}>
+                  <div className={styles.testTitle}>
+                    <h4>Testar Conexão</h4>
+                  </div>
+
+                  <div className={styles.testButtonsRow}>
+                    <button className={styles.reloadButton}>
+                      {" "}
+                      <FontAwesomeIcon
+                        icon={faRotateLeft}
+                        className={styles.icon}
+                      />
+                    </button>
+                    <div className={styles.infoContainerRow}>
+                      <p className={styles.status}>
+                        {statusDispositivos[selectedDevice.id] ||
+                          "Carregando..."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showForm && (
+        <div className={styles.overlay}>
+          <div className={styles.formContainer}>
+            <div className={styles.titleContainer}>
+              <h2>ㅤ</h2>
+              <h2>Adicionar Dispositivo</h2>
+              <button className={styles.closeButton} onClick={closeAddModal}>
+                <FontAwesomeIcon icon={faXmark} className={styles.icon} />
+              </button>
+            </div>
+            <div className={styles.sideContainer}>
+              <div className={styles.sidePhotoContainer}>
+                <img
+                  src={catracaPlaceholder}
+                  alt="Catraca"
+                  className={styles.catraca}
+                />
+              </div>
+
+              <div className={styles.dataContainer}>
+                <div className={styles.dropContainer}>
+                  <button className={styles.reloadButton}> Buscar</button>
+                  <select className={`${styles.input} ${styles.selectInput}`}>
+                    Nenhum
+                  </select>
+                </div>
+                <strong>Nome do Dispositivo</strong>
+                <input
+                  type="text"
+                  id="nome"
+                  name="nome"
+                  value={newDeviceData.nome}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Catraca 1"
+                />
+
+                <div className={styles.cardsRow}>
+                  <div className={styles.inputContainer}>
+                    <strong>IP</strong>
+                    <input
+                      type="text"
+                      id="nome"
+                      name="nome"
+                      value={newDeviceData.nome}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="192.168.10.67"
+                    />
+                  </div>
+
+                  <div className={styles.inputContainer}>
+                    <strong>Porta</strong>
+                    <input
+                      type="text"
+                      id="nome"
+                      name="nome"
+                      value={newDeviceData.nome}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="80"
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.testContainer}>
+                  <div className={styles.testButtonsRoww}>
+                    <button className={styles.reloadButton}> Salvar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* {showForm && (
         <div className={styles.overlay}>
           <div className={styles.formContainer}>
             <h2>Adicionar Novo Dispositivo</h2>
@@ -188,15 +377,15 @@ function Dispositivos() {
                 />
               </div>
               <button type="submit">Adicionar Dispositivo</button>
-              <button type="button" onClick={() => setShowForm(false)}>Cancelar</button>
+              <button type="button" onClick={() => setShowForm(false)}>
+                Cancelar
+              </button>
             </form>
           </div>
         </div>
-      )}
-
+      )} */}
     </div>
   );
 }
 
 export default Dispositivos;
-

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Departamentos.module.css";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import TableSection from "../../layout/Table/Table";
 
 function Departamentos() {
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
@@ -110,69 +111,73 @@ function Departamentos() {
 
   const Section = ({ title, subtitle, columns, data, tipo }) => {
     return (
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2>{title}</h2>
-          <button
-            className={styles.verMais}
-            onClick={() =>
-              tipo === "turmas"
-                ? navigate(`/turmas`)
-                : navigate(`/tabelas/${tipo}`)
-            }
-          >
-            Ver mais →
-          </button>
-        </div>
-        <h3 className={styles.subtitle}>{subtitle}</h3>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              {columns.map((col, i) => (
-                <th key={i}>{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((p, i) => (
-              <tr key={i}>
-                <td>{p.nome}</td>
-                <td>
-                  <img
-                    src={p.foto}
-                    alt="Foto"
-                    className={styles.fotoMiniatura}
-                    onError={(e) => (e.target.style.display = "none")}
-                  />
-                </td>
-                {"rm" in p && <td>{p.rm}</td>}
-                <td>{p.email}</td>
-                <td>{formatarTelefone(p.telefone)}</td>
-                {"data_nascimento" in p && (
-                  <td>{formatarData(p.data_nascimento)}</td>
-                )}
-                {"divisao" in p && <td>{p.divisao}</td>}
-                {"cnpj" in p && <td>{p.cnpj}</td>}
-                {tipo === "administracao" && "cargo" in p && <td>{p.cargo}</td>}
-                {tipo === "terceirizados" && "empresa" in p && (
-                  <td>{p.empresa}</td>
-                )}
-                {"trabalhaNaADM" in p && (
-                  <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
-                )}
-                <td>
-                  <button
-                    className={styles.verBtn}
-                    onClick={() => navigate(`/formulario/${tipo}/${p.id}`)}
-                  >
-                    Ver informações
-                  </button>
-                </td>
+      <>
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2>{title}</h2>
+            <button
+              className={styles.verMais}
+              onClick={() =>
+                tipo === "turmas"
+                  ? navigate(`/turmas`)
+                  : navigate(`/tabelas/${tipo}`)
+              }
+            >
+              Ver mais →
+            </button>
+          </div>
+          <h3 className={styles.subtitle}>{subtitle}</h3>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                {columns.map((col, i) => (
+                  <th key={i}>{col}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {data.map((p, i) => (
+                <tr key={i}>
+                  <td>{p.nome}</td>
+                  <td>
+                    <img
+                      src={p.foto}
+                      alt="Foto"
+                      className={styles.fotoMiniatura}
+                      onError={(e) => (e.target.style.display = "none")}
+                    />
+                  </td>
+                  {"rm" in p && <td>{p.rm}</td>}
+                  <td>{p.email}</td>
+                  <td>{formatarTelefone(p.telefone)}</td>
+                  {"data_nascimento" in p && (
+                    <td>{formatarData(p.data_nascimento)}</td>
+                  )}
+                  {"divisao" in p && <td>{p.divisao}</td>}
+                  {"cnpj" in p && <td>{p.cnpj}</td>}
+                  {tipo === "administracao" && "cargo" in p && (
+                    <td>{p.cargo}</td>
+                  )}
+                  {tipo === "terceirizados" && "empresa" in p && (
+                    <td>{p.empresa}</td>
+                  )}
+                  {"trabalhaNaADM" in p && (
+                    <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
+                  )}
+                  <td>
+                    <button
+                      className={styles.verBtn}
+                      onClick={() => navigate(`/formulario/${tipo}/${p.id}`)}
+                    >
+                      Ver informações
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
     );
   };
 

@@ -13,6 +13,8 @@ function Formulario() {
   const [turnoNome, setTurnoNome] = useState("");
   const [responsavel, setResponsavel] = useState(null);
   const [empresaNome, setEmpresaNome] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [qrCode, setQrCode] = useState("");
 
   const [showCamera, setShowCamera] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -143,8 +145,8 @@ function Formulario() {
   const handleSelecionarArquivo = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setNovaFoto(file); // apenas guarda no estado
-      setFotoUrl(URL.createObjectURL(file)); // pré-visualização
+      setNovaFoto(file);
+      setFotoUrl(URL.createObjectURL(file));
     }
   };
 
@@ -158,6 +160,42 @@ function Formulario() {
     } catch (error) {
       console.error("Erro ao acessar a câmera:", error);
     }
+  };
+
+  const handleGerarQRCode = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/pessoas/gerar_qrcode/${id}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) throw new Error("Erro ao gerar QR Code");
+
+      const updatedPessoa = await response.json();
+
+      // Atualiza o estado com novo qr_code
+      setPessoa((prev) => ({ ...prev, qr_code: updatedPessoa.qr_code }));
+      setQrCode(updatedPessoa.qr_code);
+
+      setShowSuccessModal(true);
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error("Erro ao gerar QR Code:", error);
+    }
+  };
+
+  const handleDownloadQRCode = () => {
+    const link = document.createElement("a");
+    link.href = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pessoa?.qr_code}`;
+    link.download = "qrcode.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const tirarFoto = () => {
@@ -182,38 +220,35 @@ function Formulario() {
   };
 
   const handleSalvar = async () => {
-  try {
-    // Atualiza os dados da pessoa
-    await fetch(`http://localhost:3000/pessoas/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    // Se uma nova foto foi selecionada, faz o upload
-    if (novaFoto) {
-      const formDataUpload = new FormData();
-      formDataUpload.append("foto", novaFoto);
-
-      await fetch(`http://localhost:3000/pessoas/upload/${id}`, {
-        method: "POST",
-        body: formDataUpload,
+    try {
+      await fetch(`http://localhost:3000/pessoas/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
-      const res = await fetch(`http://localhost:3000/pessoas/url/${id}`);
-      const data = await res.json();
-      setFotoUrl(data.url || "foto_exemplo.png");
-      setNovaFoto(null); // limpa depois de salvar
+      if (novaFoto) {
+        const formDataUpload = new FormData();
+        formDataUpload.append("foto", novaFoto);
+
+        await fetch(`http://localhost:3000/pessoas/upload/${id}`, {
+          method: "POST",
+          body: formDataUpload,
+        });
+
+        const res = await fetch(`http://localhost:3000/pessoas/url/${id}`);
+        const data = await res.json();
+        setFotoUrl(data.url || "foto_exemplo.png");
+        setNovaFoto(null);
+      }
+
+      console.log("Pessoa atualizada com sucesso!");
+      setEditMode(false);
+      setPessoa(formData);
+    } catch (error) {
+      console.error("Erro ao atualizar pessoa:", error);
     }
-
-    console.log("Pessoa atualizada com sucesso!");
-    setEditMode(false);
-    setPessoa(formData);
-  } catch (error) {
-    console.error("Erro ao atualizar pessoa:", error);
-  }
-};
-
+  };
 
   if (!pessoa) return <p className={styles.loading}>Carregando dados...</p>;
 
@@ -274,6 +309,7 @@ function Formulario() {
               {renderDropdown("Divisão", "divisao", divOptions)}
             </div>
             <div className={styles.inputRow}>
+              {renderCampo("Cartão Rfid", "cartao_rfid")}
               {renderCampo("Email Institucional", "email")}
               {renderCampo(
                 "Telefone",
@@ -434,7 +470,6 @@ function Formulario() {
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Cargo", "cargo")}
-             
             </div>
           </>
         );
@@ -525,16 +560,20 @@ function Formulario() {
         )}
         <h3 className={styles.subtitle}>QR Code</h3>
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/368px-QR_Code_Example.svg.png"
+          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pessoa?.qr_code}`}
           alt="QR Code"
           className={styles.fotoPreview}
         />
-        <button
-          className={styles.qrButton}
-          onClick={() => console.log("Gerar QR Code")}
-        >
+
+        <button className={styles.qrButton} onClick={handleGerarQRCode}>
           Gerar QR Code
         </button>
+
+        {pessoa?.qr_code && (
+          <button className={styles.qrButton} onClick={handleDownloadQRCode}>
+            Baixar QR Code
+          </button>
+        )}
       </aside>
 
       <section className={styles.dadosSection}>
@@ -560,6 +599,15 @@ function Formulario() {
           {renderCamposEspecificos()}
         </form>
       </section>
+
+      {showSuccessModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <p>QR Code gerado com sucesso!</p>
+            <button onClick={() => setShowSuccessModal(false)}>Fechar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

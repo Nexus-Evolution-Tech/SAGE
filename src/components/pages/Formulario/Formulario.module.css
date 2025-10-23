@@ -173,3 +173,47 @@
   border-radius: 8px;
   text-align: center;
 }
+
+.fotoSection {
+  width: 240px;
+  background: #fafafa;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.subtitle{
+    text-align: center;
+    padding-bottom: .5rem;
+}
+
+.fotoPreview {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.btnGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.btnGroup button {
+  padding: 8px;
+  border: none;
+  background: #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button {
+  padding: 8px;
+  border: none;
+  background: #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+

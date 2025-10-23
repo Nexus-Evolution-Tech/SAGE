@@ -6,7 +6,7 @@ function Formulario() {
   const { id } = useParams();
   const [pessoa, setPessoa] = useState(null);
   const [formData, setFormData] = useState({});
-  const [fotoUrl, setFotoUrl] = useState("foto_exemplo.png"); // valor padrão
+  const [fotoUrl, setFotoUrl] = useState("foto_exemplo.png");
 
   const [cursoNome, setCursoNome] = useState("");
   const [turmaNome, setTurmaNome] = useState("");
@@ -75,7 +75,7 @@ function Formulario() {
           const turmasRes = await fetch(`http://localhost:3000/turmas`);
           const turmasData = await turmasRes.json();
           setTodasTurmas(
-            turmasData.map((t) => ({ value: t.id, label: t.nome }))
+            turmasData.data.map((t) => ({ value: t.id, label: t.nome }))
           );
 
           if (pessoaData.turma_id) {
@@ -83,8 +83,11 @@ function Formulario() {
               `http://localhost:3000/turmas/${pessoaData.turma_id}`
             );
             const turmaData = await turmaRes.json();
-            const turmaInfo = turmaData[0];
-            setTurmaNome(turmaInfo?.nome_turma || "");
+            const turmaInfo = Array.isArray(turmaData)
+              ? turmaData[0]
+              : turmaData;
+
+            setTurmaNome(turmaInfo?.nome || "");
             setTurnoNome(turmaInfo?.turno || "");
 
             if (turmaInfo?.curso_id) {
@@ -92,7 +95,12 @@ function Formulario() {
                 `http://localhost:3000/cursos/${turmaInfo.curso_id}`
               );
               const cursoData = await cursoRes.json();
-              setCursoNome(cursoData[0]?.nome || "");
+
+              const curso = cursoData.find(
+                (c) => c.id === turmaInfo.curso_id
+              );
+
+              setCursoNome(curso?.nome || "");
             }
           }
 
@@ -109,12 +117,17 @@ function Formulario() {
             `http://localhost:3000/empresas/${pessoaData.empresa_id}`
           );
           const empresaData = await empresaRes.json();
-          setEmpresaNome(empresaData[0]?.nome || "");
+          setEmpresaNome(
+            Array.isArray(empresaData)
+              ? empresaData[0]?.nome
+              : empresaData?.nome || ""
+          );
         }
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       }
     }
+
     fetchData();
   }, [id]);
 
@@ -175,7 +188,6 @@ function Formulario() {
 
       const updatedPessoa = await response.json();
 
-      // Atualiza o estado com novo qr_code
       setPessoa((prev) => ({ ...prev, qr_code: updatedPessoa.qr_code }));
       setQrCode(updatedPessoa.qr_code);
 
@@ -326,7 +338,6 @@ function Formulario() {
               )}
             </div>
 
-            {/* Exibição dos dados do responsável */}
             {responsavel && (
               <>
                 <h3 className={styles.subtitle}>Responsável</h3>
@@ -499,11 +510,7 @@ function Formulario() {
               )}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo(
-                "Telefone",
-                "telefone",
-                formatarTelefone(pessoa?.telefone)
-              )}
+              
               {renderCampo("Email", "email")}
               {renderCampo(
                 "Data de Nascimento",

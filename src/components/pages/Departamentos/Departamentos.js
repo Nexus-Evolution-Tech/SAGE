@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Departamentos.module.css";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import TableSection from "../../layout/Table/Table";
 
 function Departamentos() {
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
@@ -25,9 +24,7 @@ function Departamentos() {
     if (!telefone) return "";
     const numeros = telefone.replace(/\D/g, "");
     if (numeros.length === 11) {
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
-        7
-      )}`;
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
     }
     return telefone;
   };
@@ -63,16 +60,27 @@ function Departamentos() {
 
         for (const { key, url } of tipos) {
           const res = await fetch(`http://localhost:3000/pessoas/tipo/${url}`);
-          let pessoas = await res.json();
+          const json = await res.json();
+
+          // Se a API retorna { data: [...] }
+          const pessoas = json.data || json;
 
           if (key === "profadm") {
-            pessoas = pessoas.map((p) => ({ ...p, trabalhaNaADM: true }));
-            resultado.professores.push(...pessoas);
+            const pessoasComFlag = pessoas.map((p) => ({ ...p, trabalhaNaADM: true }));
+            resultado.professores.push(...pessoasComFlag);
             continue;
           }
 
           if (key === "professores") {
-            pessoas = pessoas.map((p) => ({ ...p, trabalhaNaADM: false }));
+            const pessoasComFlag = pessoas.map((p) => ({ ...p, trabalhaNaADM: false }));
+            const pessoasComFoto = await Promise.all(
+              pessoasComFlag.slice(0, 3).map(async (pessoa) => {
+                const foto = await buscarFoto(pessoa.id);
+                return { ...pessoa, foto };
+              })
+            );
+            resultado.professores.push(...pessoasComFoto);
+            continue;
           }
 
           const pessoasComFoto = await Promise.all(
@@ -86,8 +94,9 @@ function Departamentos() {
                     `http://localhost:3000/empresas/${pessoa.empresa_id}`
                   );
                   const jsonEmpresa = await resEmpresa.json();
-                  // acessar o primeiro item do array
-                  empresaNome = jsonEmpresa[0]?.nome || "";
+                  empresaNome = Array.isArray(jsonEmpresa)
+                    ? jsonEmpresa[0]?.nome || ""
+                    : jsonEmpresa.nome || "";
                 } catch (err) {
                   console.error("Erro ao buscar empresa:", err);
                 }
@@ -111,73 +120,74 @@ function Departamentos() {
 
   const Section = ({ title, subtitle, columns, data, tipo }) => {
     return (
-      <>
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>{title}</h2>
-            <button
-              className={styles.verMais}
-              onClick={() =>
-                tipo === "turmas"
-                  ? navigate(`/turmas`)
-                  : navigate(`/tabelas/${tipo}`)
-              }
-            >
-              Ver mais →
-            </button>
-          </div>
-          <h3 className={styles.subtitle}>{subtitle}</h3>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                {columns.map((col, i) => (
-                  <th key={i}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((p, i) => (
-                <tr key={i}>
-                  <td>{p.nome}</td>
-                  <td>
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2>{title}</h2>
+          <button
+            className={styles.verMais}
+            onClick={() =>
+              tipo === "turmas"
+                ? navigate(`/turmas`)
+                : navigate(`/tabelas/${tipo}`)
+            }
+          >
+            Ver mais →
+          </button>
+        </div>
+        <h3 className={styles.subtitle}>{subtitle}</h3>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              {columns.map((col, i) => (
+                <th key={i}>{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((p, i) => (
+              <tr key={i}>
+                <td>{p.nome}</td>
+                <td>
+                  {p.foto ? (
                     <img
                       src={p.foto}
                       alt="Foto"
                       className={styles.fotoMiniatura}
                       onError={(e) => (e.target.style.display = "none")}
                     />
-                  </td>
-                  {"rm" in p && <td>{p.rm}</td>}
-                  <td>{p.email}</td>
-                  <td>{formatarTelefone(p.telefone)}</td>
-                  {"data_nascimento" in p && (
-                    <td>{formatarData(p.data_nascimento)}</td>
+                  ) : (
+                    "-"
                   )}
-                  {"divisao" in p && <td>{p.divisao}</td>}
-                  {"cnpj" in p && <td>{p.cnpj}</td>}
-                  {tipo === "administracao" && "cargo" in p && (
-                    <td>{p.cargo}</td>
-                  )}
-                  {tipo === "terceirizados" && "empresa" in p && (
-                    <td>{p.empresa}</td>
-                  )}
-                  {"trabalhaNaADM" in p && (
-                    <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
-                  )}
-                  <td>
-                    <button
-                      className={styles.verBtn}
-                      onClick={() => navigate(`/formulario/${tipo}/${p.id}`)}
-                    >
-                      Ver informações
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </>
+                </td>
+                {"rm" in p && <td>{p.rm || "-"}</td>}
+                <td>{p.email || "-"}</td>
+                <td>{formatarTelefone(p.telefone)}</td>
+                {"data_nascimento" in p && (
+                  <td>{formatarData(p.data_nascimento)}</td>
+                )}
+                {"divisao" in p && <td>{p.divisao || "-"}</td>}
+                {tipo === "administracao" && "cargo" in p && (
+                  <td>{p.cargo || "-"}</td>
+                )}
+                {tipo === "terceirizados" && "empresa" in p && (
+                  <td>{p.empresa || "-"}</td>
+                )}
+                {"trabalhaNaADM" in p && (
+                  <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
+                )}
+                <td>
+                  <button
+                    className={styles.verBtn}
+                    onClick={() => navigate(`/formulario/${tipo}/${p.id}`)}
+                  >
+                    Ver informações
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
@@ -195,9 +205,7 @@ function Departamentos() {
           </button>
           {mostrarOpcoes && (
             <div className={styles.opcoesContainer}>
-              <button onClick={() => navigate("/adicionar/ALUNO")}>
-                Aluno
-              </button>
+              <button onClick={() => navigate("/adicionar/ALUNO")}>Aluno</button>
               <button onClick={() => navigate("/adicionar/PROFESSOR")}>
                 Professor
               </button>
@@ -231,6 +239,7 @@ function Departamentos() {
         ]}
         data={dados.turmas}
       />
+
       <Section
         title="Professores"
         subtitle="Tabela dos Professores"
@@ -246,6 +255,7 @@ function Departamentos() {
         ]}
         data={dados.professores}
       />
+
       <Section
         title="Administração"
         subtitle="Tabela da Administração da Escola"
@@ -261,6 +271,7 @@ function Departamentos() {
         ]}
         data={dados.administracao}
       />
+
       <Section
         title="Terceirizados"
         subtitle="Tabela de Terceirizados"

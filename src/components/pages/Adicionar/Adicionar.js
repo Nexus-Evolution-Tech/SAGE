@@ -56,26 +56,31 @@ function Adicionar() {
     return erro;
   };
 
-  useEffect(() => {
-    const buscarDados = async () => {
-      try {
-        const turmasRes = await fetch(`http://localhost:3000/turmas`);
-        setTodasTurmas(await turmasRes.json());
+ useEffect(() => {
+  const buscarDados = async () => {
+    try {
+      const turmasRes = await fetch(`http://localhost:3000/turmas`);
+      const turmasJson = await turmasRes.json();
+      setTodasTurmas(turmasJson.data || []); 
 
-        const cursosRes = await fetch(`http://localhost:3000/cursos`);
-        setTodosCursos(await cursosRes.json());
+      const cursosRes = await fetch(`http://localhost:3000/cursos`);
+      const cursosJson = await cursosRes.json();
+      setTodosCursos(cursosJson.data || []);
 
-        const empresasRes = await fetch(`http://localhost:3000/empresas`);
-        setTodasEmpresas(await empresasRes.json());
+      const empresasRes = await fetch(`http://localhost:3000/empresas`);
+      const empresasJson = await empresasRes.json();
+      setTodasEmpresas(empresasJson.data || []);
 
-        const escolasRes = await fetch(`http://localhost:3000/escolas`);
-        setTodasEscolas(await escolasRes.json());
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-      }
-    };
-    buscarDados();
-  }, [tipo]);
+      const escolasRes = await fetch(`http://localhost:3000/escolas`);
+      const escolasJson = await escolasRes.json();
+      setTodasEscolas(escolasJson.data || []);
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+    }
+  };
+  buscarDados();
+}, [tipo]);
+
 
   const handleInputChange = (campo, valor) => {
     setFormData((prev) => ({ ...prev, [campo]: valor }));

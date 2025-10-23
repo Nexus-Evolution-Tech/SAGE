@@ -14,7 +14,7 @@ function Dispositivos() {
   const [statusDispositivos, setStatusDispositivos] = useState({});
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState(null); // <-- novo estado
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const [newDeviceData, setNewDeviceData] = useState({
     nome: "",
     modelo: "",
@@ -32,17 +32,19 @@ function Dispositivos() {
       if (!responseDispositivos.ok) {
         throw new Error(`Erro HTTP! Status: ${responseDispositivos.status}`);
       }
-      const dataDispositivos = await responseDispositivos.json();
+
+      const result = await responseDispositivos.json();
+      const dataDispositivos = result.data || []; 
       setDispositivos(dataDispositivos);
 
       const responseStatus = await fetch(
-        `http://localhost:3000/dispositivos/status`
+        "http://localhost:3000/dispositivos/status"
       );
       if (!responseStatus.ok) {
         throw new Error(`Erro HTTP ao buscar status: ${responseStatus.status}`);
       }
-      const dataStatus = await responseStatus.json();
 
+      const dataStatus = await responseStatus.json();
       const statusMap = {};
       dataStatus.forEach((item) => {
         statusMap[item.id] = item.status;
@@ -97,14 +99,31 @@ function Dispositivos() {
         senha: "",
       });
       setShowForm(false);
-      setStatusDispositivos((prevStatus) => ({
-        ...prevStatus,
-        [novoDispositivo.id]: "Disponível",
-      }));
-
-      window.location.reload();
     } catch (error) {
       setError(error.message);
+    }
+  };
+
+  const handleDeleteDevice = async (id) => {
+    const confirmar = window.confirm(
+      "Tem certeza que deseja excluir esse dispositivo?"
+    );
+    if (!confirmar) return;
+
+    try {
+      const response = await fetch(`http://localhost:3000/dispositivos/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao remover dispositivo: ${response.status}`);
+      }
+
+      setDispositivos((prev) => prev.filter((d) => d.id !== id));
+      setSelectedDevice(null);
+    } catch (error) {
+      console.error("Erro ao remover dispositivo:", error);
+      alert("Erro ao remover dispositivo. Veja o console para mais detalhes.");
     }
   };
 
@@ -136,7 +155,7 @@ function Dispositivos() {
           <div
             key={dispositivo.id}
             className={styles.cardContainer}
-            onClick={() => handleCardClick(dispositivo)} // clique abre modal
+            onClick={() => handleCardClick(dispositivo)}
           >
             <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
             <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
@@ -164,9 +183,13 @@ function Dispositivos() {
         <div className={styles.overlay}>
           <div className={styles.formContainer}>
             <div className={styles.titleContainer}>
-              <button className={styles.closeButton}>
+              <button
+                className={styles.closeButton}
+                onClick={() => handleDeleteDevice(selectedDevice.id)}
+              >
                 <FontAwesomeIcon icon={faTrash} className={styles.iconRed} />
               </button>
+
               <h2>Detalhes do Dispositivo</h2>
               <button className={styles.closeButton} onClick={closeModal}>
                 <FontAwesomeIcon icon={faXmark} className={styles.icon} />
@@ -210,7 +233,6 @@ function Dispositivos() {
 
                   <div className={styles.testButtonsRow}>
                     <button className={styles.reloadButton}>
-                      {" "}
                       <FontAwesomeIcon
                         icon={faRotateLeft}
                         className={styles.icon}
@@ -229,6 +251,7 @@ function Dispositivos() {
           </div>
         </div>
       )}
+
       {showForm && (
         <div className={styles.overlay}>
           <div className={styles.formContainer}>
@@ -249,16 +272,9 @@ function Dispositivos() {
               </div>
 
               <div className={styles.dataContainer}>
-                <div className={styles.dropContainer}>
-                  <button className={styles.reloadButton}> Buscar</button>
-                  <select className={`${styles.input} ${styles.selectInput}`}>
-                    Nenhum
-                  </select>
-                </div>
                 <strong>Nome do Dispositivo</strong>
                 <input
                   type="text"
-                  id="nome"
                   name="nome"
                   value={newDeviceData.nome}
                   onChange={handleInputChange}
@@ -271,9 +287,8 @@ function Dispositivos() {
                     <strong>IP</strong>
                     <input
                       type="text"
-                      id="nome"
-                      name="nome"
-                      value={newDeviceData.nome}
+                      name="endereco"
+                      value={newDeviceData.endereco}
                       onChange={handleInputChange}
                       required
                       placeholder="192.168.10.67"
@@ -284,9 +299,8 @@ function Dispositivos() {
                     <strong>Porta</strong>
                     <input
                       type="text"
-                      id="nome"
-                      name="nome"
-                      value={newDeviceData.nome}
+                      name="porta"
+                      value={newDeviceData.porta}
                       onChange={handleInputChange}
                       required
                       placeholder="80"
@@ -296,7 +310,12 @@ function Dispositivos() {
 
                 <div className={styles.testContainer}>
                   <div className={styles.testButtonsRoww}>
-                    <button className={styles.reloadButton}> Salvar</button>
+                    <button
+                      className={styles.reloadButton}
+                      onClick={handleSubmit}
+                    >
+                      Salvar
+                    </button>
                   </div>
                 </div>
               </div>
@@ -304,86 +323,6 @@ function Dispositivos() {
           </div>
         </div>
       )}
-
-      {/* {showForm && (
-        <div className={styles.overlay}>
-          <div className={styles.formContainer}>
-            <h2>Adicionar Novo Dispositivo</h2>
-            <form onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="nome">Nome:</label>
-                <input
-                  type="text"
-                  id="nome"
-                  name="nome"
-                  value={newDeviceData.nome}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="modelo">Modelo:</label>
-                <input
-                  type="text"
-                  id="modelo"
-                  name="modelo"
-                  value={newDeviceData.modelo}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="endereco">Endereço:</label>
-                <input
-                  type="text"
-                  id="endereco"
-                  name="endereco"
-                  value={newDeviceData.endereco}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="porta">Porta:</label>
-                <input
-                  type="number"
-                  id="porta"
-                  name="porta"
-                  value={newDeviceData.porta}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="usuario">Usuário:</label>
-                <input
-                  type="text"
-                  id="usuario"
-                  name="usuario"
-                  value={newDeviceData.usuario}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="senha">Senha:</label>
-                <input
-                  type="password"
-                  id="senha"
-                  name="senha"
-                  value={newDeviceData.senha}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <button type="submit">Adicionar Dispositivo</button>
-              <button type="button" onClick={() => setShowForm(false)}>
-                Cancelar
-              </button>
-            </form>
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }

@@ -31,18 +31,15 @@ function Monitoramento() {
         const response = await fetch("http://localhost:3000/acessos?limit=10");
         const acessos = await response.json();
 
-        // Buscar informações das pessoas em paralelo
         async function enrichAccess(acesso) {
           if (!acesso.pessoa_id) return acesso;
 
           try {
-            // Buscar dados da pessoa
             const pessoaRes = await fetch(
               `http://localhost:3000/pessoas/${acesso.pessoa_id}`
             );
             const pessoa = await pessoaRes.json();
 
-            // Buscar a URL da foto da pessoa
             const fotoRes = await fetch(
               `http://localhost:3000/pessoas/url/${acesso.pessoa_id}`
             );
@@ -83,12 +80,11 @@ function Monitoramento() {
     fetchAccesses();
   }, []);
 
-  //
+  
   return (
     <div className={styles.monitoramentoContainer}>
       <h1 className={styles.pageTitle}>Monitoramento</h1>
 
-      {/* Card superior */}
       {latestAccess && (
         <div className={styles.accessCard}>
           <div className={styles.profileInfo}>
@@ -134,7 +130,6 @@ function Monitoramento() {
         </div>
       </div> */}
 
-      {/* Tabela */}
       <div className={styles.tableContainer}>
         <table className={styles.accessTable}>
           <thead>

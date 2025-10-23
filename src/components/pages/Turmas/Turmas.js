@@ -1,30 +1,46 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import styles from "./Turmas.module.css";
 import TableSection from "../../layout/Table/Table";
 
 function Turmas() {
   const [dadosPorTurma, setDadosPorTurma] = useState({});
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTurmas = async () => {
       try {
-        const res = await fetch("http://localhost:3000/pessoas/tipo/ALUNO");
-        const alunos = await res.json();
+        const res = await fetch(
+          "http://localhost:3000/pessoas/tipo/ALUNO?limit=1000"
+        );
+        const alunosJson = await res.json();
+        const alunos = alunosJson.data || [];
 
         const agrupados = {};
         alunos.forEach((aluno) => {
-          const turmaId = aluno.turma_id;
-          if (!agrupados[turmaId]) agrupados[turmaId] = { alunos: [], nome: "" };
+          const turmaId = aluno.turma_id || 0; 
+          if (!agrupados[turmaId])
+            agrupados[turmaId] = { alunos: [], nome: "" };
           agrupados[turmaId].alunos.push(aluno);
         });
 
         await Promise.all(
           Object.keys(agrupados).map(async (turmaId) => {
-            const turmaRes = await fetch(`http://localhost:3000/turmas/${turmaId}`);
-            const turmaData = await turmaRes.json();
-            agrupados[turmaId].nome = turmaData[0]?.nome || `Turma ${turmaId}`;
+            if (turmaId === "0") {
+              agrupados[turmaId].nome = "Sem turma";
+              return;
+            }
+            try {
+              const turmaRes = await fetch(
+                `http://localhost:3000/turmas/${turmaId}`
+              );
+              const turmaData = await turmaRes.json();
+              agrupados[turmaId].nome =
+                turmaData.data?.[0]?.nome ||
+                turmaData[0]?.nome ||
+                `Turma ${turmaId}`;
+            } catch (err) {
+              console.error("Erro ao buscar turma:", err);
+              agrupados[turmaId].nome = `Turma ${turmaId}`;
+            }
           })
         );
 
@@ -55,8 +71,8 @@ function Turmas() {
       {Object.entries(dadosPorTurma).map(([turmaId, { nome, alunos }]) => {
         const rows = alunos.slice(0, 5).map((a) => ({
           Nome: a.nome,
-          RM: a.rm,
-          Email: a.email,
+          RM: a.rm || a.matricula || "-",
+          Email: a.email || "-",
           Telefone: formatarTelefone(a.telefone),
           "Data Nascimento": formatarData(a.data_nascimento),
           id: a.id,
@@ -70,7 +86,7 @@ function Turmas() {
             columns={["Nome", "RM", "Email", "Telefone", "Data Nascimento"]}
             data={rows}
             tipo="aluno"
-            link={`/tabelas/turma/${turmaId}`}
+            link={`/tabelas/turmas/${turmaId}`}
           />
         );
       })}

@@ -5,7 +5,7 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Tabelas() {
-  const { tipo, turmaId } = useParams(); // agora pega turmaId
+  const { tipo, turmaId } = useParams(); 
   const navigate = useNavigate();
   const [dados, setDados] = useState([]);
   const [busca, setBusca] = useState("");
@@ -16,7 +16,9 @@ function Tabelas() {
   const formatarTelefone = (telefone) => {
     const numeros = telefone?.replace(/\D/g, "") || "";
     if (numeros.length === 11)
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
+        7
+      )}`;
     return telefone;
   };
 
@@ -47,35 +49,85 @@ function Tabelas() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Professores = PROFESSOR + PROFADM
         if (tipo === "professores") {
-          const profRes = await fetch("http://localhost:3000/pessoas/tipo/PROFESSOR");
-          const prof = (await profRes.json()).map((p) => ({ ...p, trabalhaNaADM: false }));
+          let allProf = [];
+          let allProfAdm = [];
+          let page = 1;
+          let totalPages = 1;
 
-          const profadmRes = await fetch("http://localhost:3000/pessoas/tipo/PROFADM");
-          const profadm = (await profadmRes.json()).map((p) => ({ ...p, trabalhaNaADM: true }));
+          do {
+            const res = await fetch(
+              `http://localhost:3000/pessoas/tipo/PROFESSOR?page=${page}&limit=100`
+            );
+            const json = await res.json();
+            allProf = [...allProf, ...(json.data || json)];
+            totalPages = json.totalPages || 1;
+            page++;
+          } while (page <= totalPages);
 
-          setDados([...prof, ...profadm]);
+          page = 1;
+          totalPages = 1;
+          do {
+            const res = await fetch(
+              `http://localhost:3000/pessoas/tipo/PROFADM?page=${page}&limit=100`
+            );
+            const json = await res.json();
+            allProfAdm = [...allProfAdm, ...(json.data || json)];
+            totalPages = json.totalPages || 1;
+            page++;
+          } while (page <= totalPages);
+
+          const professores = [
+            ...allProf.map((p) => ({ ...p, trabalhaNaADM: false })),
+            ...allProfAdm.map((p) => ({ ...p, trabalhaNaADM: true })),
+          ];
+
+          setDados(professores);
           return;
         }
 
-        // Se for turmas e tiver turmaId → buscar apenas os alunos dessa turma
         if (tipo === "turmas" && turmaId) {
-          const res = await fetch(`http://localhost:3000/turmas/${turmaId}/alunos`);
-          const alunos = await res.json();
+          let alunos = [];
+          let page = 1;
+          let totalPages = 1;
+
+          do {
+            const res = await fetch(
+              `http://localhost:3000/pessoas/tipo/ALUNO?page=${page}&limit=100`
+            );
+            const json = await res.json();
+            const todos = json.data || json;
+
+            const filtrados = todos.filter(
+              (p) => Number(p.turma_id) === Number(turmaId)
+            );
+
+            alunos = [...alunos, ...filtrados];
+            totalPages = json.totalPages || 1;
+            page++;
+          } while (page <= totalPages);
+
           setDados(alunos);
           return;
         }
 
-        // Outros tipos
         const sigla = tipoMap[tipo]?.toUpperCase();
         if (!sigla) return;
 
-        const url = `http://localhost:3000/pessoas/tipo/${sigla}`;
-        const res = await fetch(url);
-        let data = await res.json();
+        let data = [];
+        let page = 1;
+        let totalPages = 1;
 
-        // Terceirizados → buscar empresa
+        do {
+          const res = await fetch(
+            `http://localhost:3000/pessoas/tipo/${sigla}?page=${page}&limit=100`
+          );
+          const json = await res.json();
+          data = [...data, ...(json.data || json)];
+          totalPages = json.totalPages || 1;
+          page++;
+        } while (page <= totalPages);
+
         if (tipo === "terceirizados") {
           const cacheEmpresas = new Map();
 
@@ -89,11 +141,17 @@ function Tabelas() {
               }
 
               try {
-                const r = await fetch(`http://localhost:3000/empresas/${p.empresa_id}`);
+                const r = await fetch(
+                  `http://localhost:3000/empresas/${p.empresa_id}`
+                );
                 const j = await r.json();
                 const emp = Array.isArray(j) ? j[0] : j;
                 cacheEmpresas.set(p.empresa_id, emp || {});
-                return { ...p, empresa: emp?.nome || "", cnpj: emp?.cnpj || "" };
+                return {
+                  ...p,
+                  empresa: emp?.nome || "",
+                  cnpj: emp?.cnpj || "",
+                };
               } catch (err) {
                 console.error("Erro ao buscar empresa:", err);
                 return { ...p, empresa: "", cnpj: "" };
@@ -159,8 +217,6 @@ function Tabelas() {
               <td>{p.rm}</td>
               <td>{p.email}</td>
               <td>{formatarData(p.data_nascimento)}</td>
-              <td>{formatarTelefone(p.telefone)}</td>
-              <td>{formatarTurma(p.turma_id)}</td>
               <td>
                 <button
                   className={styles.verMais}
@@ -234,8 +290,6 @@ function Tabelas() {
                     <th>RM</th>
                     <th>Email</th>
                     <th>Data de Nascimento</th>
-                    <th>Telefone</th>
-                    <th>Turma</th>
                     <th>Mais informações</th>
                   </>
                 )}

@@ -29,9 +29,7 @@ function Departamentos() {
     if (!telefone) return "";
     const numeros = telefone.replace(/\D/g, "");
     if (numeros.length === 11) {
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
-        7
-      )}`;
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
     }
     return telefone;
   };
@@ -109,6 +107,9 @@ function Departamentos() {
                   empresaNome = Array.isArray(jsonEmpresa)
                     ? jsonEmpresa[0]?.nome || ""
                     : jsonEmpresa.nome || "";
+                  empresaNome = Array.isArray(jsonEmpresa)
+                    ? jsonEmpresa[0]?.nome || ""
+                    : jsonEmpresa.nome || "";
                 } catch (err) {
                   console.error("Erro ao buscar empresa:", err);
                 }
@@ -132,6 +133,35 @@ function Departamentos() {
 
   const Section = ({ title, subtitle, columns, data, tipo }) => {
     return (
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2>{title}</h2>
+          <button
+            className={styles.verMais}
+            onClick={() =>
+              tipo === "turmas"
+                ? navigate(`/turmas`)
+                : navigate(`/tabelas/${tipo}`)
+            }
+          >
+            Ver mais →
+          </button>
+        </div>
+        <h3 className={styles.subtitle}>{subtitle}</h3>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              {columns.map((col, i) => (
+                <th key={i}>{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((p, i) => (
+              <tr key={i}>
+                <td>{p.nome}</td>
+                <td>
+                  {p.foto ? (
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2>{title}</h2>
@@ -200,6 +230,39 @@ function Departamentos() {
           </tbody>
         </table>
       </div>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+                {"rm" in p && <td>{p.rm || "-"}</td>}
+                <td>{p.email || "-"}</td>
+                <td>{formatarTelefone(p.telefone)}</td>
+                {"data_nascimento" in p && (
+                  <td>{formatarData(p.data_nascimento)}</td>
+                )}
+                {"divisao" in p && <td>{p.divisao || "-"}</td>}
+                {tipo === "administracao" && "cargo" in p && (
+                  <td>{p.cargo || "-"}</td>
+                )}
+                {tipo === "terceirizados" && "empresa" in p && (
+                  <td>{p.empresa || "-"}</td>
+                )}
+                {"trabalhaNaADM" in p && (
+                  <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
+                )}
+                <td>
+                  <button
+                    className={styles.verBtn}
+                    onClick={() => navigate(`/formulario/${tipo}/${p.id}`)}
+                  >
+                    Ver informações
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
@@ -225,9 +288,7 @@ function Departamentos() {
           
           {mostrarOpcoes && (
             <div className={styles.opcoesContainer}>
-              <button onClick={() => navigate("/adicionar/ALUNO")}>
-                Aluno
-              </button>
+              <button onClick={() => navigate("/adicionar/ALUNO")}>Aluno</button>
               <button onClick={() => navigate("/adicionar/PROFESSOR")}>
                 Professor
               </button>
@@ -296,6 +357,7 @@ function Departamentos() {
         data={dados.turmas}
       />
 
+
       <Section
         title="Professores"
         subtitle="Tabela dos Professores"
@@ -312,6 +374,7 @@ function Departamentos() {
         data={dados.professores}
       />
 
+
       <Section
         title="Administração"
         subtitle="Tabela da Administração da Escola"
@@ -327,6 +390,7 @@ function Departamentos() {
         ]}
         data={dados.administracao}
       />
+
 
       <Section
         title="Terceirizados"

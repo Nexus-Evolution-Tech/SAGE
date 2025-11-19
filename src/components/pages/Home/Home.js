@@ -1,15 +1,18 @@
 import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFilter, faTimes, faListOl } from "@fortawesome/free-solid-svg-icons";
+import { faTimes } from "@fortawesome/free-solid-svg-icons"; 
 import userPlaceholder from "../../../img/user.png";
 import { useEffect, useState } from "react";
+import { api } from "../../../services/api";
 
 function Monitoramento() {
   const [accessLogs, setAccessLogs] = useState([]);
   const [latestAccess, setLatestAccess] = useState(null);
   const [currentDateTime, setCurrentDateTime] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  // Removido estado 'fotoUrl' pois não estava sendo usado
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -18,16 +21,14 @@ function Monitoramento() {
       const time = now.toLocaleTimeString("pt-BR");
       setCurrentDateTime(`${date} ${time}`);
     };
-
     updateDateTime();
     const intervalId = setInterval(updateDateTime, 1000);
-
     return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
+    
     async function enrichAccess(acesso) {
-      // Objeto base para retorno
       const baseAccess = {
         ...acesso,
         area: "Portaria Principal",
@@ -37,7 +38,6 @@ function Monitoramento() {
         dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
       };
 
-      // Se não tiver pessoa_id, retorna os dados parciais
       if (!acesso.pessoa_id) {
         return {
           ...baseAccess,
@@ -48,36 +48,24 @@ function Monitoramento() {
       }
 
       try {
-        const [pessoaRes, fotoRes] = await Promise.all([
-          fetch(`http://localhost:3000/pessoas/${acesso.pessoa_id}`),
-          fetch(`http://localhost:3000/pessoas/url/${acesso.pessoa_id}`),
+
+        const [pessoa, fotoData] = await Promise.all([
+          api.get(`/pessoas/${acesso.pessoa_id}`),
+          api.get(`/pessoas/url/${acesso.pessoa_id}`),
         ]);
 
-        // Verificação de segurança (boa prática)
-        if (!pessoaRes.ok)
-          throw new Error(`Pessoa não encontrada (${pessoaRes.status})`);
-        if (!fotoRes.ok)
-          throw new Error(`URL da foto não encontrada (${fotoRes.status})`);
-
-        const pessoa = await pessoaRes.json();
-        const fotoData = await fotoRes.json();
-
-        // ================== CORREÇÃO AQUI ==================
-        // O objeto 'pessoa' não tem 'data' dentro dele
         return {
           ...baseAccess,
-          nome: pessoa.nome || "Nome não encontrado", // ACESSO DIRETO
+          nome: pessoa.nome || "Nome não encontrado",
           foto: fotoData.url || userPlaceholder,
-          perfil: pessoa.perfil || "Perfil não informado", // ACESSO DIRETO
+          perfil: pessoa.perfil || "Perfil não informado",
         };
-        // ===================================================
       } catch (error) {
-        // Esta é a linha 71 que você vê no log
+
         console.error(
           `Erro ao buscar dados para pessoa_id ${acesso.pessoa_id}:`,
           error
         );
-        // Retorna dados "quebrados" de forma controlada
         return {
           ...baseAccess,
           nome: "Erro ao carregar dados",
@@ -86,55 +74,78 @@ function Monitoramento() {
         };
       }
     }
+
+    // Esta função busca a lista principal de acessos
     async function fetchAccesses() {
       try {
-        const response = await fetch("http://localhost:3000/acessos");
-        const acessosResponse = await response.json(); // É o objeto { data: [...] }
+        setError(null);
+        setLoading(true);
 
-        // CORREÇÃO: 'acessosResponse.data' é o array que queremos iterar
+        // ==========================================================
+        // 3. SUBSTITUIR 'FETCH' POR 'API.GET'
+        //    (Adicionando paginação como boa prática)
+        // ==========================================================
+        const acessosResponse = await api.get("/acessos?page=1&limit=20");
+        // ==========================================================
+
         if (!acessosResponse.data || !Array.isArray(acessosResponse.data)) {
-          console.error(
-            "Formato de resposta inesperado da API:",
-            acessosResponse
-          );
-          return;
+          throw new Error("Formato de resposta inesperado da API.");
         }
 
         const acessosArray = acessosResponse.data;
 
-        // =================================================================
-        // INÍCIO DA CORREÇÃO (ORDENAÇÃO)
-        // =================================================================
         // Ordena o array pelos dados originais (mais recente primeiro)
         const sortedArray = acessosArray.sort((a, b) => {
           return new Date(b.data_hora) - new Date(a.data_hora);
         });
-        // =================================================================
-        // FIM DA CORREÇÃO
-        // =================================================================
 
-        // OTIMIZAÇÃO: Executa todas as promessas de "enriquecimento" em paralelo
-        // (Agora usando o 'sortedArray')
+        // Executa todas as promessas de "enriquecimento" em paralelo
         const enrichedAccesses = await Promise.all(
           sortedArray.map(enrichAccess)
         );
 
         if (enrichedAccesses.length > 0) {
-          // Como o array está ordenado, o [0] é o mais recente
           setLatestAccess(enrichedAccesses[0]);
           setAccessLogs(enrichedAccesses.slice(1));
         }
       } catch (error) {
         console.error("Erro ao buscar acessos:", error);
+        // O api.js já redireciona se for 401,
+        // aqui tratamos outros erros (ex: 500, 404)
+        setError("Falha ao carregar acessos. Verifique a API.");
+      } finally {
+        setLoading(false);
       }
     }
 
     fetchAccesses();
-  }, []); // Dependência vazia está correta, busca apenas uma vez
+  }, []); // Dependência vazia, busca apenas uma vez
 
+  // Renderização condicional para Loading e Erro
+  if (loading) {
+    return (
+      <div className={styles.monitoramentoContainer}>
+        <h1 className={styles.pageTitle}>Monitoramento</h1>
+        <p>Carregando dados...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.monitoramentoContainer}>
+        <h1 className={styles.pageTitle}>Monitoramento</h1>
+        <p style={{ color: "red" }}>{error}</p>
+      </div>
+    );
+  }
+
+  // Renderização principal
   return (
     <div className={styles.monitoramentoContainer}>
       <h1 className={styles.pageTitle}>Monitoramento</h1>
+      {/* Exibe o relógio (opcional) */}
+      {/* <p>{currentDateTime}</p> */}
 
       {latestAccess ? (
         <div className={styles.accessCard}>
@@ -158,12 +169,10 @@ function Monitoramento() {
           </div>
         </div>
       ) : (
-        <p>Carregando último acesso...</p>
+        <p>Nenhum acesso recente encontrado.</p>
       )}
 
-      {/* Seu filtro (comentado) */}
-      {/* <div className={styles.filterContainer}> ... </div> */}
-
+      {/* Tabela de Logs */}
       <div className={styles.tableContainer}>
         <table className={styles.accessTable}>
           <thead>
@@ -178,7 +187,6 @@ function Monitoramento() {
           </thead>
           <tbody>
             {accessLogs.slice(0, itemsPerPage).map((log) => (
-              // 'log.id' do acesso original é uma chave melhor
               <tr key={log.id}>
                 <td>
                   <img

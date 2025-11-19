@@ -1,16 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styles from "./Login.module.css";
-
 import logo from '../../../img/logo.png';
 
-
+// Modal (sem alterações)
 const Modal = ({ message, onClose }) => {
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Erro de Login</h2>
+          <h2 className={styles.modalTitle}>Aviso</h2>
           <button onClick={onClose} className={styles.closeButton}>&times;</button>
         </div>
         <p className={styles.modalMessage}>{message}</p>
@@ -20,67 +19,111 @@ const Modal = ({ message, onClose }) => {
 };
 
 function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [schools, setSchools] = useState([]);
+  const [selectedSchoolLogin, setSelectedSchoolLogin] = useState(""); 
+  const [password, setPassword] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState(""); 
   const navigate = useNavigate();
 
+  // useEffect (sem alterações)
   useEffect(() => {
     const fetchSchools = async () => {
       try {
-        const response = await fetch("http://localhost:3000/escolas");
+        // Usando fetch normal aqui, pois é um GET simples
+        const response = await fetch("http://localhost:3000/escolas"); 
         if (!response.ok) {
           throw new Error('Erro ao buscar as escolas.');
         }
-        const data = await response.json();
-        setSchools(data);
-        if (data.length > 0) {
-            setUsername(data[0].login);
+        
+        const data = await response.json(); 
+
+        if (data.data && Array.isArray(data.data)) {
+          setSchools(data.data); 
+          
+          if (data.data.length > 0) {
+            setSelectedSchoolLogin(data.data[0].login); 
+          }
+        } else {
+          throw new Error("A resposta da API não continha um array 'data'.");
         }
       } catch (error) {
-        console.error("Erro na comunicação com o backend:", error);
+        console.error("Erro ao buscar escolas (Verifique se a API está rodando):", error);
+        setModalMessage("Não foi possível carregar as escolas. Verifique a API.");
+        setShowModal(true);
       }
     };
     fetchSchools();
-  }, []);
+  }, []); 
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); 
 
-    if (!username || !password) {
+    const selectedSchool = schools.find(
+      (school) => school.login === selectedSchoolLogin 
+    );
+    const usuario = selectedSchoolLogin; 
+
+    if (!usuario || !password || !selectedSchool) {
+      setModalMessage("Por favor, selecione a escola e digite a senha.");
       setShowModal(true);
       return;
     }
+    
+    const id = selectedSchool.id;
+
+    console.log("--- DADOS QUE SERÃO ENVIADOS ---");
+    console.log("URL:", `http://localhost:3000/escolas/login/${id}`);
+    console.log("BODY (Payload):", JSON.stringify({ usuario: usuario, senha: password }));
 
     try {
-      const response = await fetch("http://localhost:3000/login", {
+      const response = await fetch(`http://localhost:3000/escolas/login/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ usuario: usuario, senha: password }),
       });
 
+      // ==================================
+      //      NOVA DEPURAÇÃO
+      // ==================================
+      console.log("Resposta da API (bruta):", response);
+      if (!response.ok) {
+        console.error("A resposta da API não foi 'OK'. Status:", response.status);
+      }
+      // ==================================
+
+      // Esta linha pode falhar se a resposta não for JSON (ex: erro 500)
+      const data = await response.json(); 
+      console.log("Resposta da API (JSON):", data);
+
       if (response.ok) {
-        navigate("/");
-      } else if (response.status === 401) {
-        setShowModal(true);
+        localStorage.setItem('token', data.token);
+        console.log("Login OK! Redirecionando...");
+        navigate("/"); // Redireciona para a Home (ou '/monitoramento')
       } else {
-        console.error("Erro no login:", response.statusText);
+        setModalMessage(data.message || "Credenciais inválidas.");
         setShowModal(true);
       }
     } catch (error) {
-      console.error("Erro na comunicação com o backend:", error);
+      // ==================================
+      //      DEPURAÇÃO DE ERRO
+      // ==================================
+      console.error("--- ERRO CATASTRÓFICO NO FETCH ---");
+      console.error("Isso é provavelmente um erro de CORS ou rede.", error);
+      // ==================================
+      setModalMessage(`Erro de conexão: ${error.message}. (Verifique o console)`);
       setShowModal(true);
     }
   };
 
+  // return (sem alterações)
   return (
     <div className={styles.container}>
       {showModal && (
         <Modal
-          message="Utilizador ou senha incorretos."
+          message={modalMessage}
           onClose={() => setShowModal(false)}
         />
       )}
@@ -89,26 +132,20 @@ function Login() {
         <div className={styles.cardTitle}>Login</div>
 
         <form className={styles.inputs} onSubmit={handleLogin}>
+          
           <select
             className={`${styles.input} ${styles.selectInput}`}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={selectedSchoolLogin} 
+            onChange={(e) => setSelectedSchoolLogin(e.target.value)} 
             required
           >
             {schools.map((school) => (
-              <option key={school.id} value={school.login}>
+              <option key={school.id} value={school.login}> 
                 {school.nome}
               </option>
             ))}
           </select>
-          <input
-            type="text"
-            placeholder="Usuário"
-            className={styles.input}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+          
           <input
             type="password"
             placeholder="Senha"
@@ -118,19 +155,10 @@ function Login() {
             required
           />
 
-           <Link className={styles.btn} to='/inicio'>
-          ENTRAR
-        </Link>
-          {/* <button type="submit" className={styles.btn}>
+          <button type="submit" className={styles.btn}>
             ENTRAR
-          </button> */}
+          </button>
         </form>
-
-        {/*
-        <Link className={styles.btn} to='/'>
-          ENTRAR
-        </Link>
-        */}
       </div>
     </div>
   );

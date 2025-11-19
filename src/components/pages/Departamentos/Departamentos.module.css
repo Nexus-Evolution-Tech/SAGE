@@ -121,21 +121,18 @@
 }
 
 .opcoesContainer {
-  position: absolute;
-  top: 50px;
-  right: 0;
   background-color: var(--white);
-  box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 5px;
   padding: 10px;
   z-index: 10;
+  top: 0
 }
 
 .opcoesContainer button {
-  padding: 8px 10px;
+  padding: 10px 14px;
   background-color: var(--primary-color);
   color: var(--white);
   border: none;
@@ -144,6 +141,7 @@
   text-align: left;
   transition: all .3s ease;
   border: 1px solid transparent;
+  text-align:  center;
 }
 
 .opcoesContainer button:hover {
@@ -183,4 +181,15 @@
   background-color: var(--red);
   padding: 1rem .8rem;
   border-radius: 12px;
+}
+
+.titleModal h2 {
+  text-align: center
+}
+
+.buttonsModal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
 }

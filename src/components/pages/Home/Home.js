@@ -9,7 +9,7 @@ function Monitoramento() {
   const [latestAccess, setLatestAccess] = useState(null);
   const [currentDateTime, setCurrentDateTime] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [fotoUrl, setFotoUrl] = useState("foto_exemplo.png");
+  // Removido estado 'fotoUrl' pois não estava sendo usado
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -26,66 +26,117 @@ function Monitoramento() {
   }, []);
 
   useEffect(() => {
+    async function enrichAccess(acesso) {
+      // Objeto base para retorno
+      const baseAccess = {
+        ...acesso,
+        area: "Portaria Principal",
+        dispositivo: "Catraca Esquerda (IDBlock)",
+        autorizacao: acesso.permitido ? "Acesso autorizado" : "Acesso negado",
+        status: acesso.permitido ? "authorized" : "denied",
+        dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
+      };
+
+      // Se não tiver pessoa_id, retorna os dados parciais
+      if (!acesso.pessoa_id) {
+        return {
+          ...baseAccess,
+          nome: "Visitante/Desconhecido",
+          foto: userPlaceholder,
+          perfil: "N/A",
+        };
+      }
+
+      try {
+        const [pessoaRes, fotoRes] = await Promise.all([
+          fetch(`http://localhost:3000/pessoas/${acesso.pessoa_id}`),
+          fetch(`http://localhost:3000/pessoas/url/${acesso.pessoa_id}`),
+        ]);
+
+        // Verificação de segurança (boa prática)
+        if (!pessoaRes.ok)
+          throw new Error(`Pessoa não encontrada (${pessoaRes.status})`);
+        if (!fotoRes.ok)
+          throw new Error(`URL da foto não encontrada (${fotoRes.status})`);
+
+        const pessoa = await pessoaRes.json();
+        const fotoData = await fotoRes.json();
+
+        // ================== CORREÇÃO AQUI ==================
+        // O objeto 'pessoa' não tem 'data' dentro dele
+        return {
+          ...baseAccess,
+          nome: pessoa.nome || "Nome não encontrado", // ACESSO DIRETO
+          foto: fotoData.url || userPlaceholder,
+          perfil: pessoa.perfil || "Perfil não informado", // ACESSO DIRETO
+        };
+        // ===================================================
+      } catch (error) {
+        // Esta é a linha 71 que você vê no log
+        console.error(
+          `Erro ao buscar dados para pessoa_id ${acesso.pessoa_id}:`,
+          error
+        );
+        // Retorna dados "quebrados" de forma controlada
+        return {
+          ...baseAccess,
+          nome: "Erro ao carregar dados",
+          foto: userPlaceholder,
+          perfil: "Erro",
+        };
+      }
+    }
     async function fetchAccesses() {
       try {
-        const response = await fetch("http://localhost:3000/acessos?limit=10");
-        const acessos = await response.json();
+        const response = await fetch("http://localhost:3000/acessos");
+        const acessosResponse = await response.json(); // É o objeto { data: [...] }
 
-        async function enrichAccess(acesso) {
-          if (!acesso.pessoa_id) return acesso;
-
-          try {
-            const pessoaRes = await fetch(
-              `http://localhost:3000/pessoas/${acesso.pessoa_id}`
-            );
-            const pessoa = await pessoaRes.json();
-
-            const fotoRes = await fetch(
-              `http://localhost:3000/pessoas/url/${acesso.pessoa_id}`
-            );
-            const fotoData = await fotoRes.json();
-
-            return {
-              ...acesso,
-              nome: pessoa.nome,
-              foto: fotoData.url || userPlaceholder,
-              perfil: pessoa.perfil || "Perfil não informado",
-              area: "Portaria Principal",
-              dispositivo: "Catraca Esquerda (IDBlock)",
-              autorizacao: acesso.permitido
-                ? "Acesso autorizado"
-                : "Acesso negado",
-              status: acesso.permitido ? "authorized" : "denied",
-              dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
-            };
-          } catch (error) {
-            console.error("Erro ao buscar pessoa ou foto:", error);
-            return acesso;
-          }
+        // CORREÇÃO: 'acessosResponse.data' é o array que queremos iterar
+        if (!acessosResponse.data || !Array.isArray(acessosResponse.data)) {
+          console.error(
+            "Formato de resposta inesperado da API:",
+            acessosResponse
+          );
+          return;
         }
 
-        const enrichedAccesses = [];
-        for (let i = 0; i < acessos.length; i++) {
-          const enriched = await enrichAccess(acessos[i]);
-          enrichedAccesses.push(enriched);
-        }
+        const acessosArray = acessosResponse.data;
 
-        setLatestAccess(enrichedAccesses[0]);
-        setAccessLogs(enrichedAccesses.slice(1));
+        // =================================================================
+        // INÍCIO DA CORREÇÃO (ORDENAÇÃO)
+        // =================================================================
+        // Ordena o array pelos dados originais (mais recente primeiro)
+        const sortedArray = acessosArray.sort((a, b) => {
+          return new Date(b.data_hora) - new Date(a.data_hora);
+        });
+        // =================================================================
+        // FIM DA CORREÇÃO
+        // =================================================================
+
+        // OTIMIZAÇÃO: Executa todas as promessas de "enriquecimento" em paralelo
+        // (Agora usando o 'sortedArray')
+        const enrichedAccesses = await Promise.all(
+          sortedArray.map(enrichAccess)
+        );
+
+        if (enrichedAccesses.length > 0) {
+          // Como o array está ordenado, o [0] é o mais recente
+          setLatestAccess(enrichedAccesses[0]);
+          setAccessLogs(enrichedAccesses.slice(1));
+        }
       } catch (error) {
         console.error("Erro ao buscar acessos:", error);
       }
     }
 
     fetchAccesses();
-  }, []);
+  }, []); // Dependência vazia está correta, busca apenas uma vez
 
-  
   return (
     <div className={styles.monitoramentoContainer}>
       <h1 className={styles.pageTitle}>Monitoramento</h1>
 
-      {latestAccess && (
+      {latestAccess ? (
         <div className={styles.accessCard}>
           <div className={styles.profileInfo}>
             <div className={styles.profilePicture}>
@@ -106,29 +157,12 @@ function Monitoramento() {
             </div>
           </div>
         </div>
+      ) : (
+        <p>Carregando último acesso...</p>
       )}
 
-      {/* <div className={styles.filterContainer}>
-        <div className={styles.filterButton}>
-          <FontAwesomeIcon icon={faListOl} className={styles.deniedIcon} />
-          <p className={styles.itemsText}>Itens por página</p>
-
-          <select
-            className={styles.dropdown}
-            value={itemsPerPage}
-            onChange={(e) => setItemsPerPage(Number(e.target.value))}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-        </div>
-
-        <div className={styles.filterButton}>
-          <FontAwesomeIcon icon={faFilter} className={styles.deniedIcon} />
-        </div>
-      </div> */}
+      {/* Seu filtro (comentado) */}
+      {/* <div className={styles.filterContainer}> ... </div> */}
 
       <div className={styles.tableContainer}>
         <table className={styles.accessTable}>
@@ -144,14 +178,15 @@ function Monitoramento() {
           </thead>
           <tbody>
             {accessLogs.slice(0, itemsPerPage).map((log) => (
+              // 'log.id' do acesso original é uma chave melhor
               <tr key={log.id}>
                 <td>
                   <img
                     src={log.foto || userPlaceholder}
                     alt="Foto"
                     style={{
-                      width: "90px",
-                      height: "90px",
+                      width: "80px",
+                      height: "80px",
                       borderRadius: "50%",
                       objectFit: "cover",
                     }}

@@ -10,7 +10,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Departamentos() {
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
-  const [mostrarModal, setMostrarModal] = useState(false); // Controla o modal
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarLista, setMostrarLista] = useState(false);
   const [dados, setDados] = useState({
     turmas: [],
     professores: [],
@@ -29,7 +30,9 @@ function Departamentos() {
     if (!telefone) return "";
     const numeros = telefone.replace(/\D/g, "");
     if (numeros.length === 11) {
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
+        7
+      )}`;
     }
     return telefone;
   };
@@ -107,9 +110,6 @@ function Departamentos() {
                   empresaNome = Array.isArray(jsonEmpresa)
                     ? jsonEmpresa[0]?.nome || ""
                     : jsonEmpresa.nome || "";
-                  empresaNome = Array.isArray(jsonEmpresa)
-                    ? jsonEmpresa[0]?.nome || ""
-                    : jsonEmpresa.nome || "";
                 } catch (err) {
                   console.error("Erro ao buscar empresa:", err);
                 }
@@ -133,35 +133,6 @@ function Departamentos() {
 
   const Section = ({ title, subtitle, columns, data, tipo }) => {
     return (
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2>{title}</h2>
-          <button
-            className={styles.verMais}
-            onClick={() =>
-              tipo === "turmas"
-                ? navigate(`/turmas`)
-                : navigate(`/tabelas/${tipo}`)
-            }
-          >
-            Ver mais →
-          </button>
-        </div>
-        <h3 className={styles.subtitle}>{subtitle}</h3>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              {columns.map((col, i) => (
-                <th key={i}>{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((p, i) => (
-              <tr key={i}>
-                <td>{p.nome}</td>
-                <td>
-                  {p.foto ? (
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2>{title}</h2>
@@ -230,39 +201,6 @@ function Departamentos() {
           </tbody>
         </table>
       </div>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-                {"rm" in p && <td>{p.rm || "-"}</td>}
-                <td>{p.email || "-"}</td>
-                <td>{formatarTelefone(p.telefone)}</td>
-                {"data_nascimento" in p && (
-                  <td>{formatarData(p.data_nascimento)}</td>
-                )}
-                {"divisao" in p && <td>{p.divisao || "-"}</td>}
-                {tipo === "administracao" && "cargo" in p && (
-                  <td>{p.cargo || "-"}</td>
-                )}
-                {tipo === "terceirizados" && "empresa" in p && (
-                  <td>{p.empresa || "-"}</td>
-                )}
-                {"trabalhaNaADM" in p && (
-                  <td>{p.trabalhaNaADM ? "Sim" : "Não"}</td>
-                )}
-                <td>
-                  <button
-                    className={styles.verBtn}
-                    onClick={() => navigate(`/formulario/${tipo}/${p.id}`)}
-                  >
-                    Ver informações
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     );
   };
 
@@ -281,27 +219,81 @@ function Departamentos() {
 
           <button
             className={styles.addPeople}
-            onClick={() => setMostrarModal(true)} 
+            onClick={() => setMostrarModal(true)}
           >
             <FontAwesomeIcon icon={faDownload} className={styles.iconSearch} />
           </button>
-          
+
           {mostrarOpcoes && (
-            <div className={styles.opcoesContainer}>
-              <button onClick={() => navigate("/adicionar/ALUNO")}>Aluno</button>
-              <button onClick={() => navigate("/adicionar/PROFESSOR")}>
-                Professor
-              </button>
-              <button onClick={() => navigate("/adicionar/PROFADM")}>
-                Professor Administrador
-              </button>
-              <button onClick={() => navigate("/adicionar/ADMINISTRADOR")}>
-                Administrador
-              </button>
-              <button onClick={() => navigate("/adicionar/TERCEIRIZADO")}>
-                Terceirizado
-              </button>
+            <div
+              className={styles.modalOverlay}
+              onClick={() => setMostrarOpcoes(false)}
+            >
+              <div
+                className={styles.modalContent}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={styles.titleModal}>
+                  <h2>Escolha uma opção</h2>
+                </div>
+
+                <div className={styles.buttonsModal}>
+                  <button className={styles.modalButton} onClick={() => setMostrarLista(!mostrarLista)}>
+                    Adicionar Manualmente
+                  </button>
+                  <button className={styles.modalButton}>
+                    Importar Planilha
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
+
+          {mostrarLista && (
+            <div
+              className={styles.modalOverlay}
+              onClick={() => setMostrarLista(false)}
+            >
+              <div
+                className={styles.modalContent}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={styles.opcoesContainer}>
+                  <button onClick={() => navigate("/adicionar/ALUNO")}>
+                    Aluno
+                  </button>
+                  <button onClick={() => navigate("/adicionar/PROFESSOR")}>
+                    Professor
+                  </button>
+                  <button onClick={() => navigate("/adicionar/PROFADM")}>
+                    Professor Administrador
+                  </button>
+                  <button onClick={() => navigate("/adicionar/ADMINISTRADOR")}>
+                    Administrador
+                  </button>
+                  <button onClick={() => navigate("/adicionar/TERCEIRIZADO")}>
+                    Terceirizado
+                  </button>
+                </div>
+              </div>
+            </div>
+            // <div className={styles.opcoesContainer}>
+            //   <button onClick={() => navigate("/adicionar/ALUNO")}>
+            //     Aluno
+            //   </button>
+            //   <button onClick={() => navigate("/adicionar/PROFESSOR")}>
+            //     Professor
+            //   </button>
+            //   <button onClick={() => navigate("/adicionar/PROFADM")}>
+            //     Professor Administrador
+            //   </button>
+            //   <button onClick={() => navigate("/adicionar/ADMINISTRADOR")}>
+            //     Administrador
+            //   </button>
+            //   <button onClick={() => navigate("/adicionar/TERCEIRIZADO")}>
+            //     Terceirizado
+            //   </button>
+            // </div>
           )}
 
           {/* --- CORREÇÃO DO MODAL --- */}
@@ -336,7 +328,6 @@ function Departamentos() {
             </div>
           )}
           {/* --- FIM DA CORREÇÃO --- */}
-
         </div>
       </div>
 
@@ -357,7 +348,6 @@ function Departamentos() {
         data={dados.turmas}
       />
 
-
       <Section
         title="Professores"
         subtitle="Tabela dos Professores"
@@ -374,7 +364,6 @@ function Departamentos() {
         data={dados.professores}
       />
 
-
       <Section
         title="Administração"
         subtitle="Tabela da Administração da Escola"
@@ -390,7 +379,6 @@ function Departamentos() {
         ]}
         data={dados.administracao}
       />
-
 
       <Section
         title="Terceirizados"

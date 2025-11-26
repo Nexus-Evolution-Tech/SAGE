@@ -175,11 +175,47 @@
   justify-content: space-between;
 }
 
+.modalContentSelect {
+  background: var(--white);
+  padding: 60px 40px;
+  border-radius: 8px;
+  width: 500px;
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalContentExcel {
+  background: var(--white);
+  padding: 60px 40px;
+  border-radius: 8px;
+  width: 700px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalContentList {
+  background: var(--white);
+  padding: 60px 40px;
+  border-radius: 8px;
+  width: 500px;
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .modalButton{
   color: var(--white);
   text-decoration: none;
   background-color: var(--red);
-  padding: 1rem .8rem;
+  width: 180px;
   border-radius: 12px;
 }
 
@@ -192,4 +228,92 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
+}
+
+/* Esconde o input de arquivo padrão */
+.fileInput {
+  display: none;
+}
+
+/* Estilo da área de "arrastar e soltar" */
+.dropZone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: #888;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  margin-top: 1.5rem;
+}
+
+/* Estilo quando um arquivo está sendo arrastado sobre a área */
+.dropZoneActive {
+  background-color: #e0e0e0;
+  border-color: #555;
+}
+
+.dropZone:hover {
+  background-color: #f0f0f0;
+}
+
+/* O que aparece dentro da dropzone (ícone e texto) */
+.dropZonePrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dropZonePrompt p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* O que aparece após selecionar um arquivo */
+.fileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.fileName {
+  font-weight: bold;
+  color: #333;
+  font-size: 1rem;
+  word-break: break-all; /* Quebra nomes de arquivo longos */
+}
+
+/* Botão para trocar o arquivo */
+.removerArquivoBtn {
+  background: none;
+  border: none;
+  color: #007bff; /* Cor de link */
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+}
+
+/* Mensagens de feedback (sucesso/erro) */
+.uploadMessage {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.sucesso {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.erro {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }

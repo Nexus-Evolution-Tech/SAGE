@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import styles from "./Formulario.module.css";
+import { api } from "../../../services/api"; 
 
 function Formulario() {
   const { id } = useParams();
@@ -34,6 +35,7 @@ function Formulario() {
   const divOptions = [
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
+    { value: "INT", label: "INT" },
   ];
 
   const fileInputRef = useRef();
@@ -41,48 +43,28 @@ function Formulario() {
   const canvasRef = useRef();
 
   const formatarTelefone = (tel) => {
-    if (!tel) return "";
-    const numeroLimpo = tel.replace(/\D/g, "");
-    if (numeroLimpo.length === 11) {
-      return `(${numeroLimpo.substring(0, 2)}) ${numeroLimpo.substring(
-        2,
-        7
-      )}-${numeroLimpo.substring(7)}`;
-    }
-    return tel;
   };
-
   const formatarData = (data) => {
-    if (!data) return "";
-    const dataLimpa = data.substring(0, 10);
-    const [ano, mes, dia] = dataLimpa.split("-");
-    return `${dia}/${mes}/${ano}`;
   };
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const pessoaRes = await fetch(`http://localhost:3000/pessoas/${id}`);
-        const pessoaData = await pessoaRes.json();
+        const pessoaData = await api.get(`/pessoas/${id}`);
         setPessoa(pessoaData);
         setFormData(pessoaData);
 
-        const fotoRes = await fetch(`http://localhost:3000/pessoas/url/${id}`);
-        const fotoData = await fotoRes.json();
+        const fotoData = await api.get(`/pessoas/url/${id}`);
         setFotoUrl(fotoData.url || "foto_exemplo.png");
 
         if (pessoaData.tipo === "ALUNO") {
-          const turmasRes = await fetch(`http://localhost:3000/turmas`);
-          const turmasData = await turmasRes.json();
+          const turmasData = await api.get(`/turmas`);
           setTodasTurmas(
             turmasData.data.map((t) => ({ value: t.id, label: t.nome }))
           );
 
           if (pessoaData.turma_id) {
-            const turmaRes = await fetch(
-              `http://localhost:3000/turmas/${pessoaData.turma_id}`
-            );
-            const turmaData = await turmaRes.json();
+            const turmaData = await api.get(`/turmas/${pessoaData.turma_id}`);
             const turmaInfo = Array.isArray(turmaData)
               ? turmaData[0]
               : turmaData;
@@ -91,32 +73,23 @@ function Formulario() {
             setTurnoNome(turmaInfo?.turno || "");
 
             if (turmaInfo?.curso_id) {
-              const cursoRes = await fetch(
-                `http://localhost:3000/cursos/${turmaInfo.curso_id}`
-              );
-              const cursoData = await cursoRes.json();
-
-              const curso = cursoData.find(
-                (c) => c.id === turmaInfo.curso_id
-              );
-
+              const cursoData = await api.get(`/cursos/${turmaInfo.curso_id}`);
+              const curso = cursoData.find((c) => c.id === turmaInfo.curso_id);
               setCursoNome(curso?.nome || "");
             }
           }
 
-          const respRes = await fetch(
-            `http://localhost:3000/pessoas/tipo/responsavel?aluno_id=${id}`
+          const respData = await api.get(
+            `/pessoas/tipo/responsavel?aluno_id=${id}`
           );
-          const respData = await respRes.json();
           setResponsavel(respData[0] || null);
         } else if (
           pessoaData.tipo === "TERCEIRIZADO" &&
           pessoaData.empresa_id
         ) {
-          const empresaRes = await fetch(
-            `http://localhost:3000/empresas/${pessoaData.empresa_id}`
+          const empresaData = await api.get(
+            `/empresas/${pessoaData.empresa_id}`
           );
-          const empresaData = await empresaRes.json();
           setEmpresaNome(
             Array.isArray(empresaData)
               ? empresaData[0]?.nome
@@ -141,13 +114,9 @@ function Formulario() {
     formDataUpload.append("foto", file);
 
     try {
-      await fetch(`http://localhost:3000/pessoas/upload/${id}`, {
-        method: "POST",
-        body: formDataUpload,
-      });
+      await api.postFormData(`/pessoas/upload/${id}`, formDataUpload);
 
-      const res = await fetch(`http://localhost:3000/pessoas/url/${id}`);
-      const data = await res.json();
+      const data = await api.get(`/pessoas/url/${id}`);
       setFotoUrl(data.url || "foto_exemplo.png");
       console.log("Foto atualizada com sucesso!");
     } catch (error) {
@@ -164,29 +133,13 @@ function Formulario() {
   };
 
   const iniciarCamera = async () => {
-    setShowCamera(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error("Erro ao acessar a câmera:", error);
-    }
   };
 
   const handleGerarQRCode = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/pessoas/gerar_qrcode/${id}`,
-        {
-          method: "POST",
-        }
-      );
+      const updatedPessoa = await api.post(`/pessoas/gerar_qrcode/${id}`, {});
 
-      if (!response.ok) throw new Error("Erro ao gerar QR Code");
-
-      const updatedPessoa = await response.json();
+      if (!updatedPessoa) throw new Error("Erro ao gerar QR Code");
 
       setPessoa((prev) => ({ ...prev, qr_code: updatedPessoa.qr_code }));
       setQrCode(updatedPessoa.qr_code);
@@ -202,54 +155,21 @@ function Formulario() {
   };
 
   const handleDownloadQRCode = () => {
-    const link = document.createElement("a");
-    link.href = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pessoa?.qr_code}`;
-    link.download = "qrcode.png";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
-
   const tirarFoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-
-    canvas.width = video.videoWidth || 300;
-    canvas.height = video.videoHeight || 300;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-      if (blob) handleUpload(blob);
-    }, "image/jpeg");
-
-    if (video.srcObject) {
-      video.srcObject.getTracks().forEach((track) => track.stop());
-    }
-    setShowCamera(false);
   };
 
   const handleSalvar = async () => {
     try {
-      await fetch(`http://localhost:3000/pessoas/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      await api.patch(`/pessoas/${id}`, formData);
 
       if (novaFoto) {
         const formDataUpload = new FormData();
         formDataUpload.append("foto", novaFoto);
 
-        await fetch(`http://localhost:3000/pessoas/upload/${id}`, {
-          method: "POST",
-          body: formDataUpload,
-        });
+        await api.postFormData(`/pessoas/upload/${id}`, formDataUpload);
 
-        const res = await fetch(`http://localhost:3000/pessoas/url/${id}`);
-        const data = await res.json();
+        const data = await api.get(`/pessoas/url/${id}`);
         setFotoUrl(data.url || "foto_exemplo.png");
         setNovaFoto(null);
       }
@@ -510,7 +430,6 @@ function Formulario() {
               )}
             </div>
             <div className={styles.inputRow}>
-              
               {renderCampo("Email", "email")}
               {renderCampo(
                 "Data de Nascimento",
@@ -586,7 +505,6 @@ function Formulario() {
       <section className={styles.dadosSection}>
         <div className={styles.header}>
           <h2>Informações</h2>
-          <button className={styles.actionButton}>Exportar</button>
           {editMode ? (
             <button className={styles.actionButton} onClick={handleSalvar}>
               <p className={styles.textBackground}>Salvar</p>

@@ -5,6 +5,8 @@ import {
   useLocation,
 } from "react-router-dom";
 
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+
 import Pessoas from "./components/pages/Pessoas/Pessoas";
 import Departamentos from "./components/pages/Departamentos/Departamentos";
 import Dispositivos from "./components/pages/Dispositivos/Dispositivos";
@@ -25,12 +27,18 @@ import Regras from "./components/pages/Regras/Regras";
 import Horarios from "./components/pages/Horarios/Horarios";
 import Areas from "./components/pages/Areas/Areas";
 
+import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
+
 function AppContent() {
   const location = useLocation();
 
+  const isPublicPage = location.pathname === "/" || 
+                       location.pathname === "/login" || 
+                       location.pathname === "/cadastro";
+
   return (
     <div className="App">
-      {location.pathname !== "/" && location.pathname !== "/cadastro" && (
+      {!isPublicPage && (
         <>
           <Navbar />
           <ToolBar />
@@ -41,26 +49,31 @@ function AppContent() {
         <Container customClass="min-height">
           <Routes>
             <Route path="/" element={<Login />} />
-            <Route path="/pessoas" element={<Pessoas />} />
-            <Route path="/inicio" element={<Inicio />} />
-            <Route path="/departamentos" element={<Departamentos />} />
-            <Route path="/dispositivos" element={<Dispositivos />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/monitoramento" element={<Monitoramento />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
-            <Route path="/tabelas/:tipo" element={<Tabelas />} />
-            <Route path="/tabelas/:tipo/:turmaId" element={<Tabelas />} />
-            <Route path="/formulario/:tipo/:id" element={<Formulario />} />
-            <Route path="/turmas" element={<Turmas />} />
-            <Route path="/adicionar/:tipo" element={<Adicionar />} />
-            <Route path="/regras" element={<Regras />} />
-            <Route path="/horarios" element={<Horarios />} />
-            <Route path="/areas" element={<Areas />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/pessoas" element={<Pessoas />} />
+              <Route path="/inicio" element={<Inicio />} />
+              <Route path="/departamentos" element={<Departamentos />} />
+              <Route path="/dispositivos" element={<Dispositivos />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/monitoramento" element={<Monitoramento />} />
+              <Route path="/tabelas/:tipo" element={<Tabelas />} />
+              <Route path="/tabelas/:tipo/:turmaId" element={<Tabelas />} />
+              <Route path="/formulario/:tipo/:id" element={<Formulario />} />
+              <Route path="/turmas" element={<Turmas />} />
+              <Route path="/adicionar/:tipo" element={<Adicionar />} />
+              <Route path="/regras" element={<Regras />} />
+              <Route path="/horarios" element={<Horarios />} />
+              <Route path="/areas" element={<Areas />} />
+            </Route>
+            
+
           </Routes>
         </Container>
       </div>
 
-      {/*location.pathname !== "/login" && <Footer />*/}
     </div>
   );
 }
@@ -68,6 +81,7 @@ function AppContent() {
 function App() {
   return (
     <Router>
+      <AuthInterceptor />
       <AppContent />
     </Router>
   );

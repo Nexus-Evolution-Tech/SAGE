@@ -12,7 +12,8 @@
   left: 0;
   top: 0;
   z-index: 999;
-  color: var(--primary-color); 
+  color: var(--primary-color);
+  overflow: visible; 
 }
 
 .logoLink {
@@ -117,6 +118,11 @@
   color: var(--primary-color);
   font-size: 1.5em;
   transition: color 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0; 
+  font-family: inherit;
 }
 
 .bottomLink:hover {
@@ -125,4 +131,45 @@
 
 .activeBottom {
   color: var(--red);
+}
+
+.userMenuContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.userModal {
+  position: absolute;
+  margin-bottom: 540px;  
+  left: 50%;  
+  transform: translateX(-50%);
+
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  width: 180px;
+  padding: 0.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid #eee; 
+}
+
+.modalButton {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  padding: 10px 15px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.modalButton:hover {
+  background-color: #f0f0f0;
 }

@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { NavLink } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import styles from "./Navbar.module.css";
 
 import logo from "../../../img/logo.png";
@@ -8,6 +8,11 @@ import navLinks, { settingsLink, userLink } from "./NavLinks.js";
 
 function Navbar() {
   const navRef = useRef(null);
+  const navigate = useNavigate(); 
+
+  const [showUserModal, setShowUserModal] = useState(false);
+  const userIconRef = useRef(null); 
+  const userModalRef = useRef(null); 
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +26,28 @@ function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        userModalRef.current &&
+        !userModalRef.current.contains(event.target) &&
+        userIconRef.current &&
+        !userIconRef.current.contains(event.target)
+      ) {
+        setShowUserModal(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userModalRef, userIconRef]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login", { replace: true });
+  };
 
   return (
     <nav className={styles.navbar} ref={navRef}>
@@ -60,18 +87,40 @@ function Navbar() {
               : styles.bottomLink
           }
         >
-          <FontAwesomeIcon icon={settingsLink.icon} className={styles.icon} />
+          <FontAwesomeIcon icon={settingsLink.icon} />
         </NavLink>
-        <NavLink
-          to={userLink.to}
-          className={({ isActive }) =>
-            isActive
-              ? `${styles.bottomLink} ${styles.activeBottom}`
-              : styles.bottomLink
-          }
-        >
-          <FontAwesomeIcon icon={userLink.icon} className={styles.icon} />
-        </NavLink>
+
+        <div className={styles.userMenuContainer}>
+          <button
+            ref={userIconRef}
+            onClick={() => setShowUserModal(!showUserModal)}
+            className={`${styles.bottomLink} ${
+              showUserModal ? styles.activeBottom : ""
+            }`}
+          >
+            <FontAwesomeIcon icon={userLink.icon} />
+          </button>
+
+          {showUserModal && (
+            <div ref={userModalRef} className={styles.userModal}>
+              {/* <button
+                className={styles.modalButton}
+                onClick={() => {
+                  navigate("/redefinir-senha");
+                  setShowUserModal(false);
+                }}
+              >
+                Redefinir Senha
+              </button> */}
+              <button
+                className={styles.modalButton}
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

@@ -101,7 +101,7 @@ function Login() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         console.log("Login OK! Redirecionando...");
-        navigate("/"); // Redireciona para a Home (ou '/monitoramento')
+        navigate("/inicio"); // Redireciona para a Home (ou '/monitoramento')
       } else {
         setModalMessage(data.message || "Credenciais inválidas.");
         setShowModal(true);

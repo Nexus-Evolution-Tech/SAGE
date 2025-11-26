@@ -3,17 +3,21 @@ import { useEffect, useState } from "react";
 import styles from "./Tabelas.module.css";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { api } from "../../../services/api"; // --- MUDANÇA 1: Importar a API
 
 function Tabelas() {
-  const { tipo, turmaId } = useParams(); 
+  const { tipo, turmaId } = useParams();
   const navigate = useNavigate();
   const [dados, setDados] = useState([]);
   const [busca, setBusca] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true); // --- MUDANÇA 2: Adicionar estado de loading
+  const [error, setError] = useState(null); // --- MUDANÇA 3: Adicionar estado de erro
 
   const toggleModal = () => setShowModal((prev) => !prev);
 
   const formatarTelefone = (telefone) => {
+    // ... (seu código existente)
     const numeros = telefone?.replace(/\D/g, "") || "";
     if (numeros.length === 11)
       return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
@@ -23,11 +27,13 @@ function Tabelas() {
   };
 
   const formatarData = (dataISO) => {
+    // ... (seu código existente)
     if (!dataISO) return "";
     return new Date(dataISO).toLocaleDateString("pt-BR", { timeZone: "UTC" });
   };
 
   const formatarTurma = (id) => {
+    // ... (seu código existente)
     const turmas = {
       1: "1° Ano A",
       2: "1° Ano B",
@@ -46,8 +52,11 @@ function Tabelas() {
     professores: "PROFESSOR",
   };
 
+  // --- MUDANÇA 4: useEffect totalmente refatorado para usar api.get() ---
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         if (tipo === "professores") {
           let allProf = [];
@@ -55,23 +64,25 @@ function Tabelas() {
           let page = 1;
           let totalPages = 1;
 
+          // Busca PROFESSOR
           do {
-            const res = await fetch(
-              `http://localhost:3000/pessoas/tipo/PROFESSOR?page=${page}&limit=100`
+            // Usa api.get() que já envia token
+            const json = await api.get(
+              `/pessoas/tipo/PROFESSOR?page=${page}&limit=100`
             );
-            const json = await res.json();
             allProf = [...allProf, ...(json.data || json)];
             totalPages = json.totalPages || 1;
             page++;
           } while (page <= totalPages);
 
+          // Busca PROFADM
           page = 1;
           totalPages = 1;
           do {
-            const res = await fetch(
-              `http://localhost:3000/pessoas/tipo/PROFADM?page=${page}&limit=100`
+            // Usa api.get() que já envia token
+            const json = await api.get(
+              `/pessoas/tipo/PROFADM?page=${page}&limit=100`
             );
-            const json = await res.json();
             allProfAdm = [...allProfAdm, ...(json.data || json)];
             totalPages = json.totalPages || 1;
             page++;
@@ -83,7 +94,7 @@ function Tabelas() {
           ];
 
           setDados(professores);
-          return;
+          return; // Finaliza a função aqui
         }
 
         if (tipo === "turmas" && turmaId) {
@@ -92,10 +103,10 @@ function Tabelas() {
           let totalPages = 1;
 
           do {
-            const res = await fetch(
-              `http://localhost:3000/pessoas/tipo/ALUNO?page=${page}&limit=100`
+            // Usa api.get() que já envia token
+            const json = await api.get(
+              `/pessoas/tipo/ALUNO?page=${page}&limit=100`
             );
-            const json = await res.json();
             const todos = json.data || json;
 
             const filtrados = todos.filter(
@@ -108,21 +119,23 @@ function Tabelas() {
           } while (page <= totalPages);
 
           setDados(alunos);
-          return;
+          return; // Finaliza a função aqui
         }
 
         const sigla = tipoMap[tipo]?.toUpperCase();
-        if (!sigla) return;
+        if (!sigla) {
+          throw new Error("Tipo de rota inválido.");
+        }
 
         let data = [];
         let page = 1;
         let totalPages = 1;
 
         do {
-          const res = await fetch(
-            `http://localhost:3000/pessoas/tipo/${sigla}?page=${page}&limit=100`
+          // Usa api.get() que já envia token
+          const json = await api.get(
+            `/pessoas/tipo/${sigla}?page=${page}&limit=100`
           );
-          const json = await res.json();
           data = [...data, ...(json.data || json)];
           totalPages = json.totalPages || 1;
           page++;
@@ -130,7 +143,6 @@ function Tabelas() {
 
         if (tipo === "terceirizados") {
           const cacheEmpresas = new Map();
-
           data = await Promise.all(
             data.map(async (p) => {
               if (!p.empresa_id) return { ...p, empresa: "", cnpj: "" };
@@ -141,10 +153,8 @@ function Tabelas() {
               }
 
               try {
-                const r = await fetch(
-                  `http://localhost:3000/empresas/${p.empresa_id}`
-                );
-                const j = await r.json();
+                // Usa api.get() que já envia token
+                const j = await api.get(`/empresas/${p.empresa_id}`);
                 const emp = Array.isArray(j) ? j[0] : j;
                 cacheEmpresas.set(p.empresa_id, emp || {});
                 return {
@@ -162,12 +172,17 @@ function Tabelas() {
 
         setDados(data);
       } catch (err) {
+        // O err.message já vem tratado do api.js (incluindo 401/403)
         console.error("Erro ao buscar dados:", err);
+        setError(err.message || "Falha ao carregar os dados.");
+      } finally {
+        setLoading(false); // --- MUDANÇA 5: Desativa o loading
       }
     };
 
     fetchData();
   }, [tipo, turmaId]);
+  // --- FIM DA MUDANÇA 4 ---
 
   const dadosFiltrados = dados.filter(
     (p) =>
@@ -179,6 +194,7 @@ function Tabelas() {
   );
 
   const handleVerMais = (id) => {
+    // Esta lógica de navegação foi mantida como estava no seu original
     navigate(`/formulario/${tipoMap[tipo].toLowerCase()}/${id}`);
   };
 
@@ -210,7 +226,7 @@ function Tabelas() {
   const renderTable = () => {
     const renderRows = () =>
       dadosFiltrados.map((p, i) => (
-        <tr key={i}>
+        <tr key={p.id || i}> {/* --- MUDANÇA 6: Usar p.id como chave */}
           <td>{p.nome}</td>
           {tipo === "turmas" && (
             <>
@@ -276,6 +292,28 @@ function Tabelas() {
           )}
         </tr>
       ));
+
+    // --- MUDANÇA 7: Lógica para exibir loading ou erro ---
+    if (loading) {
+      return (
+        <>
+          {commonHeader}
+          <div className={styles.statusContainer}>Carregando dados...</div>
+        </>
+      );
+    }
+
+    if (error) {
+       return (
+         <>
+           {commonHeader}
+           <div className={`${styles.statusContainer} ${styles.noResults}`}>
+             Erro: {error}
+           </div>
+         </>
+       );
+    }
+    // --- FIM DA MUDANÇA 7 ---
 
     return (
       <>

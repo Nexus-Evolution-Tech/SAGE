@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styles from "./Adicionar.module.css";
+import { api } from "../../../services/api";
 
 function Adicionar() {
   const { tipo } = useParams();
@@ -56,31 +57,29 @@ function Adicionar() {
     return erro;
   };
 
- useEffect(() => {
-  const buscarDados = async () => {
-    try {
-      const turmasRes = await fetch(`http://localhost:3000/turmas`);
-      const turmasJson = await turmasRes.json();
-      setTodasTurmas(turmasJson.data || []); 
+  useEffect(() => {
+    const buscarDados = async () => {
+      try {
+        const turmasJson = await api.get(`/turmas`);
+        setTodasTurmas(turmasJson.data || turmasJson || []); 
 
-      const cursosRes = await fetch(`http://localhost:3000/cursos`);
-      const cursosJson = await cursosRes.json();
-      setTodosCursos(cursosJson.data || []);
+        const cursosJson = await api.get(`/cursos`);
+        setTodosCursos(cursosJson.data || cursosJson || []);
 
-      const empresasRes = await fetch(`http://localhost:3000/empresas`);
-      const empresasJson = await empresasRes.json();
-      setTodasEmpresas(empresasJson.data || []);
+        const empresasJson = await api.get(`/empresas`);
+        setTodasEmpresas(empresasJson.data || empresasJson || []);
 
-      const escolasRes = await fetch(`http://localhost:3000/escolas`);
-      const escolasJson = await escolasRes.json();
-      setTodasEscolas(escolasJson.data || []);
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-    }
-  };
-  buscarDados();
-}, [tipo]);
+        const escolasJson = await api.get(`/escolas`);
+        setTodasEscolas(escolasJson.data || escolasJson || []);
 
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+        setMessage(`Erro ao carregar dados: ${error.message}`);
+        setModalType("error");
+      }
+    };
+    buscarDados();
+  }, [tipo]);
 
   const handleInputChange = (campo, valor) => {
     setFormData((prev) => ({ ...prev, [campo]: valor }));
@@ -88,7 +87,7 @@ function Adicionar() {
 
   const formatDate = (date) => {
     if (!date) return null;
-    return new Date(date).toISOString().split("T")[0]; 
+    return new Date(date).toISOString().split("T")[0];
   };
 
   const handleSalvar = async (e) => {
@@ -121,38 +120,22 @@ function Adicionar() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/pessoas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        let errorMsg = "Erro ao adicionar.";
-        try {
-          const errorJson = await response.json();
-          errorMsg = `${errorJson.message}: ${traduzErro(errorJson.erro)}`;
-        } catch {
-          errorMsg = await response.text();
-        }
-        console.error("Erro detalhado:", errorMsg);
-        setMessage(errorMsg);
-        setModalType("error");
-        return;
-      }
+      await api.post("/pessoas", payload);
 
       setMessage(`${tipo} adicionado com sucesso!`);
       setModalType("success");
       setFormData({ tipo });
       setFotoPreview(null);
+
     } catch (err) {
       console.error("Erro ao salvar:", err);
-      setMessage("Erro inesperado ao salvar.");
+      setMessage(traduzErro(err.message)); 
       setModalType("error");
     } finally {
       setLoading(false);
     }
   };
+
 
   const renderCampo = (label, campo, type = "text") => (
     <div className={styles.inputGroup}>
@@ -249,11 +232,11 @@ function Adicionar() {
                 ? renderDropdown("Empresa", "empresa", todasEmpresas)
                 : renderCampo("RG", "rg")}
               {tipo === "TERCEIRIZADO"
-                ? renderDropdown("Função", "funcao", funcaoOptions)
+                ? renderDropdown("Função", "funcao", funcaoOptions, "label")
                 : renderCampo("Cargo", "cargo")}
             </div>
             <div className={styles.inputRow}>
-              {renderDropdown("Tipo de Contrato", "tipo_contrato", contratOptions)}
+              {renderDropdown("Tipo de Contrato", "tipo_contrato", contratOptions, "label")}
               {renderCampo("Data de Admissão", "data_admissao", "date")}
               {renderCampo("Data de Saída", "data_saida", "date")}
             </div>

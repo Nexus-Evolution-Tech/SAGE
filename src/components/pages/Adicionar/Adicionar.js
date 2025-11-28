@@ -29,6 +29,7 @@ function Adicionar() {
   const divOptions = [
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
+    { value: "INT", label: "INT" },
   ];
 
   const contratOptions = [

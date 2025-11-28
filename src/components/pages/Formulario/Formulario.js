@@ -35,6 +35,7 @@ function Formulario() {
   const divOptions = [
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
+    { value: "INT", label: "INT" },
   ];
 
   const fileInputRef = useRef();
@@ -504,7 +505,6 @@ function Formulario() {
       <section className={styles.dadosSection}>
         <div className={styles.header}>
           <h2>Informações</h2>
-          <button className={styles.actionButton}>Exportar</button>
           {editMode ? (
             <button className={styles.actionButton} onClick={handleSalvar}>
               <p className={styles.textBackground}>Salvar</p>

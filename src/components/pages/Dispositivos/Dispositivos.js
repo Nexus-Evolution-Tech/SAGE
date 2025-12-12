@@ -3,11 +3,12 @@ import catracaPlaceholder from "../../../img/catraca.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCirclePlus,
-  faRotateLeft,
   faXmark,
   faTrash,
+  faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
+import { api } from "../../../services/api";
 
 function Dispositivos() {
   const [dispositivos, setDispositivos] = useState([]);
@@ -15,6 +16,7 @@ function Dispositivos() {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
+
   const [newDeviceData, setNewDeviceData] = useState({
     nome: "",
     modelo: "",
@@ -24,34 +26,26 @@ function Dispositivos() {
     senha: "",
   });
 
+  // ===============================
+  // BUSCAR DISPOSITIVOS + STATUS
+  // ===============================
   const fetchDispositivos = async () => {
     try {
-      const responseDispositivos = await fetch(
-        "http://localhost:3000/dispositivos"
-      );
-      if (!responseDispositivos.ok) {
-        throw new Error(`Erro HTTP! Status: ${responseDispositivos.status}`);
-      }
+      const result = await api.get("/dispositivos");
+      const dataDispositivos = result.data || [];
 
-      const result = await responseDispositivos.json();
-      const dataDispositivos = result.data || []; 
       setDispositivos(dataDispositivos);
 
-      const responseStatus = await fetch(
-        "http://localhost:3000/dispositivos/status"
-      );
-      if (!responseStatus.ok) {
-        throw new Error(`Erro HTTP ao buscar status: ${responseStatus.status}`);
-      }
+      const statusData = await api.get("/dispositivos/status");
 
-      const dataStatus = await responseStatus.json();
       const statusMap = {};
-      dataStatus.forEach((item) => {
+      statusData.forEach((item) => {
         statusMap[item.id] = item.status;
       });
+
       setStatusDispositivos(statusMap);
-    } catch (e) {
-      setError(e.message);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -59,36 +53,55 @@ function Dispositivos() {
     fetchDispositivos();
   }, []);
 
+  // ===============================
+  // CORREÇÃO: RELOAD STATUS INDIVIDUAL
+  // ===============================
+  const handleReloadStatus = async (id) => {
+    if (!id) return;
+
+    // Define status visual temporário
+    setStatusDispositivos((prev) => ({
+      ...prev,
+      [id]: "Verificando...",
+    }));
+
+    try {
+      const response = await api.get(`/dispositivos/${id}/status`);
+      
+      // O backend retorna um objeto: { id: 1, nome: "...", status: "ONLINE" }
+      // Precisamos extrair especificamente a propriedade .status
+      const novoStatus = response.data.status; 
+
+      setStatusDispositivos((prev) => ({
+        ...prev,
+        [id]: novoStatus,
+      }));
+    } catch (err) {
+      console.error("Erro ao atualizar status:", err);
+      setStatusDispositivos((prev) => ({
+        ...prev,
+        [id]: "OFFLINE", // Define como OFFLINE em caso de erro na requisição
+      }));
+    }
+  };
+
+  // ===============================
+  // FORM INPUT HANDLER
+  // ===============================
   const handleInputChange = (e) => {
     setNewDeviceData({ ...newDeviceData, [e.target.name]: e.target.value });
   };
 
+  // ===============================
+  // SALVAR DISPOSITIVO NA API
+  // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3000/dispositivos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newDeviceData),
-      });
+      const response = await api.post("/dispositivos", newDeviceData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Erro ao adicionar dispositivo: ${response.status} - ${
-            errorData.message || "Erro desconhecido"
-          }`
-        );
-      }
-
-      const novoDispositivo = await response.json();
-      setDispositivos((prevDispositivos) => [
-        ...prevDispositivos,
-        novoDispositivo,
-      ]);
+      setDispositivos((prev) => [...prev, response.data]);
 
       setNewDeviceData({
         nome: "",
@@ -98,68 +111,46 @@ function Dispositivos() {
         usuario: "",
         senha: "",
       });
+
       setShowForm(false);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
+  // ===============================
+  // REMOVER DISPOSITIVO
+  // ===============================
   const handleDeleteDevice = async (id) => {
-    const confirmar = window.confirm(
-      "Tem certeza que deseja excluir esse dispositivo?"
-    );
-    if (!confirmar) return;
+    if (!window.confirm("Tem certeza que deseja excluir esse dispositivo?")) {
+      return;
+    }
 
     try {
-      const response = await fetch(`http://localhost:3000/dispositivos/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao remover dispositivo: ${response.status}`);
-      }
+      await api.delete(`/dispositivos/${id}`);
 
       setDispositivos((prev) => prev.filter((d) => d.id !== id));
       setSelectedDevice(null);
-    } catch (error) {
-      console.error("Erro ao remover dispositivo:", error);
-      alert("Erro ao remover dispositivo. Veja o console para mais detalhes.");
+    } catch (err) {
+      alert("Erro ao remover: " + err.message);
     }
   };
-
-  const handleCardClick = (device) => {
-    setSelectedDevice(device);
-  };
-
-  const closeModal = () => {
-    setSelectedDevice(null);
-  };
-
-  const closeAddModal = () => {
-    setShowForm(false);
-  };
-
-  if (error) {
-    return (
-      <div className={styles.container}>
-        Erro ao carregar dispositivos: {error}
-      </div>
-    );
-  }
 
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Dispositivos</h1>
+
       <div className={styles.cards}>
         {dispositivos.map((dispositivo) => (
           <div
             key={dispositivo.id}
             className={styles.cardContainer}
-            onClick={() => handleCardClick(dispositivo)}
+            onClick={() => setSelectedDevice(dispositivo)}
           >
             <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
             <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
             <p className={styles.cardArea}>ID: {dispositivo.id}</p>
+
             {dispositivo.foto ? (
               <img src={dispositivo.foto} alt={dispositivo.nome} />
             ) : (
@@ -170,7 +161,7 @@ function Dispositivos() {
 
         <div className={styles.buttonContainer}>
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => setShowForm(true)}
             className={styles.iconButton}
           >
             <FontAwesomeIcon icon={faCirclePlus} className={styles.icon} />
@@ -179,6 +170,7 @@ function Dispositivos() {
         </div>
       </div>
 
+      {/* MODAL DETALHES */}
       {selectedDevice && (
         <div className={styles.overlay}>
           <div className={styles.formContainer}>
@@ -191,10 +183,15 @@ function Dispositivos() {
               </button>
 
               <h2>Detalhes do Dispositivo</h2>
-              <button className={styles.closeButton} onClick={closeModal}>
+
+              <button
+                className={styles.closeButton}
+                onClick={() => setSelectedDevice(null)}
+              >
                 <FontAwesomeIcon icon={faXmark} className={styles.icon} />
               </button>
             </div>
+
             <div className={styles.sideContainer}>
               <div className={styles.sidePhotoContainer}>
                 <img
@@ -205,7 +202,7 @@ function Dispositivos() {
               </div>
 
               <div className={styles.dataContainer}>
-                <strong>Nome do Dispositivo</strong>
+                <strong>Nome</strong>
                 <div className={styles.infoContainer}>
                   <p>{selectedDevice.nome}</p>
                 </div>
@@ -227,23 +224,29 @@ function Dispositivos() {
                 </div>
 
                 <div className={styles.testContainer}>
-                  <div className={styles.testTitle}>
-                    <h4>Testar Conexão</h4>
-                  </div>
+                  <h4>Testar Conexão</h4>
 
-                  <div className={styles.testButtonsRow}>
-                    <button className={styles.reloadButton}>
+                  <div className={styles.testContainerRow}>
+                    {/* LÓGICA CONDICIONAL DE COR BASEADA EM "ONLINE" (CAIXA ALTA) */}
+                    <p
+                      className={`${styles.statusBase} ${
+                        statusDispositivos[selectedDevice.id] === "ONLINE"
+                          ? styles.statusOnline
+                          : styles.statusOffline
+                      }`}
+                    >
+                      {statusDispositivos[selectedDevice.id] || "Carregando..."}
+                    </p>
+
+                    <button 
+                      className={styles.reloadButton}
+                      onClick={() => handleReloadStatus(selectedDevice.id)}
+                    >
                       <FontAwesomeIcon
-                        icon={faRotateLeft}
+                        icon={faRefresh}
                         className={styles.icon}
                       />
                     </button>
-                    <div className={styles.infoContainerRow}>
-                      <p className={styles.status}>
-                        {statusDispositivos[selectedDevice.id] ||
-                          "Carregando..."}
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -252,74 +255,54 @@ function Dispositivos() {
         </div>
       )}
 
+      {/* MODAL ADD */}
       {showForm && (
         <div className={styles.overlay}>
           <div className={styles.formContainer}>
             <div className={styles.titleContainer}>
-              <h2>ㅤ</h2>
               <h2>Adicionar Dispositivo</h2>
-              <button className={styles.closeButton} onClick={closeAddModal}>
+              <button
+                className={styles.closeButton}
+                onClick={() => setShowForm(false)}
+              >
                 <FontAwesomeIcon icon={faXmark} className={styles.icon} />
               </button>
             </div>
-            <div className={styles.sideContainer}>
-              <div className={styles.sidePhotoContainer}>
-                <img
-                  src={catracaPlaceholder}
-                  alt="Catraca"
-                  className={styles.catraca}
-                />
-              </div>
 
+            <form onSubmit={handleSubmit}>
               <div className={styles.dataContainer}>
-                <strong>Nome do Dispositivo</strong>
+                <strong>Nome</strong>
                 <input
                   type="text"
                   name="nome"
                   value={newDeviceData.nome}
                   onChange={handleInputChange}
                   required
-                  placeholder="Catraca 1"
                 />
 
-                <div className={styles.cardsRow}>
-                  <div className={styles.inputContainer}>
-                    <strong>IP</strong>
-                    <input
-                      type="text"
-                      name="endereco"
-                      value={newDeviceData.endereco}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="192.168.10.67"
-                    />
-                  </div>
+                <strong>IP</strong>
+                <input
+                  type="text"
+                  name="endereco"
+                  value={newDeviceData.endereco}
+                  onChange={handleInputChange}
+                  required
+                />
 
-                  <div className={styles.inputContainer}>
-                    <strong>Porta</strong>
-                    <input
-                      type="text"
-                      name="porta"
-                      value={newDeviceData.porta}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="80"
-                    />
-                  </div>
-                </div>
+                <strong>Porta</strong>
+                <input
+                  type="text"
+                  name="porta"
+                  value={newDeviceData.porta}
+                  onChange={handleInputChange}
+                  required
+                />
 
-                <div className={styles.testContainer}>
-                  <div className={styles.testButtonsRoww}>
-                    <button
-                      className={styles.reloadButton}
-                      onClick={handleSubmit}
-                    >
-                      Salvar
-                    </button>
-                  </div>
-                </div>
+                <button type="submit" className={styles.reloadButton}>
+                  Salvar
+                </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

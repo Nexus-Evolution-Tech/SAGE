@@ -223,6 +223,14 @@
   padding-top: 1rem;
 }
 
+.testContainerRow{
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 1rem;
+  padding-top: .5rem;
+}
+
 .testButtonsRow {
   display: flex;
   align-items: center;
@@ -238,8 +246,27 @@
 
 
 
-.status {
+/* Estrutura base do status */
+.statusBase {
+  border: 1px solid #000;
+  padding: .3rem .5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  text-transform: capitalize; /* Opcional: deixa a primeira letra maiúscula */
+}
+
+/* Status Offline (Vermelho) */
+.statusOffline {
   color: red;
+  border-color: red;
+  background-color: rgba(255, 0, 0, 0.05);
+}
+
+/* Status Online (Verde) */
+.statusOnline {
+  color: green;
+  border-color: green;
+  background-color: rgba(0, 128, 0, 0.05);
 }
 
 .reloadButton {

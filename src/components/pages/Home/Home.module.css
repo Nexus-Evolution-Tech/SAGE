@@ -7,7 +7,7 @@
   --green: #008001;
   --light-green: #a4c284;
   --extra-light-green: #f5f5c7;
-  --red: #032f5e;
+  --blue: #032f5e;
   --light-red: #032f5e;
   --extra-light-red: #efa5a5;
 }
@@ -225,7 +225,7 @@
 }
 
 .statusBadge.required {
-  background-color: var(--red);
+  background-color: var(--blue);
   color: #fff;
 }
 

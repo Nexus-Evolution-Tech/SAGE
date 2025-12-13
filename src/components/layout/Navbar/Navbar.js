@@ -4,7 +4,7 @@ import styles from "./Navbar.module.css";
 
 import logo from "../../../img/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import navLinks, { settingsLink, userLink } from "./NavLinks.js";
+import navLinks, { userLink } from "./NavLinks.js";
 
 function Navbar() {
   const navRef = useRef(null);
@@ -79,16 +79,7 @@ function Navbar() {
       </div>
 
       <div className={styles.bottomNav}>
-        <NavLink
-          to={settingsLink.to}
-          className={({ isActive }) =>
-            isActive
-              ? `${styles.bottomLink} ${styles.activeBottom}`
-              : styles.bottomLink
-          }
-        >
-          <FontAwesomeIcon icon={settingsLink.icon} />
-        </NavLink>
+  
 
         <div className={styles.userMenuContainer}>
           <button

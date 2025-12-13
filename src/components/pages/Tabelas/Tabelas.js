@@ -10,11 +10,9 @@ function Tabelas() {
   const navigate = useNavigate();
   const [dados, setDados] = useState([]);
   const [busca, setBusca] = useState("");
-  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true); // --- MUDANÇA 2: Adicionar estado de loading
   const [error, setError] = useState(null); // --- MUDANÇA 3: Adicionar estado de erro
 
-  const toggleModal = () => setShowModal((prev) => !prev);
 
   const formatarTelefone = (telefone) => {
     // ... (seu código existente)
@@ -217,9 +215,6 @@ function Tabelas() {
           <FontAwesomeIcon icon={faSearch} className={styles.iconSearch} />
         </button>
       </div>
-      <button className={styles.filterBtn} onClick={toggleModal}>
-        Filtrar
-      </button>
     </div>
   );
 
@@ -376,22 +371,7 @@ function Tabelas() {
     );
   };
 
-  return (
-    <div className={styles.container}>
-      {renderTable()}
-      {showModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h3>Filtros</h3>
-            <p>Configurações de filtro serão adicionadas aqui.</p>
-            <button className={styles.closeBtn} onClick={toggleModal}>
-              Fechar
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+
 }
 
 export default Tabelas;

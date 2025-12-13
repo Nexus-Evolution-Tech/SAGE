@@ -55,7 +55,7 @@
 }
 
 .iconButton {
-  color: var(--red);
+  color: var(--blue);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -86,7 +86,7 @@
 }
 
 .cardTitle {
-  color: var(--red);
+  color: var(--blue);
   font-size: 1.2em;
   margin-bottom: 5px;
   text-align: center;
@@ -138,7 +138,7 @@
 .formContainer h2 {
   margin-top: 0;
   text-align: center;
-  color: var(--red);
+  color: var(--blue);
 }
 
 .formContainer form {
@@ -162,7 +162,7 @@
 }
 
 .formContainer button[type="submit"] {
-  background-color: var(--red);
+  background-color: var(--blue);
   color: white;
 }
 
@@ -223,6 +223,14 @@
   padding-top: 1rem;
 }
 
+.testContainerRow{
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 1rem;
+  padding-top: .5rem;
+}
+
 .testButtonsRow {
   display: flex;
   align-items: center;
@@ -238,8 +246,27 @@
 
 
 
-.status {
+/* Estrutura base do status */
+.statusBase {
+  border: 1px solid #000;
+  padding: .3rem .5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  text-transform: capitalize; /* Opcional: deixa a primeira letra maiúscula */
+}
+
+/* Status Offline (Vermelho) */
+.statusOffline {
   color: red;
+  border-color: red;
+  background-color: rgba(255, 0, 0, 0.05);
+}
+
+/* Status Online (Verde) */
+.statusOnline {
+  color: green;
+  border-color: green;
+  background-color: rgba(0, 128, 0, 0.05);
 }
 
 .reloadButton {
@@ -291,4 +318,3 @@
   background-position: right 10px center;
   background-size: 18px;
 }
-

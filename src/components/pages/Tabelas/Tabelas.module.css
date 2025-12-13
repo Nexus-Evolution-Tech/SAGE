@@ -44,7 +44,7 @@
 
 .verMais:hover,
 .filterBtn:hover {
-  background-color: var(--red);
+  background-color: var(--blue);
 }
 
 .searchContainer{

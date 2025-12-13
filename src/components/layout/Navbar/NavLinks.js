@@ -7,11 +7,9 @@ const navLinks = [
   { to: "/dispositivos", label: "Dispositivos", icon: faGlobe },
   { to: "/areas", label: "Áreas", icon: faClock },
   { to: "/horarios", label: "Horários", icon: faFileLines },
-  { to: "/regras", label: "Regras", icon: faFileLines },
   { to: "/relatorios", label: "Relatórios", icon: faChartSimple },
 ];
 
-export const settingsLink = { to: "/settings", icon: faCog };
 export const userLink = { to: "/profile", icon: faUser };
 
 export default navLinks;

@@ -10,7 +10,6 @@ import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import Pessoas from "./components/pages/Pessoas/Pessoas";
 import Departamentos from "./components/pages/Departamentos/Departamentos";
 import Dispositivos from "./components/pages/Dispositivos/Dispositivos";
-import Settings from "./components/pages/Settings/Settings";
 import Container from "./components/layout/Container/Container";
 import Navbar from "./components/layout/Navbar/Navbar";
 import Footer from "./components/layout/Footer/Footer";
@@ -57,7 +56,6 @@ function AppContent() {
               <Route path="/inicio" element={<Inicio />} />
               <Route path="/departamentos" element={<Departamentos />} />
               <Route path="/dispositivos" element={<Dispositivos />} />
-              <Route path="/settings" element={<Settings />} />
               <Route path="/monitoramento" element={<Monitoramento />} />
               <Route path="/tabelas/:tipo" element={<Tabelas />} />
               <Route path="/tabelas/:tipo/:turmaId" element={<Tabelas />} />

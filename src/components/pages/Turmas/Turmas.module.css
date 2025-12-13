@@ -27,7 +27,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--red, #2e5bff);
+  background-color: var(--blue, #2e5bff);
   color: #fff;
   padding: 15px 20px;
   margin-top: 1rem;
@@ -40,7 +40,7 @@
 
 .verMais {
   background-color: #fff;
-  color: var(--red, #2e5bff);
+  color: var(--blue, #2e5bff);
   border: 2px solid #fff;
   padding: 8px 16px;
   font-weight: bold;
@@ -80,7 +80,7 @@
 }
 
 .verBtn {
-  background-color: var(--red, #2e5bff);
+  background-color: var(--blue, #2e5bff);
   color: #fff;
   border: none;
   padding: 8px 14px;

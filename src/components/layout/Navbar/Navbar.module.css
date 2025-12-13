@@ -126,11 +126,11 @@
 }
 
 .bottomLink:hover {
-  color: var(--red);
+  color: var(--blue);
 }
 
 .activeBottom {
-  color: var(--red);
+  color: var(--blue);
 }
 
 .userMenuContainer {

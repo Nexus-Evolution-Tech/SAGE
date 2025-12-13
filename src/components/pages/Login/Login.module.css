@@ -68,7 +68,7 @@ body {
 
 .input:focus {
   background: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 0 2px var(--red, #e53e3e);
+  box-shadow: 0 0 0 2px var(--blue, #e53e3e);
 }
 
 .btn {

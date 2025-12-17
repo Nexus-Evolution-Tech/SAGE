@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import styles from "./Departamentos.module.css";
 import {
   faPlus,
@@ -29,13 +30,119 @@ function Departamentos() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState("");
 
-  const [dados, setDados] = useState({
+  const navigate = useNavigate();
+
+  // ============================================
+  // REACT QUERY - Buscar dados com cache persistente
+  // ============================================
+  const { data: dados = {
     turmas: [],
     professores: [],
     administracao: [],
     terceirizados: [],
+  }, isLoading, error } = useQuery({
+    queryKey: ['departamentos'],
+    queryFn: async () => {
+      const abortController = new AbortController();
+      
+      try {
+        const tipos = [
+          { key: "turmas", url: "ALUNO" },
+          { key: "professores", url: "PROFESSOR" },
+          { key: "profadm", url: "PROFADM" },
+          { key: "administracao", url: "ADMINISTRADOR" },
+          { key: "terceirizados", url: "TERCEIRIZADO" },
+        ];
+
+        const resultado = {
+          turmas: [],
+          professores: [],
+          administracao: [],
+          terceirizados: [],
+        };
+
+        // Processar tipos SEQUENCIALMENTE para evitar stall
+        for (const { key, url } of tipos) {
+          if (abortController.signal.aborted) {
+            console.log('Busca cancelada');
+            return resultado;
+          }
+
+          const json = await api.get(`/pessoas/tipo/${url}`);
+          const pessoas = json.data || json;
+
+          if (!Array.isArray(pessoas)) {
+            console.error(
+              `A API para /pessoas/tipo/${url} não retornou um array.`,
+              pessoas
+            );
+            continue;
+          }
+
+          if (key === "profadm") {
+            const pessoasComFlag = pessoas.map((p) => ({
+              ...p,
+              trabalhaNaADM: true,
+            }));
+            resultado.professores.push(...pessoasComFlag);
+            continue;
+          }
+
+          if (key === "professores") {
+            const pessoasComFlag = pessoas.map((p) => ({
+              ...p,
+              trabalhaNaADM: false,
+            }));
+            
+            // Buscar fotos em PARALELO
+            const pessoasComFoto = await Promise.all(
+              pessoasComFlag.slice(0, 3).map(async (pessoa) => {
+                const foto = await buscarFoto(pessoa.id);
+                return { ...pessoa, foto };
+              })
+            );
+            
+            resultado.professores.push(...pessoasComFoto);
+            continue;
+          }
+
+          // Buscar fotos e empresas em PARALELO
+          const pessoasComFoto = await Promise.all(
+            pessoas.slice(0, 3).map(async (pessoa) => {
+              const foto = await buscarFoto(pessoa.id);
+
+              let empresaNome = "";
+              if (key === "terceirizados" && pessoa.empresa_id) {
+                try {
+                  const jsonEmpresa = await api.get(
+                    `/empresas/${pessoa.empresa_id}`
+                  );
+                  empresaNome = Array.isArray(jsonEmpresa)
+                    ? jsonEmpresa[0]?.nome || ""
+                    : jsonEmpresa.nome || "";
+                } catch (err) {
+                  console.error("Erro ao buscar empresa:", err);
+                }
+              }
+
+              return { ...pessoa, foto, empresa: empresaNome };
+            })
+          );
+
+          resultado[key] = pessoasComFoto;
+        }
+
+        return resultado;
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error("Erro ao buscar dados:", error);
+        }
+        throw error;
+      }
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutos - mesmo do ReactQueryProvider
+    gcTime: 1000 * 60 * 15, // 15 minutos
   });
-  const navigate = useNavigate();
 
   const formatarData = (dataISO) => {
     if (!dataISO) return "";
@@ -64,93 +171,7 @@ function Departamentos() {
     }
   };
 
-  useEffect(() => {
-    const buscarDados = async () => {
-      try {
-        const tipos = [
-          { key: "turmas", url: "ALUNO" },
-          { key: "professores", url: "PROFESSOR" },
-          { key: "profadm", url: "PROFADM" },
-          { key: "administracao", url: "ADMINISTRADOR" },
-          { key: "terceirizados", url: "TERCEIRIZADO" },
-        ];
 
-        const resultado = {
-          turmas: [],
-          professores: [],
-          administracao: [],
-          terceirizados: [],
-        };
-
-        for (const { key, url } of tipos) {
-          const json = await api.get(`/pessoas/tipo/${url}`);
-          const pessoas = json.data || json;
-
-          if (!Array.isArray(pessoas)) {
-            console.error(
-              `A API para /pessoas/tipo/${url} não retornou um array.`,
-              pessoas
-            );
-            continue;
-          }
-
-          if (key === "profadm") {
-            const pessoasComFlag = pessoas.map((p) => ({
-              ...p,
-              trabalhaNaADM: true,
-            }));
-            resultado.professores.push(...pessoasComFlag);
-            continue;
-          }
-
-          if (key === "professores") {
-            const pessoasComFlag = pessoas.map((p) => ({
-              ...p,
-              trabalhaNaADM: false,
-            }));
-            const pessoasComFoto = await Promise.all(
-              pessoasComFlag.slice(0, 3).map(async (pessoa) => {
-                const foto = await buscarFoto(pessoa.id);
-                return { ...pessoa, foto };
-              })
-            );
-            resultado.professores.push(...pessoasComFoto);
-            continue;
-          }
-
-          const pessoasComFoto = await Promise.all(
-            pessoas.slice(0, 3).map(async (pessoa) => {
-              const foto = await buscarFoto(pessoa.id);
-
-              let empresaNome = "";
-              if (key === "terceirizados" && pessoa.empresa_id) {
-                try {
-                  const jsonEmpresa = await api.get(
-                    `/empresas/${pessoa.empresa_id}`
-                  );
-                  empresaNome = Array.isArray(jsonEmpresa)
-                    ? jsonEmpresa[0]?.nome || ""
-                    : jsonEmpresa.nome || "";
-                } catch (err) {
-                  console.error("Erro ao buscar empresa:", err);
-                }
-              }
-
-              return { ...pessoa, foto, empresa: empresaNome };
-            })
-          );
-
-          resultado[key] = pessoasComFoto;
-        }
-
-        setDados(resultado);
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-      }
-    };
-
-    buscarDados();
-  }, []);
 
   const handleFileSelect = (file) => {
     if (file) {
@@ -435,9 +456,8 @@ function Departamentos() {
   return (
     <div className={styles.container}>
       <div className={styles.titleContainer}>
-        <div className={styles.div}></div>
         <h1 className={styles.title}>Departamentos</h1>
-        <div style={{ position: "relative", gap: "1rem", display: "flex" }}>
+        <div style={{ position: "relative", gap: "1rem", display: "flex", marginLeft: "auto" }}>
           <button
             className={styles.addPeople}
             onClick={() => setMostrarOpcoes(!mostrarOpcoes)}
@@ -699,14 +719,28 @@ function Departamentos() {
         </div>
       </div>
 
-      <Section
-        title="Turmas"
-        subtitle="Tabela dos Alunos do 1º Ano A"
-        tipo="turmas"
-        columns={[
-          "Nome",
-          "Foto",
-          "RM",
+      {isLoading && (
+        <div className={styles.loadingContainer} style={{ textAlign: "center", padding: "2rem" }}>
+          <p>Carregando dados...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className={styles.errorContainer} style={{ textAlign: "center", padding: "2rem", color: "red" }}>
+          <p>Erro ao carregar dados: {error.message}</p>
+        </div>
+      )}
+
+      {!isLoading && !error && (
+        <>
+          <Section
+            title="Turmas"
+            subtitle="Tabela dos Alunos do 1º Ano A"
+            tipo="turmas"
+            columns={[
+              "Nome",
+              "Foto",
+              "RM",
           "Email Institucional",
           "Telefone",
           "Data de Nascimento",
@@ -760,6 +794,8 @@ function Departamentos() {
         ]}
         data={dados.terceirizados}
       />
+        </>
+      )}
     </div>
   );
 }

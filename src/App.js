@@ -27,6 +27,8 @@ import Horarios from "./components/pages/Horarios/Horarios";
 import Areas from "./components/pages/Areas/Areas";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
+import { ReactQueryProvider } from './contexts/ReactQueryProvider';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 
 function AppContent() {
   const location = useLocation();
@@ -79,8 +81,12 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AuthInterceptor />
-      <AppContent />
+      <ReactQueryProvider>
+        <WebSocketProvider>
+          <AuthInterceptor />
+          <AppContent />
+        </WebSocketProvider>
+      </ReactQueryProvider>
     </Router>
   );
 }

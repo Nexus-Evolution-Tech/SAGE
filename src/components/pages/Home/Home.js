@@ -2,17 +2,130 @@ import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons"; 
 import userPlaceholder from "../../../img/user.png";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api";
+import { useWebSocket } from "../../../hooks/useWebSocket";
+import useMonitoringStore from "../../../stores/monitoringStore";
+import { shallow } from "zustand/shallow";
 
 function Monitoramento() {
-  const [accessLogs, setAccessLogs] = useState([]);
-  const [latestAccess, setLatestAccess] = useState(null);
   const [currentDateTime, setCurrentDateTime] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  const recentAccesses = useMonitoringStore((state) => state.recentAccesses, shallow);
+
+  // Enriquecer dados de acesso com foto/nome
+  const enrichAccess = useCallback(async (acesso) => {
+    const baseAccess = {
+      ...acesso,
+      area: "Portaria Principal",
+      dispositivo: "Catraca Esquerda (IDBlock)",
+      autorizacao: acesso.permitido ? "Acesso autorizado" : "Acesso negado",
+      status: acesso.permitido ? "authorized" : "denied",
+      dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
+    };
+
+    if (!acesso.pessoa_id) {
+      return {
+        ...baseAccess,
+        nome: "Visitante/Desconhecido",
+        foto: userPlaceholder,
+        perfil: "N/A",
+      };
+    }
+
+    try {
+      const [pessoa, fotoData] = await Promise.all([
+        api.get(`/pessoas/${acesso.pessoa_id}`),
+        api.get(`/pessoas/url/${acesso.pessoa_id}`),
+      ]);
+
+      return {
+        ...baseAccess,
+        nome: pessoa.nome || "Nome não encontrado",
+        foto: fotoData.url || userPlaceholder,
+        perfil: pessoa.perfil || "Perfil não informado",
+      };
+    } catch (error) {
+      console.error(
+        `Erro ao buscar dados para pessoa_id ${acesso.pessoa_id}:`,
+        error
+      );
+      return {
+        ...baseAccess,
+        nome: "Erro ao carregar dados",
+        foto: userPlaceholder,
+        perfil: "Erro",
+      };
+    }
+  }, []);
+
+  // Carregar acessos iniciais via React Query e preencher o store
+  const {
+    data,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["home", "acessos"],
+    queryFn: async () => {
+      const acessosResponse = await api.get("/acessos?page=1&limit=50");
+
+      if (!acessosResponse.data || !Array.isArray(acessosResponse.data)) {
+        throw new Error("Formato de resposta inesperado da API.");
+      }
+
+      const acessosArray = acessosResponse.data.sort((a, b) => {
+        return new Date(b.data_hora) - new Date(a.data_hora);
+      });
+
+      const enrichedAccesses = await Promise.all(
+        acessosArray.map(enrichAccess)
+      );
+      return enrichedAccesses;
+    },
+    staleTime: 10000, // 10 segundos para permitir updates rápidos
+    gcTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    refetchInterval: 3000, // polling a cada 3s garante updates rápidos
+    onSuccess: (enriched) => {
+      useMonitoringStore.getState().setRecentAccesses(enriched);
+    },
+  });
+
+  // WebSocket para receber novos acessos em tempo real
+  const onAccess = useCallback(
+    async (data) => {
+      console.log("[Home] acesso:novo recebido", data);
+      const enriched = await enrichAccess(data);
+      useMonitoringStore.getState().addRecentAccess(enriched);
+    },
+    [enrichAccess]
+  );
+
+  // Memorizar opções para evitar recriar objeto e resubscrever desnecessariamente
+  const wsOptions = useMemo(
+    () => ({
+      autoSubscribeAccess: true,
+      onAccess,
+    }),
+    [onAccess]
+  );
+
+  // Mantém WebSocket para receber acessos, mas não exibe status separado
+  useWebSocket(wsOptions);
+
+  // Health check da API (badge verde/vermelho)
+  const { isError: apiError } = useQuery({
+    queryKey: ["health"],
+    queryFn: async () => {
+      await api.get("/health");
+      return true;
+    },
+    refetchInterval: 5000, // 5s para acompanhar estado da API em tempo real
+    staleTime: 4000,
+    retry: 1,
+  });
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -26,124 +139,49 @@ function Monitoramento() {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    
-    async function enrichAccess(acesso) {
-      const baseAccess = {
-        ...acesso,
-        area: "Portaria Principal",
-        dispositivo: "Catraca Esquerda (IDBlock)",
-        autorizacao: acesso.permitido ? "Acesso autorizado" : "Acesso negado",
-        status: acesso.permitido ? "authorized" : "denied",
-        dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
-      };
+  // Se o store ainda não tem dados, usa o resultado da query para renderizar imediatamente
+  const fallbackAccesses = data || [];
+  const effectiveAccesses = recentAccesses.length > 0 ? recentAccesses : fallbackAccesses;
 
-      if (!acesso.pessoa_id) {
-        return {
-          ...baseAccess,
-          nome: "Visitante/Desconhecido",
-          foto: userPlaceholder,
-          perfil: "N/A",
-        };
-      }
+  const latestAccess = effectiveAccesses[0];
+  const accessLogs = effectiveAccesses.slice(1);
 
-      try {
-
-        const [pessoa, fotoData] = await Promise.all([
-          api.get(`/pessoas/${acesso.pessoa_id}`),
-          api.get(`/pessoas/url/${acesso.pessoa_id}`),
-        ]);
-
-        return {
-          ...baseAccess,
-          nome: pessoa.nome || "Nome não encontrado",
-          foto: fotoData.url || userPlaceholder,
-          perfil: pessoa.perfil || "Perfil não informado",
-        };
-      } catch (error) {
-
-        console.error(
-          `Erro ao buscar dados para pessoa_id ${acesso.pessoa_id}:`,
-          error
-        );
-        return {
-          ...baseAccess,
-          nome: "Erro ao carregar dados",
-          foto: userPlaceholder,
-          perfil: "Erro",
-        };
-      }
-    }
-
-    // Esta função busca a lista principal de acessos
-    async function fetchAccesses() {
-      try {
-        setError(null);
-        setLoading(true);
-
-        // ==========================================================
-        // 3. SUBSTITUIR 'FETCH' POR 'API.GET'
-        //    (Adicionando paginação como boa prática)
-        // ==========================================================
-        const acessosResponse = await api.get("/acessos?page=1&limit=20");
-        // ==========================================================
-
-        if (!acessosResponse.data || !Array.isArray(acessosResponse.data)) {
-          throw new Error("Formato de resposta inesperado da API.");
-        }
-
-        const acessosArray = acessosResponse.data;
-
-        // Ordena o array pelos dados originais (mais recente primeiro)
-        const sortedArray = acessosArray.sort((a, b) => {
-          return new Date(b.data_hora) - new Date(a.data_hora);
-        });
-
-        // Executa todas as promessas de "enriquecimento" em paralelo
-        const enrichedAccesses = await Promise.all(
-          sortedArray.map(enrichAccess)
-        );
-
-        if (enrichedAccesses.length > 0) {
-          setLatestAccess(enrichedAccesses[0]);
-          setAccessLogs(enrichedAccesses.slice(1));
-        }
-      } catch (error) {
-        console.error("Erro ao buscar acessos:", error);
-        // O api.js já redireciona se for 401,
-        // aqui tratamos outros erros (ex: 500, 404)
-        setError("Falha ao carregar acessos. Verifique a API.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchAccesses();
-  }, []); // Dependência vazia, busca apenas uma vez
-
-  // Renderização condicional para Loading e Erro
-  if (loading) {
-    return (
-      <div className={styles.monitoramentoContainer}>
-        <h1 className={styles.pageTitle}>Monitoramento</h1>
-        <p>Carregando dados...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={styles.monitoramentoContainer}>
-        <h1 className={styles.pageTitle}>Monitoramento</h1>
-        <p style={{ color: "red" }}>{error}</p>
-      </div>
-    );
-  }
+  const isLoadingState = isLoading && effectiveAccesses.length === 0;
 
   // Renderização principal
   return (
     <div className={styles.monitoramentoContainer}>
-      <h1 className={styles.pageTitle}>Monitoramento</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+        <h1 className={styles.pageTitle}>Monitoramento</h1>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            fontSize: "0.95rem",
+            color: apiError ? "#d93025" : "#0f9d58",
+          }}
+        >
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              background: apiError ? "#d93025" : "#0f9d58",
+              boxShadow: apiError ? "0 0 6px #d93025" : "0 0 6px #0f9d58",
+            }}
+          />
+          {apiError ? "API offline" : "API online"}
+        </span>
+      </div>
+
+      {isLoadingState && (
+        <p>Carregando dados...</p>
+      )}
+
+      {error && !isLoadingState && (
+        <p style={{ color: "red" }}>Erro ao carregar dados: {error.message || error}</p>
+      )}
       {/* Exibe o relógio (opcional) */}
       {/* <p>{currentDateTime}</p> */}
 

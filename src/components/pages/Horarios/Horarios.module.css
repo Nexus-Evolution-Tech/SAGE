@@ -1,0 +1,162 @@
+.container {
+  padding: 20px;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  font-family: 'Roboto', sans-serif;
+  margin-left: 200px;
+}
+
+.pageTitle {
+  text-align: center;
+  color: #002e5d; /* Azul escuro institucional */
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  font-weight: bold;
+}
+
+.turmaSection {
+  margin-bottom: 40px;
+}
+
+.turmaTitle {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  margin-left: 5px;
+  border-left: 4px solid #002e5d;
+  padding-left: 10px;
+}
+
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  width: 1000px;
+}
+
+.cardHeader {
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.cardHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #555;
+  font-weight: bold;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.tableResponsive {
+  overflow-x: auto;
+}
+
+.scheduleTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.scheduleTable th,
+.scheduleTable td {
+  padding: 12px 10px;
+  text-align: center;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
+}
+
+.scheduleTable th {
+  background-color: #f9f9f9;
+  color: #444;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.firstCol {
+  background-color: #f4f4f4;
+  width: 120px;
+}
+
+.dayCol {
+  background-color: #f8f8f8;
+  font-weight: bold;
+  color: #555;
+  text-transform: capitalize;
+}
+
+.slotCell {
+  min-width: 100px;
+}
+
+.emptySlot {
+  color: #ccc;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.aulaInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.materiaNome {
+  font-weight: bold;
+  color: #444;
+  background-color: #eef2f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: block;
+  width: 100%;
+}
+
+.divisaoTag {
+  font-size: 0.7rem;
+  color: #d9534f;
+  font-weight: bold;
+}
+
+.actionsFooter {
+    padding: 15px;
+    background-color: #fff;
+}
+
+.btnAdd {
+  background-color: #6c8ebf; /* Azul acinzentado da foto */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.btnAdd:hover {
+  background-color: #5a7aa6;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+  color: #666;
+}

@@ -508,6 +508,9 @@ function Departamentos() {
                   <button onClick={() => navigate("/adicionar/ALUNO")}>
                     Aluno
                   </button>
+                  <button onClick={() => navigate("/adicionar/RESPONSAVEL")}>
+                    Responsável
+                  </button>
                   <button onClick={() => navigate("/adicionar/PROFESSOR")}>
                     Professor
                   </button>

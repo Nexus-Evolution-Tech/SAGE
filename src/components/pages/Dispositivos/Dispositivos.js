@@ -9,6 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { api } from "../../../services/api";
+import SkeletonLoader from "../../common/SkeletonLoader";
 
 function Dispositivos() {
   const [dispositivos, setDispositivos] = useState([]);
@@ -170,23 +171,29 @@ function Dispositivos() {
       </div>
 
       <div className={styles.cards}>
-        {dispositivos.map((dispositivo) => (
-          <div
-            key={dispositivo.id}
-            className={styles.cardContainer}
-            onClick={() => setSelectedDevice(dispositivo)}
-          >
-            <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
-            <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
-            <p className={styles.cardArea}>ID: {dispositivo.id}</p>
+        {dispositivos.length === 0 ? (
+          <SkeletonLoader type="card" count={4} />
+        ) : (
+          <>
+            {dispositivos.map((dispositivo) => (
+              <div
+                key={dispositivo.id}
+                className={styles.cardContainer}
+                onClick={() => setSelectedDevice(dispositivo)}
+              >
+                <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
+                <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
+                <p className={styles.cardArea}>ID: {dispositivo.id}</p>
 
-            {dispositivo.foto ? (
-              <img src={dispositivo.foto} alt={dispositivo.nome} />
-            ) : (
-              <img src={catracaPlaceholder} alt="catraca placeholder" />
-            )}
-          </div>
-        ))}
+                {dispositivo.foto ? (
+                  <img src={dispositivo.foto} alt={dispositivo.nome} />
+                ) : (
+                  <img src={catracaPlaceholder} alt="catraca placeholder" />
+                )}
+              </div>
+            ))}
+          </>
+        )}
 
         <div className={styles.buttonContainer}>
           <button

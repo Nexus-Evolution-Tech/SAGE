@@ -10,6 +10,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons"; 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "../../../services/api";
+import SkeletonLoader from "../../common/SkeletonLoader";
 
 function Departamentos() {
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
@@ -720,9 +721,7 @@ function Departamentos() {
       </div>
 
       {isLoading && (
-        <div className={styles.loadingContainer} style={{ textAlign: "center", padding: "2rem" }}>
-          <p>Carregando dados...</p>
-        </div>
+        <SkeletonLoader type="table" count={8} />
       )}
 
       {error && (

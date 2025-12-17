@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import styles from "./Turmas.module.css";
 import TableSection from "../../layout/Table/Table";
-import { api } from "../../../services/api"; // --- MUDANÇA 1: Importar a API
+import { api } from "../../../services/api";
+import SkeletonLoader from "../../common/SkeletonLoader"; // --- Adicionar Skeleton
 
 function Turmas() {
   const [dadosPorTurma, setDadosPorTurma] = useState({});
@@ -81,7 +82,7 @@ function Turmas() {
       <h1 className={styles.title}>Turmas</h1>
 
       {/* --- MUDANÇA 7: Renderizar estado de loading ou erro --- */}
-      {loading && <p className={styles.loadingMessage}>Carregando turmas...</p>}
+      {loading && <SkeletonLoader type="table" count={6} />}
       {error && <p className={styles.errorMessage}>{error}</p>}
 
       {!loading &&

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import useMonitoringStore from "../../../stores/monitoringStore";
+import SkeletonLoader from "../../common/SkeletonLoader";
 import { shallow } from "zustand/shallow";
 
 function Monitoramento() {
@@ -176,7 +177,7 @@ function Monitoramento() {
       </div>
 
       {isLoadingState && (
-        <p>Carregando dados...</p>
+        <SkeletonLoader type="feed" count={5} />
       )}
 
       {error && !isLoadingState && (
@@ -212,56 +213,60 @@ function Monitoramento() {
 
       {/* Tabela de Logs */}
       <div className={styles.tableContainer}>
-        <table className={styles.accessTable}>
-          <thead>
-            <tr>
-              <th>Foto</th>
-              <th>Data e Hora</th>
-              <th>Perfil</th>
-              <th>Área</th>
-              <th>Dispositivo</th>
-              <th>Autorização</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accessLogs.slice(0, itemsPerPage).map((log) => (
-              <tr key={log.id}>
-                <td>
-                  <img
-                    src={log.foto || userPlaceholder}
-                    alt="Foto"
-                    style={{
-                      width: "80px",
-                      height: "80px",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </td>
-                <td>{log.dataHora}</td>
-                <td>
-                  <p className={styles.profileName}>{log.nome}</p>
-                  <p className={styles.profileSubtitle}>{log.perfil}</p>
-                </td>
-                <td>{log.area}</td>
-                <td>{log.dispositivo}</td>
-                <td>
-                  <span
-                    className={`${styles.statusBadge} ${styles[log.status]}`}
-                  >
-                    {log.autorizacao}
-                    {log.status === "denied" && (
-                      <FontAwesomeIcon
-                        icon={faTimes}
-                        className={styles.deniedIcon}
-                      />
-                    )}
-                  </span>
-                </td>
+        {isLoading ? (
+          <SkeletonLoader type="table" count={itemsPerPage} />
+        ) : (
+          <table className={styles.accessTable}>
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>Data e Hora</th>
+                <th>Perfil</th>
+                <th>Área</th>
+                <th>Dispositivo</th>
+                <th>Autorização</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {accessLogs.slice(0, itemsPerPage).map((log) => (
+                <tr key={log.id}>
+                  <td>
+                    <img
+                      src={log.foto || userPlaceholder}
+                      alt="Foto"
+                      style={{
+                        width: "80px",
+                        height: "80px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  </td>
+                  <td>{log.dataHora}</td>
+                  <td>
+                    <p className={styles.profileName}>{log.nome}</p>
+                    <p className={styles.profileSubtitle}>{log.perfil}</p>
+                  </td>
+                  <td>{log.area}</td>
+                  <td>{log.dispositivo}</td>
+                  <td>
+                    <span
+                      className={`${styles.statusBadge} ${styles[log.status]}`}
+                    >
+                      {log.autorizacao}
+                      {log.status === "denied" && (
+                        <FontAwesomeIcon
+                          icon={faTimes}
+                          className={styles.deniedIcon}
+                        />
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

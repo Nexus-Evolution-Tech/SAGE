@@ -5,6 +5,38 @@
   gap: 2rem;
   width: 1200px;
   padding-left: 200px;
+  padding-top: 96px;
+}
+
+.pageHeader {
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 40px;
+  background: #f7f9fb;
+  z-index: 50;
+  border-bottom: 1px solid #e1e7ef;
+}
+
+.pageTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pageBreadcrumb {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.pageMainTitle {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 1.4rem;
 }
 
 .fotoSection {

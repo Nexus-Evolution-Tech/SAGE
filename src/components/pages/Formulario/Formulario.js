@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import styles from "./Formulario.module.css";
-import { api } from "../../../services/api"; 
+import { api } from "../../../services/api";
 
 function Formulario() {
   const { id } = useParams();
@@ -20,6 +20,7 @@ function Formulario() {
   const [showCamera, setShowCamera] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [novaFoto, setNovaFoto] = useState(null);
+  const [cameraStream, setCameraStream] = useState(null);
 
   const [todasTurmas, setTodasTurmas] = useState([]);
   const statusOptions = [
@@ -36,14 +37,42 @@ function Formulario() {
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
   ];
+  const periodoOptions = [
+    { value: "MANHA", label: "Manhã" },
+    { value: "TARDE", label: "Tarde" },
+    { value: "NOITE", label: "Noite" },
+    { value: "INTEGRAL", label: "Integral" },
+  ];
 
   const fileInputRef = useRef();
   const videoRef = useRef();
   const canvasRef = useRef();
 
   const formatarTelefone = (tel) => {
+    if (!tel) return "";
+    const digits = String(tel).replace(/\D/g, "");
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 6) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    }
+    if (digits.length <= 10) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`.trim();
+    }
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`.trim();
   };
   const formatarData = (data) => {
+    if (!data) return "";
+    const parsed = new Date(data);
+    if (Number.isNaN(parsed.getTime())) return data;
+    return parsed.toLocaleDateString("pt-BR");
+  };
+
+  const toDateInputValue = (data) => {
+    if (!data) return "";
+    const parsed = new Date(data);
+    if (Number.isNaN(parsed.getTime())) return "";
+    const tzOffset = parsed.getTimezoneOffset() * 60000;
+    return new Date(parsed.getTime() - tzOffset).toISOString().split("T")[0];
   };
 
   useEffect(() => {
@@ -82,6 +111,32 @@ function Formulario() {
             `/pessoas/tipo/responsavel?aluno_id=${id}`
           );
           setResponsavel(respData[0] || null);
+
+          if (!pessoaData.qr_code) {
+            try {
+              const novaCarteirinha = await api.post(`/pessoas/gerar_qrcode/${id}`, {});
+              const qrValue = novaCarteirinha?.qr_code || novaCarteirinha?.data?.qr_code;
+              if (qrValue) {
+                setPessoa((prev) => ({ ...prev, qr_code: qrValue }));
+                setFormData((prev) => ({ ...prev, qr_code: qrValue }));
+                setQrCode(qrValue);
+              }
+            } catch (err) {
+              console.error("Erro ao gerar carteirinha automaticamente:", err);
+            }
+          }
+
+          const anoLetivo = new Date().getFullYear();
+          setFormData((prev) => {
+            const next = { ...prev };
+            if (Object.prototype.hasOwnProperty.call(prev, "ano")) {
+              next.ano = anoLetivo;
+            }
+            if (Object.prototype.hasOwnProperty.call(prev, "ano_letivo")) {
+              next.ano_letivo = anoLetivo;
+            }
+            return next;
+          });
         } else if (
           pessoaData.tipo === "TERCEIRIZADO" &&
           pessoaData.empresa_id
@@ -103,24 +158,18 @@ function Formulario() {
     fetchData();
   }, [id]);
 
-  const handleInputChange = (campo, valor) => {
-    setFormData((prev) => ({ ...prev, [campo]: valor }));
-  };
-
-  const handleUpload = async (file) => {
-    if (!file) return;
-    const formDataUpload = new FormData();
-    formDataUpload.append("foto", file);
-
-    try {
-      await api.postFormData(`/pessoas/upload/${id}`, formDataUpload);
-
-      const data = await api.get(`/pessoas/url/${id}`);
-      setFotoUrl(data.url || "foto_exemplo.png");
-      console.log("Foto atualizada com sucesso!");
-    } catch (error) {
-      console.error("Erro ao enviar a foto:", error);
+  useEffect(() => () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
     }
+  }, [cameraStream]);
+
+  const handleInputChange = (campo, valor) => {
+    let proximoValor = valor;
+    if (campo.toLowerCase().includes("telefone")) {
+      proximoValor = formatarTelefone(valor);
+    }
+    setFormData((prev) => ({ ...prev, [campo]: proximoValor }));
   };
 
   const handleSelecionarArquivo = (e) => {
@@ -132,30 +181,69 @@ function Formulario() {
   };
 
   const iniciarCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setCameraStream(stream);
+      setShowCamera(true);
+    } catch (error) {
+      console.error("Erro ao iniciar câmera:", error);
+    }
   };
 
   const handleGerarQRCode = async () => {
     try {
       const updatedPessoa = await api.post(`/pessoas/gerar_qrcode/${id}`, {});
+      const qrValue = updatedPessoa?.qr_code || updatedPessoa?.data?.qr_code;
+      if (!qrValue) throw new Error("Erro ao gerar QR Code");
 
-      if (!updatedPessoa) throw new Error("Erro ao gerar QR Code");
-
-      setPessoa((prev) => ({ ...prev, qr_code: updatedPessoa.qr_code }));
-      setQrCode(updatedPessoa.qr_code);
+      setPessoa((prev) => ({ ...prev, qr_code: qrValue }));
+      setFormData((prev) => ({ ...prev, qr_code: qrValue }));
+      setQrCode(qrValue);
 
       setShowSuccessModal(true);
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      setTimeout(() => setShowSuccessModal(false), 1500);
     } catch (error) {
       console.error("Erro ao gerar QR Code:", error);
     }
   };
 
   const handleDownloadQRCode = () => {
+    const qrValue = pessoa?.qr_code || qrCode;
+    if (!qrValue) return;
+
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrValue)}`;
+    fetch(qrImageUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `carteirinha-${pessoa?.id || "aluno"}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((err) => console.error("Erro ao baixar QR Code:", err));
   };
   const tirarFoto = () => {
+    if (!canvasRef.current || !videoRef.current) return;
+    const context = canvasRef.current.getContext("2d");
+    context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+
+    canvasRef.current.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      setFotoUrl(url);
+      setNovaFoto(new File([blob], "foto.png", { type: blob.type }));
+    }, "image/png");
+
+    setShowCamera(false);
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
   };
 
   const handleSalvar = async () => {
@@ -183,17 +271,28 @@ function Formulario() {
 
   if (!pessoa) return <p className={styles.loading}>Carregando dados...</p>;
 
-  const renderCampo = (label, campo, valor, isReadOnly = false) => (
-    <div className={styles.inputGroup}>
-      <label>{label}</label>
-      <input
-        type="text"
-        value={valor || formData[campo] || ""}
-        readOnly={isReadOnly || !editMode || valor !== undefined}
-        onChange={(e) => handleInputChange(campo, e.target.value)}
-      />
-    </div>
-  );
+  const breadcrumbLabel = pessoa?.tipo === "ALUNO" ? "Departamentos / Alunos" : "Departamentos";
+
+  const renderCampo = (label, campo, valor, isReadOnly = false, type = "text") => {
+    const isDateField = type === "date";
+    const value = editMode
+      ? isDateField
+        ? toDateInputValue(formData[campo] || valor)
+        : formData[campo] ?? ""
+      : valor ?? formData[campo] ?? "";
+
+    return (
+      <div className={styles.inputGroup}>
+        <label>{label}</label>
+        <input
+          type={type}
+          value={value}
+          readOnly={isReadOnly || !editMode}
+          onChange={(e) => handleInputChange(campo, e.target.value)}
+        />
+      </div>
+    );
+  };
 
   const renderDropdown = (label, campo, options, displayValue) => {
     const currentDisplayValue = displayValue || formData[campo] || "";
@@ -249,11 +348,13 @@ function Formulario() {
               )}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo("Período", "turno", turnoNome)}
+              {renderDropdown("Período", "turno", periodoOptions, turnoNome)}
               {renderCampo(
                 "Data de Nascimento",
                 "data_nascimento",
-                formatarData(pessoa?.data_nascimento)
+                formatarData(pessoa?.data_nascimento),
+                false,
+                "date"
               )}
             </div>
 
@@ -448,6 +549,12 @@ function Formulario() {
 
   return (
     <div className={styles.cadastroContainer}>
+      <div className={styles.pageHeader}>
+        <div className={styles.pageTitles}>
+          <span className={styles.pageBreadcrumb}>{breadcrumbLabel}</span>
+          <h2 className={styles.pageMainTitle}>{pessoa?.nome || "Aluno"}</h2>
+        </div>
+      </div>
       <aside className={styles.fotoSection}>
         <h3 className={styles.subtitle}>Foto</h3>
         <img

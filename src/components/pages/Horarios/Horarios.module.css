@@ -14,6 +14,13 @@
   font-weight: bold;
 }
 
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
 .turmaSection {
   margin-bottom: 40px;
 }
@@ -188,6 +195,7 @@
   cursor: pointer;
   border-bottom: 1px solid #f2f2f2;
   font-size: 0.9rem;
+  color: #1f2d3d;
 }
 
 .popoverItemPrimary {
@@ -208,6 +216,13 @@
 
 .popoverItemActive {
   background: #e8f0fe;
+  color: #1f2d3d;
+  font-weight: 700;
+}
+
+.popoverItemActive:hover {
+  background: #e8f0fe;
+  color: #1f2d3d;
 }
 
 .popoverItemName {

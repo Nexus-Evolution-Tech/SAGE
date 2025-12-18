@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faSearch, faTrash, faEdit } from "@fortawesome/free-solid-svg-icons";
 import styles from "./Aulas.module.css";
+import BackButton from "../../layout/BackButton/BackButton";
 import {
   api,
   listarAulas,
@@ -18,6 +19,7 @@ function Aulas() {
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [deletingMateriaId, setDeletingMateriaId] = useState(null);
   const [editing, setEditing] = useState(null);
   const [professores, setProfessores] = useState([]);
   const [salas, setSalas] = useState([]);
@@ -145,6 +147,27 @@ function Aulas() {
     }
   };
 
+  const handleDeleteMateria = async (id) => {
+    if (!id) return;
+    const confirmed = window.confirm("Apagar esta matéria? As aulas que usam esta matéria precisarão ser atualizadas.");
+    if (!confirmed) return;
+
+    setDeletingMateriaId(id);
+    try {
+      await api.delete(`/materias/${id}`);
+      await loadMaterias();
+
+      setForm((prev) =>
+        String(prev.materiaId) === String(id) ? { ...prev, materiaId: "" } : prev
+      );
+    } catch (err) {
+      console.error("[Aulas] Erro ao apagar matéria:", err);
+      alert("Erro ao apagar matéria: " + (err.message || err));
+    } finally {
+      setDeletingMateriaId(null);
+    }
+  };
+
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Apagar esta aula? Os horários que usarem esta aula ficarão vazios."
@@ -221,8 +244,11 @@ function Aulas() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
+      <div className={styles.headerRow}>
+        <BackButton fallback="/horarios" />
         <h1 className={styles.title}>Catálogo de Aulas</h1>
+      </div>
+      <div className={styles.header}>
         <div className={styles.headerActions}>
           <div className={styles.searchBox}>
             <FontAwesomeIcon icon={faSearch} className={styles.searchIcon} />
@@ -309,6 +335,15 @@ function Aulas() {
                     }}
                   >
                     + Nova
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.deleteMateriaBtn}
+                    onClick={() => handleDeleteMateria(form.materiaId)}
+                    disabled={!form.materiaId || deletingMateriaId === form.materiaId}
+                    title="Apagar matéria selecionada"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
                   </button>
                 </div>
               </label>

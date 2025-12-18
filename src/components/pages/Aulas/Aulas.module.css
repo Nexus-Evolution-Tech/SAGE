@@ -11,6 +11,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 .title {
@@ -230,6 +231,30 @@
   background: #fff;
   border: 1px solid var(--blue, #007bff);
   color: var(--blue, #007bff);
+}
+
+.deleteMateriaBtn {
+  background: #fdecee;
+  color: #b42318;
+  border: 1px solid #f5c2c0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.deleteMateriaBtn:hover:enabled {
+  background: #f8d7da;
+  transform: translateY(-1px);
+}
+
+.deleteMateriaBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .modalActions {

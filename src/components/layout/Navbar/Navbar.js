@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Navbar.module.css";
 
 import logo from "../../../img/logo.png";
@@ -9,6 +9,7 @@ import navLinks, { userLink } from "./NavLinks.js";
 function Navbar() {
   const navRef = useRef(null);
   const navigate = useNavigate(); 
+  const location = useLocation();
 
   const [showUserModal, setShowUserModal] = useState(false);
   const userIconRef = useRef(null); 
@@ -49,6 +50,14 @@ function Navbar() {
     navigate("/login", { replace: true });
   };
 
+  const isSectionActive = (linkPath, matchPaths = []) => {
+    const paths = [linkPath, ...matchPaths];
+    return paths.some((path) => {
+      if (path === "/") return location.pathname === "/";
+      return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    });
+  };
+
   return (
     <nav className={styles.navbar} ref={navRef}>
       <NavLink to="/" className={styles.logoLink}>
@@ -67,7 +76,9 @@ function Navbar() {
               <NavLink
                 to={link.to}
                 className={({ isActive }) =>
-                  isActive ? styles.active : styles.inactive
+                  isActive || isSectionActive(link.to, link.match)
+                    ? styles.active
+                    : styles.inactive
                 }
               >
                 <FontAwesomeIcon icon={link.icon} className={styles.icon} />

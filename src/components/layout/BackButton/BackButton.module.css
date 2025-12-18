@@ -1,0 +1,23 @@
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--primary-color, #002e5d);
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.backButton:hover {
+  background: rgba(0, 46, 93, 0.08);
+  color: var(--primary-color, #002e5d);
+  transform: translateY(-1px);
+}
+
+.icon {
+  font-size: 0.95rem;
+}

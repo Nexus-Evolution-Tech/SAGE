@@ -10,7 +10,6 @@ import {
   atualizarHorario,
   validarHorario,
 } from "../../../services/api";
-
 const TIME_SLOTS = [
   { start: "07:30", end: "08:20", type: "aula" },
   { start: "08:20", end: "09:10", type: "aula" },
@@ -33,6 +32,7 @@ const DAYS_OF_WEEK = [
 ];
 
 const normalizeDay = (day) => (day || "").toUpperCase().replace("Ç", "C");
+
 const DIVISOES = [
   { value: "", label: "Nenhuma (INT)" },
   { value: "INT", label: "INT" },
@@ -56,17 +56,23 @@ function Horarios() {
   const popoverRef = useRef(null);
 
   useEffect(() => {
+    const normalizeHorariosList = (res) => {
+      const list = res?.data?.data || res?.data || res || [];
+      return Array.isArray(list) ? list : [];
+    };
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
         const horariosRes = await listarHorarios();
-        const dataHorarios = horariosRes?.data || horariosRes || [];
+        const dataHorarios = normalizeHorariosList(horariosRes);
 
         const turmasRes = await api.get("/turmas");
         const dataTurmas = turmasRes?.data?.data || turmasRes?.data || turmasRes || [];
 
-        setHorarios(Array.isArray(dataHorarios) ? dataHorarios : []);
+
+  setHorarios(dataHorarios);
         setTurmas(Array.isArray(dataTurmas) ? dataTurmas : []);
       } catch (err) {
         setError("Erro ao carregar dados.");
@@ -119,26 +125,69 @@ function Horarios() {
 
   const getAulaForSlot = (turmaAulas, day, slotStart, slotEnd) => {
     const dayNormalized = normalizeDay(day);
-    return turmaAulas.find((aula) => {
-      // Suportar tanto formato antigo (inicio/fim) quanto novo (horario)
-      let aulaInicio, aulaFim;
 
-      if (aula.horario) {
-        // Formato novo: "07:00-07:50"
+    const normalizeTime = (time) => {
+      const str = String(time || "").replace(/\s+/g, "").replace(/-/g, "-");
+      const match = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (!match) return "";
+      const h = match[1].padStart(2, "0");
+      const m = match[2];
+      return `${h}:${m}`;
+    };
+
+    const isSameDay = (aulaDay) => {
+      const normalized = normalizeDay(aulaDay);
+      const checkDay = normalized
+        .replace("-FEIRA", "")
+        .replace("ÇA", "CA")
+        .substring(0, 5);
+      const checkDayNorm = dayNormalized
+        .replace("-FEIRA", "")
+        .replace("ÇA", "CA")
+        .substring(0, 5);
+      return checkDay === checkDayNorm || checkDay.includes(checkDayNorm) || checkDayNorm.includes(checkDay);
+    };
+
+    const slotStartNorm = normalizeTime(slotStart);
+    const slotEndNorm = normalizeTime(slotEnd);
+
+    const toMinutes = (val) => {
+      const [hh = "0", mm = "0"] = val.split(":");
+      return Number(hh) * 60 + Number(mm);
+    };
+
+    const foundAula = turmaAulas.find((aula) => {
+      let aulaInicio = "";
+      let aulaFim = "";
+
+      // Tentar formato novo: "07:00-07:50" ou "07:30:00-08:20:00"
+      if (aula.horario && aula.horario.includes("-")) {
         const [inicio, fim] = aula.horario.split("-");
-        aulaInicio = inicio;
-        aulaFim = fim;
+        aulaInicio = normalizeTime(inicio);
+        aulaFim = normalizeTime(fim);
+      } else if (aula.horario) {
+        // Se horario existe mas é só uma hora (ex: "07:30:00")
+        // Tenta campo inicio/fim separados
+        aulaInicio = normalizeTime(aula.horario || aula.inicio);
+        aulaFim = normalizeTime(aula.fim || aula.hora_fim);
       } else {
-        // Formato antigo
-        aulaInicio = (aula.inicio || "").substring(0, 5);
-        aulaFim = (aula.fim || "").substring(0, 5);
+        // Formato antigo: campos separados
+        aulaInicio = normalizeTime(aula.inicio);
+        aulaFim = normalizeTime(aula.fim);
       }
 
-      const aulaDay = normalizeDay(aula.dia_semana || aula.diaSemana);
-      const isSameDay = aulaDay === dayNormalized;
-      const isHappening = aulaInicio < slotEnd && aulaFim > slotStart;
-      return isSameDay && isHappening;
+      if (!aulaInicio || !aulaFim) return false;
+
+      const sameDay = isSameDay(aula.dia_semana || aula.diaSemana);
+
+      const isHappening =
+        toMinutes(aulaInicio) < toMinutes(slotEndNorm) &&
+        toMinutes(aulaFim) > toMinutes(slotStartNorm);
+
+      return sameDay && isHappening;
     });
+
+    return foundAula;
   };
 
   const getAulaId = (aula) => aula?.aulaId || aula?.aula?.id || aula?.id;
@@ -159,9 +208,10 @@ function Horarios() {
   const aulasPorTurma = useMemo(() => groupAulasByTurma(horarios), [horarios]);
 
   const turmaIds = useMemo(() => {
+    // Mostrar turmas que têm horários + turmas do sistema que ainda não têm horários
     const idsFromHorarios = Object.keys(aulasPorTurma);
     const idsFromTurmas = turmas.map((t) => String(t.id));
-    return Array.from(new Set([...idsFromTurmas, ...idsFromHorarios]));
+    return Array.from(new Set([...idsFromTurmas, ...idsFromHorarios])).sort((a, b) => Number(a) - Number(b));
   }, [aulasPorTurma, turmas]);
 
   const openEditor = (turmaId, day, slot, aulaAtual) => {
@@ -194,12 +244,17 @@ function Horarios() {
 
     const payload = {
       turmaId: Number(editor.turmaId),
-      diaSemana: normalizeDay(editor.day),                    // Backend espera diaSemana
-      horario: `${editor.slot.start}-${editor.slot.end}`,  // Backend espera "07:00-07:50"
+      diaSemana: normalizeDay(editor.day),
+      horario: `${editor.slot.start}-${editor.slot.end}`,
+      inicio: editor.slot.start,
+      fim: editor.slot.end,
       aulaId: Number(selectedAulaId),
       divisao: selectedDivisao || null,
-      salaId: null,                             // TODO: adicionar seleção de sala
+      salaId: null,
     };
+
+    console.log("=== HORÁRIOS DEBUG ===");
+    console.log("Payload a ser enviado:", JSON.stringify(payload, null, 2));
 
     try {
       // Validação prévia (se disponível)
@@ -233,17 +288,26 @@ function Horarios() {
         editor.slot.end
       );
 
+      console.log("Aula existente encontrada:", aulaExistente ? JSON.stringify(aulaExistente, null, 2) : "NENHUMA");
+
       if (aulaExistente?.id) {
+        console.log(`Atualizando horário existente ID ${aulaExistente.id}`);
         await atualizarHorario(aulaExistente.id, payload);
       } else {
+        console.log("Criando novo horário");
         await criarHorario(payload);
       }
 
       const horariosRes = await listarHorarios();
-      const dataHorarios = horariosRes?.data || horariosRes || [];
+      const dataHorarios = horariosRes?.data?.data || horariosRes?.data || horariosRes || [];
       setHorarios(Array.isArray(dataHorarios) ? dataHorarios : []);
       closeEditor();
     } catch (err) {
+      console.error("=== ERRO AO SALVAR HORÁRIO ===");
+      console.error("Erro completo:", err);
+      console.error("Status:", err?.status);
+      console.error("Data:", err?.data);
+      console.error("Message:", err?.message);
       setSlotError(err.message || "Erro ao salvar horário.");
     } finally {
       setSavingSlot(false);
@@ -261,7 +325,9 @@ function Horarios() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.pageTitle}>Horários</h1>
+      <div className={styles.headerRow}>
+        <h1 className={styles.pageTitle}>Horários</h1>
+      </div>
 
       {turmaIds.length === 0 && (
         <div className={styles.emptyState}>Nenhuma turma encontrada.</div>

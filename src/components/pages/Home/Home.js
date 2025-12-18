@@ -117,7 +117,7 @@ function Monitoramento() {
   useWebSocket(wsOptions);
 
   // Health check da API (badge verde/vermelho)
-  const { isError: apiError } = useQuery({
+  const { isError: apiError, isLoading: healthLoading } = useQuery({
     queryKey: ["health"],
     queryFn: async () => {
       await api.get("/health");
@@ -154,13 +154,14 @@ function Monitoramento() {
     <div className={styles.monitoramentoContainer}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
         <h1 className={styles.pageTitle}>Monitoramento</h1>
+        {/** API status: default offline while loading; online only after success */}
         <span
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: "0.35rem",
             fontSize: "0.95rem",
-            color: apiError ? "#d93025" : "#0f9d58",
+            color: (!healthLoading && !apiError) ? "#0f9d58" : "#d93025",
           }}
         >
           <span
@@ -168,11 +169,11 @@ function Monitoramento() {
               width: 10,
               height: 10,
               borderRadius: "50%",
-              background: apiError ? "#d93025" : "#0f9d58",
-              boxShadow: apiError ? "0 0 6px #d93025" : "0 0 6px #0f9d58",
+              background: (!healthLoading && !apiError) ? "#0f9d58" : "#d93025",
+              boxShadow: (!healthLoading && !apiError) ? "0 0 6px #0f9d58" : "0 0 6px #d93025",
             }}
           />
-          {apiError ? "API offline" : "API online"}
+          {(!healthLoading && !apiError) ? "API online" : "API offline"}
         </span>
       </div>
 

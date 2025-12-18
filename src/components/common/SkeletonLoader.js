@@ -1,10 +1,7 @@
 import React from 'react';
 import styles from './SkeletonLoader.module.css';
 
-/**
- * Componente de Skeleton Loading (estilo Facebook)
- * Mostra um efeito de carregamento elegante enquanto dados são buscados
- */
+
 function SkeletonLoader({ type = 'list', count = 5, height = 'auto' }) {
   if (type === 'list') {
     return (
@@ -22,7 +19,7 @@ function SkeletonLoader({ type = 'list', count = 5, height = 'auto' }) {
 
   if (type === 'card') {
     return (
-      <div className={styles.skeletonContainer}>
+      <div className={styles.skeletonCardGrid}>
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className={styles.skeletonCard}>
             <div className={styles.skeletonCardImage} />
@@ -45,13 +42,11 @@ function SkeletonLoader({ type = 'list', count = 5, height = 'auto' }) {
           <div className={styles.skeletonLine} style={{ width: '20%' }} />
           <div className={styles.skeletonLine} style={{ width: '20%' }} />
           <div className={styles.skeletonLine} style={{ width: '20%' }} />
-          <div className={styles.skeletonLine} style={{ width: '20%' }} />
         </div>
 
         {/* Rows do table */}
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className={styles.skeletonTableRow}>
-            <div className={styles.skeletonLine} style={{ width: '20%' }} />
             <div className={styles.skeletonLine} style={{ width: '20%' }} />
             <div className={styles.skeletonLine} style={{ width: '20%' }} />
             <div className={styles.skeletonLine} style={{ width: '20%' }} />

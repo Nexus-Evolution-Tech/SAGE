@@ -172,7 +172,7 @@ function Dispositivos() {
 
       <div className={styles.cards}>
         {dispositivos.length === 0 ? (
-          <SkeletonLoader type="card" count={4} />
+          <SkeletonLoader type="card" count={1} />
         ) : (
           <>
             {dispositivos.map((dispositivo) => (

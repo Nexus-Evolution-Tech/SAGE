@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { api } from "../../../services/api";
+import { api } from "../../../services/api"; 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import styles from "./Horarios.module.css";
@@ -25,22 +25,81 @@ function Horarios() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // === FUNÇÃO DE BUSCA CORRIGIDA E BLINDADA ===
+  const fetchAllPages = async (endpoint) => {
+    try {
+      // 1. Busca a primeira página
+      const response = await api.get(endpoint, { params: { page: 1, limit: 50 } });
+      const responseBody = response.data;
+
+      // CENÁRIO A: A API retornou o array diretamente (sem paginação wrapper)
+      if (Array.isArray(responseBody)) {
+        return responseBody;
+      }
+
+      // CENÁRIO B: A API retornou um objeto paginado (ex: { data: [], totalPages: 4 })
+      // Aqui usamos "responseBody.data || []" para garantir que se for undefined, vira array vazio
+      let list = [];
+      
+      if (Array.isArray(responseBody.data)) {
+        list = responseBody.data;
+      } else if (responseBody.data && Array.isArray(responseBody.data.data)) {
+         // Alguns backends aninham data.data
+         list = responseBody.data.data;
+      } else {
+        console.warn(`Atenção: Estrutura inesperada em ${endpoint}. Retornando vazio.`, responseBody);
+        return [];
+      }
+
+      // Se achamos a lista, vamos ver se tem mais páginas
+      const totalPages = responseBody.totalPages || responseBody.last_page || 1;
+      let allData = [...list];
+
+      // 2. Busca o restante em paralelo se houver mais páginas
+      if (totalPages > 1) {
+        const promises = [];
+        for (let page = 2; page <= totalPages; page++) {
+          promises.push(api.get(endpoint, { params: { page, limit: 50 } }));
+        }
+
+        const responses = await Promise.all(promises);
+
+        responses.forEach((res) => {
+          const body = res.data;
+          // Tenta extrair o array da resposta das outras páginas
+          const pageData = Array.isArray(body) ? body : (body.data || []);
+          if (Array.isArray(pageData)) {
+            allData = [...allData, ...pageData];
+          }
+        });
+      }
+
+      return allData;
+
+    } catch (error) {
+      console.error(`Erro fatal ao buscar ${endpoint}:`, error);
+      // Retorna array vazio em caso de erro de rede para não quebrar o Promise.all
+      return [];
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [aulasRes, turmasRes] = await Promise.all([
-          api.get("/aulas"),
-          api.get("/turmas")
+
+        const [aulasData, turmasData] = await Promise.all([
+          fetchAllPages("/aulas"),
+          fetchAllPages("/turmas")
         ]);
 
-        const dataAulas = aulasRes.data.data || aulasRes.data;
-        const dataTurmas = turmasRes.data.data || turmasRes.data;
+        console.log("Aulas carregadas:", aulasData.length);
+        console.log("Turmas carregadas:", turmasData.length);
 
-        setAulas(dataAulas);
-        setTurmas(dataTurmas);
+        setAulas(aulasData);
+        setTurmas(turmasData);
       } catch (err) {
-        setError("Erro ao carregar dados.");
+        setError("Erro ao carregar dados. Verifique o console.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -51,6 +110,7 @@ function Horarios() {
   }, []);
 
   const groupAulasByTurma = (aulasData) => {
+    if (!Array.isArray(aulasData)) return {};
     return aulasData.reduce((acc, aula) => {
       const turmaId = aula.turma_id;
       if (!acc[turmaId]) {
@@ -62,11 +122,15 @@ function Horarios() {
   };
 
   const getNomeTurma = (id) => {
+    // Garante que turmas é um array antes de procurar
+    if (!Array.isArray(turmas)) return `Turma ${id}`;
     const turmaEncontrada = turmas.find((t) => t.id === Number(id));
     return turmaEncontrada ? turmaEncontrada.nome : `Turma ${id}`;
   };
 
   const getAulaForSlot = (turmaAulas, day, slotStart, slotEnd) => {
+    if (!turmaAulas) return undefined;
+    
     return turmaAulas.find((aula) => {
       const aulaInicio = aula.inicio.substring(0, 5);
       const aulaFim = aula.fim.substring(0, 5);
@@ -86,6 +150,12 @@ function Horarios() {
     <div className={styles.container}>
       <h1 className={styles.pageTitle}>Horários</h1>
 
+      {Object.keys(aulasPorTurma).length === 0 && !loading && (
+          <div style={{ padding: 20, textAlign: "center" }}>
+            Nenhuma aula encontrada. Se você inseriu os dados no banco, verifique se a API está retornando a estrutura esperada (F12).
+          </div>
+      )}
+
       {Object.keys(aulasPorTurma).map((turmaId) => (
         <div key={turmaId} className={styles.turmaSection}>
           <h2 className={styles.turmaTitle}>{getNomeTurma(turmaId)}</h2>
@@ -100,7 +170,6 @@ function Horarios() {
               <table className={styles.scheduleTable}>
                 <thead>
                   <tr>
-                    {/* Alteração: Cabeçalho agora tem os Dias da Semana */}
                     <th className={styles.firstCol}>Horário</th>
                     {DAYS_OF_WEEK.map((day) => (
                       <th key={day}>
@@ -110,10 +179,8 @@ function Horarios() {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Alteração: Loop principal agora é pelos Slots de tempo (Linhas) */}
                   {TIME_SLOTS.map((slot, index) => {
                     
-                    // Se for intervalo/almoço, fazemos uma linha inteira (colspan)
                     if (slot.type !== 'aula') {
                         return (
                             <tr key={index} style={{ backgroundColor: '#f0f0f0' }}>
@@ -133,12 +200,10 @@ function Horarios() {
 
                     return (
                       <tr key={index}>
-                        {/* Primeira coluna: O Horário */}
                         <td className={styles.timeCell} style={{ fontWeight: 'bold', backgroundColor: '#f9f9f9' }}>
                           {slot.start} - {slot.end}
                         </td>
 
-                        {/* Colunas seguintes: Os dias da semana */}
                         {DAYS_OF_WEEK.map((day) => {
                           const aulaEncontrada = getAulaForSlot(
                             aulasPorTurma[turmaId],

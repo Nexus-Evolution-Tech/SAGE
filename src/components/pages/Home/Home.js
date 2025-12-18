@@ -1,8 +1,8 @@
 import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons"; 
+import { faTimes, faSync } from "@fortawesome/free-solid-svg-icons";
 import userPlaceholder from "../../../img/user.png";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../services/api";
 
 function Monitoramento() {
@@ -10,10 +10,11 @@ function Monitoramento() {
   const [latestAccess, setLatestAccess] = useState(null);
   const [currentDateTime, setCurrentDateTime] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Relógio
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
@@ -26,107 +27,127 @@ function Monitoramento() {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
+  // Função auxiliar para enriquecer os dados
+  // AGORA ACEITA A LISTA DE DISPOSITIVOS COMO PARAMETRO
+  const enrichAccess = useCallback(async (acesso, listaDispositivos = []) => {
     
-    async function enrichAccess(acesso) {
-      const baseAccess = {
-        ...acesso,
-        area: "Portaria Principal",
-        dispositivo: "Catraca Esquerda (IDBlock)",
-        autorizacao: acesso.permitido ? "Acesso autorizado" : "Acesso negado",
-        status: acesso.permitido ? "authorized" : "denied",
-        dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
+    // Lógica para encontrar o nome do dispositivo
+    const dispositivoEncontrado = listaDispositivos.find(d => d.id === acesso.dispositivo_id);
+    const nomeDispositivo = dispositivoEncontrado ? dispositivoEncontrado.nome : `Dispositivo ID: ${acesso.dispositivo_id}`;
+
+    const baseAccess = {
+      ...acesso,
+      area: "Portaria Principal", // Você também pode dinamicamente pegar isso se tiver no banco
+      dispositivo: nomeDispositivo, // Usa o nome vindo do banco
+      autorizacao: acesso.permitido ? "Acesso autorizado" : "Acesso negado",
+      status: acesso.permitido ? "authorized" : "denied",
+      dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
+    };
+
+    if (!acesso.pessoa_id) {
+      return {
+        ...baseAccess,
+        nome: "Visitante/Desconhecido",
+        foto: userPlaceholder,
+        perfil: "N/A",
       };
-
-      if (!acesso.pessoa_id) {
-        return {
-          ...baseAccess,
-          nome: "Visitante/Desconhecido",
-          foto: userPlaceholder,
-          perfil: "N/A",
-        };
-      }
-
-      try {
-
-        const [pessoa, fotoData] = await Promise.all([
-          api.get(`/pessoas/${acesso.pessoa_id}`),
-          api.get(`/pessoas/url/${acesso.pessoa_id}`),
-        ]);
-
-        return {
-          ...baseAccess,
-          nome: pessoa.nome || "Nome não encontrado",
-          foto: fotoData.url || userPlaceholder,
-          perfil: pessoa.perfil || "Perfil não informado",
-        };
-      } catch (error) {
-
-        console.error(
-          `Erro ao buscar dados para pessoa_id ${acesso.pessoa_id}:`,
-          error
-        );
-        return {
-          ...baseAccess,
-          nome: "Erro ao carregar dados",
-          foto: userPlaceholder,
-          perfil: "Erro",
-        };
-      }
     }
 
-    // Esta função busca a lista principal de acessos
-    async function fetchAccesses() {
-      try {
-        setError(null);
-        setLoading(true);
+    try {
+      const [pessoa, fotoData] = await Promise.all([
+        api.get(`/pessoas/${acesso.pessoa_id}`),
+        api.get(`/pessoas/url/${acesso.pessoa_id}`),
+      ]);
 
-        // ==========================================================
-        // 3. SUBSTITUIR 'FETCH' POR 'API.GET'
-        //    (Adicionando paginação como boa prática)
-        // ==========================================================
-        const acessosResponse = await api.get("/acessos?page=1&limit=20");
-        // ==========================================================
-
-        if (!acessosResponse.data || !Array.isArray(acessosResponse.data)) {
-          throw new Error("Formato de resposta inesperado da API.");
-        }
-
-        const acessosArray = acessosResponse.data;
-
-        // Ordena o array pelos dados originais (mais recente primeiro)
-        const sortedArray = acessosArray.sort((a, b) => {
-          return new Date(b.data_hora) - new Date(a.data_hora);
-        });
-
-        // Executa todas as promessas de "enriquecimento" em paralelo
-        const enrichedAccesses = await Promise.all(
-          sortedArray.map(enrichAccess)
-        );
-
-        if (enrichedAccesses.length > 0) {
-          setLatestAccess(enrichedAccesses[0]);
-          setAccessLogs(enrichedAccesses.slice(1));
-        }
-      } catch (error) {
-        console.error("Erro ao buscar acessos:", error);
-        // O api.js já redireciona se for 401,
-        // aqui tratamos outros erros (ex: 500, 404)
-        setError("Falha ao carregar acessos. Verifique a API.");
-      } finally {
-        setLoading(false);
-      }
+      return {
+        ...baseAccess,
+        nome: pessoa.nome || "Nome não encontrado",
+        foto: fotoData.url || userPlaceholder,
+        perfil: pessoa.perfil || "Perfil não informado",
+      };
+    } catch (error) {
+      console.error(`Erro ao buscar dados para pessoa_id ${acesso.pessoa_id}:`, error);
+      return {
+        ...baseAccess,
+        nome: "Erro ao carregar dados",
+        foto: userPlaceholder,
+        perfil: "Erro",
+      };
     }
+  }, []);
 
+  // Função principal de busca
+  const fetchAccesses = useCallback(async () => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      // Busca os acessos E os dispositivos em paralelo
+      const [acessosResponse, dispositivosResponse] = await Promise.all([
+        api.get("/acessos?page=1&limit=100"),
+        api.get("/dispositivos")
+      ]);
+
+      if (!acessosResponse.data || !Array.isArray(acessosResponse.data)) {
+        throw new Error("Formato de resposta inesperado da API de Acessos.");
+      }
+
+      const acessosArray = acessosResponse.data;
+      const listaDispositivos = dispositivosResponse.data || [];
+
+      // Ordena do mais recente para o mais antigo
+      const sortedArray = acessosArray.sort((a, b) => {
+        return new Date(b.data_hora) - new Date(a.data_hora);
+      });
+
+      // Enriquece os dados passando a lista de dispositivos
+      const enrichedAccesses = await Promise.all(
+        sortedArray.map((acesso) => enrichAccess(acesso, listaDispositivos))
+      );
+
+      if (enrichedAccesses.length > 0) {
+        setLatestAccess(enrichedAccesses[0]);
+        setAccessLogs(enrichedAccesses.slice(1));
+      } else {
+        setLatestAccess(null);
+        setAccessLogs([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+      setError("Falha ao carregar acessos ou dispositivos. Verifique a API.");
+    } finally {
+      setLoading(false);
+    }
+  }, [enrichAccess]);
+
+  // Carrega dados iniciais
+  useEffect(() => {
     fetchAccesses();
-  }, []); // Dependência vazia, busca apenas uma vez
+  }, [fetchAccesses]);
 
-  // Renderização condicional para Loading e Erro
+  // Botão de Sincronizar
+  const handleSyncLogs = async () => {
+    try {
+      setLoading(true); 
+      await api.post("/acessos/sincronizar-todos"); 
+      await fetchAccesses();
+    } catch (error) {
+      console.error("Erro na sincronização:", error);
+      setError("Erro ao sincronizar logs com o dispositivo.");
+      setLoading(false);
+    }
+  };
+
+  // ... O restante do código de renderização (return) permanece igual ...
+  // Renderização condicional do Loader
   if (loading) {
     return (
       <div className={styles.monitoramentoContainer}>
         <h1 className={styles.pageTitle}>Monitoramento</h1>
-        <p>Carregando dados...</p>
+        <div className={styles.loaderContainer}>
+            <FontAwesomeIcon icon={faSync} spin size="3x" color="#021932"/>
+            <p>Sincronizando e carregando logs...</p>
+        </div>
       </div>
     );
   }
@@ -135,17 +156,23 @@ function Monitoramento() {
     return (
       <div className={styles.monitoramentoContainer}>
         <h1 className={styles.pageTitle}>Monitoramento</h1>
-        <p style={{ color: "red" }}>{error}</p>
+        <div style={{ textAlign: 'center' }}>
+            <p style={{ color: "red", marginBottom: '20px' }}>{error}</p>
+            <button className={styles.syncButton} onClick={fetchAccesses}>Tentar Novamente</button>
+        </div>
       </div>
     );
   }
 
-  // Renderização principal
   return (
     <div className={styles.monitoramentoContainer}>
-      <h1 className={styles.pageTitle}>Monitoramento</h1>
-      {/* Exibe o relógio (opcional) */}
-      {/* <p>{currentDateTime}</p> */}
+       
+      <div className={styles.headerControls}>
+        <h1 className={styles.pageTitle}>Monitoramento</h1>
+        <button className={styles.syncButton} onClick={handleSyncLogs}>
+          <FontAwesomeIcon icon={faSync} /> Receber Logs
+        </button>
+      </div>
 
       {latestAccess ? (
         <div className={styles.accessCard}>
@@ -162,17 +189,17 @@ function Monitoramento() {
               </p>
               <h3>{latestAccess.nome || "Nome não encontrado"}</h3>
               <p>Área: {latestAccess.area}</p>
-              <p>Dispositivo: {latestAccess.dispositivo}</p>
+              {/* O nome do dispositivo aparecerá aqui automaticamente agora */}
+              <p>Dispositivo: {latestAccess.dispositivo}</p> 
               <br />
               <p>{latestAccess.autorizacao}</p>
             </div>
           </div>
         </div>
       ) : (
-        <p>Nenhum acesso recente encontrado.</p>
+        <p style={{textAlign: 'center', margin: '20px'}}>Nenhum acesso recente encontrado.</p>
       )}
 
-      {/* Tabela de Logs */}
       <div className={styles.tableContainer}>
         <table className={styles.accessTable}>
           <thead>
@@ -186,8 +213,8 @@ function Monitoramento() {
             </tr>
           </thead>
           <tbody>
-            {accessLogs.slice(0, itemsPerPage).map((log) => (
-              <tr key={log.id}>
+            {accessLogs.slice(0, itemsPerPage).map((log, index) => (
+              <tr key={log.id || index}>
                 <td>
                   <img
                     src={log.foto || userPlaceholder}
@@ -206,7 +233,8 @@ function Monitoramento() {
                   <p className={styles.profileSubtitle}>{log.perfil}</p>
                 </td>
                 <td>{log.area}</td>
-                <td>{log.dispositivo}</td>
+                {/* Aqui também aparecerá o nome correto */}
+                <td>{log.dispositivo}</td> 
                 <td>
                   <span
                     className={`${styles.statusBadge} ${styles[log.status]}`}

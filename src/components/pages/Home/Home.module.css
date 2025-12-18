@@ -18,6 +18,61 @@
   box-sizing: border-box;
   margin-left: 150px;
   max-width: 1500px;
+  padding: 20px;
+}
+
+/* Novo container para alinhar titulo e botão */
+.headerControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.pageTitle {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0; /* Removi a margem inferior original pois o container pai cuida disso */
+}
+
+/* Estilo do novo botão */
+.syncButton {
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s, transform 0.1s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.syncButton:hover {
+  background-color: var(--blue); /* Ou uma cor um pouco mais clara/escura */
+  transform: translateY(-2px);
+}
+
+.syncButton:active {
+  transform: translateY(0);
+}
+
+/* Estilo para o Loader centralizado */
+.loaderContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: var(--gray);
+  gap: 20px;
+  font-size: 1.2rem;
 }
 
 .pageTitle {
@@ -254,3 +309,4 @@
   outline: none;
   border-color: var(--primary-color);
 }
+

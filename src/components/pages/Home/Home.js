@@ -2,7 +2,7 @@ import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons"; 
 import userPlaceholder from "../../../img/user.png";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api";
 import { useWebSocket } from "../../../hooks/useWebSocket";
@@ -11,8 +11,7 @@ import SkeletonLoader from "../../common/SkeletonLoader";
 import { shallow } from "zustand/shallow";
 
 function Monitoramento() {
-  const [currentDateTime, setCurrentDateTime] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const itemsPerPage = 10;
 
   const recentAccesses = useMonitoringStore((state) => state.recentAccesses, shallow);
 
@@ -89,9 +88,6 @@ function Monitoramento() {
     gcTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     refetchInterval: 3000, // polling a cada 3s garante updates rápidos
-    onSuccess: (enriched) => {
-      useMonitoringStore.getState().setRecentAccesses(enriched);
-    },
   });
 
   // WebSocket para receber novos acessos em tempo real
@@ -128,19 +124,6 @@ function Monitoramento() {
     retry: 1,
   });
 
-  useEffect(() => {
-    const updateDateTime = () => {
-      const now = new Date();
-      const date = now.toLocaleDateString("pt-BR");
-      const time = now.toLocaleTimeString("pt-BR");
-      setCurrentDateTime(`${date} ${time}`);
-    };
-    updateDateTime();
-    const intervalId = setInterval(updateDateTime, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
-
-  // Se o store ainda não tem dados, usa o resultado da query para renderizar imediatamente
   const fallbackAccesses = data || [];
   const effectiveAccesses = recentAccesses.length > 0 ? recentAccesses : fallbackAccesses;
 

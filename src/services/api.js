@@ -1,6 +1,11 @@
 // src/services/api.js
 
-const API_URL = 'http://localhost:3000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+if (process.env.NODE_ENV === 'development') {
+  // Log base URL to help diagnose port routing
+  // eslint-disable-next-line no-console
+  console.log('[API] Base URL:', API_URL);
+}
 
 function getToken() {
    return localStorage.getItem('token');
@@ -41,12 +46,26 @@ detail: { message: errorMessage }
   return null; // Handle 'No Content'
   }
   
-  // Tenta parsear JSON
-  const data = await response.json();
+  // Clone response para poder ler body múltiplas vezes
+  const cloned = response.clone();
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    try {
+      data = await cloned.text();
+    } catch (e2) {
+      data = null;
+    }
+  }
 
   if (!response.ok) {
-  // Joga um erro com a mensagem da API
-  throw new Error(data.message || `Erro na requisição: ${response.statusText}`);
+    const message = (data && data.message) || (typeof data === 'string' ? data : null);
+    const err = new Error(message || `Erro na requisição: ${response.statusText}`);
+    err.status = response.status;
+    // anexa corpo bruto quando não for JSON
+    err.data = (data && typeof data === 'object') ? data : (data ? { raw: data } : null);
+    throw err;
   }
   
   return data;
@@ -95,16 +114,123 @@ async function patch(endpoint, body) {
 
 async function postFormData(endpoint, formData) {
   const response = await fetch(`${API_URL}${endpoint}`, {
-  method: 'POST',
-  headers: getAuthHeaders(true), 
-  body: formData,
+    method: 'POST',
+    headers: getAuthHeaders(true),
+    body: formData,
   });
   return handleResponse(response);
+}
+
+async function put(endpoint, body) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
+  });
+  return handleResponse(response);
+}
+
+async function del(endpoint) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+// Aulas (catálogo)
+export async function listarAulas(search = "") {
+  const query = search ? `?search=${encodeURIComponent(search)}` : "";
+  return get(`/aulas${query}`);
+}
+
+export async function criarAula(data) {
+  return post(`/aulas`, data);
+}
+
+export async function atualizarAula(id, data) {
+  return put(`/aulas/${id}`, data);
+}
+
+export async function deletarAula(id, mode) {
+  const suffix = mode ? `?mode=${mode}` : "";
+  return del(`/aulas/${id}${suffix}`);
+}
+
+// Horários (slots na grade)
+const HORARIOS_AULAS_PATH = '/horarios-aulas';
+
+function buildQuery(params = {}) {
+  const query = new URLSearchParams();
+  if (params.turmaId) query.append('turmaId', params.turmaId);
+  if (params.diaSemana) query.append('diaSemana', params.diaSemana);
+  const qs = query.toString();
+  return qs ? `?${qs}` : '';
+}
+
+async function withFallback(primary, fallback) {
+  try {
+    return await primary();
+  } catch (err) {
+    if (!fallback) throw err;
+    try {
+      return await fallback();
+    } catch {
+      throw err;
+    }
+  }
+}
+
+export async function listarHorarios(params) {
+  const query = buildQuery(params);
+  return withFallback(
+    () => get(`${HORARIOS_AULAS_PATH}${query}`),
+    () => get(`/horarios${query}`)
+  );
+}
+
+export async function criarHorario(data) {
+  return withFallback(
+    () => post(`${HORARIOS_AULAS_PATH}`, data),
+    () => post(`/horarios`, data)
+  );
+}
+
+export async function atualizarHorario(id, data) {
+  return withFallback(
+    () => put(`${HORARIOS_AULAS_PATH}/${id}`, data),
+    () => put(`/horarios/${id}`, data)
+  );
+}
+
+export async function deletarHorario(id) {
+  return withFallback(
+    () => del(`${HORARIOS_AULAS_PATH}/${id}`),
+    () => del(`/horarios/${id}`)
+  );
+}
+
+export async function validarHorario(data) {
+  return withFallback(
+    () => post(`${HORARIOS_AULAS_PATH}/validar`, data),
+    () => post(`/horarios/validar`, data)
+  );
 }
 
 export const api = {
   get,
   post,
   patch,
+  put,
+  delete: del,
   postFormData,
+  listarAulas,
+  criarAula,
+  atualizarAula,
+  deletarAula,
+  listarHorarios,
+  criarHorario,
+  atualizarHorario,
+  deletarHorario,
+  validarHorario,
 };

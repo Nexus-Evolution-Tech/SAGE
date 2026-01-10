@@ -29,6 +29,7 @@ function Adicionar() {
   const divOptions = [
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
+    { value: "INT", label: "INT" }
   ];
 
   const contratOptions = [
@@ -195,29 +196,111 @@ function Adicionar() {
             <div className={styles.inputRow}>
               {renderCampo("Data de Nascimento", "data_nascimento", "date")}
             </div>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.subtitle}>Dados do Responsável</label>
+          </>
+        );
+      case "RESPONSAVEL":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderDropdown("Escola", "unidade_id", todasEscolas)}
+              {renderCampo("Aluno ID", "aluno_id")}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo("Nome do Responsável", "responsavel_nome")}
-              {renderCampo("RG", "responsavel_rg")}
-              {renderCampo("CPF", "responsavel_cpf")}
+              {renderCampo("CPF", "cpf")}
+              {renderCampo("RG", "rg")}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo("Telefone", "responsavel_telefone")}
-              {renderCampo("Email", "responsavel_email")}
-              {renderCampo(
-                "Data de Nascimento",
-                "responsavel_data_nascimento",
-                "date"
-              )}
+              {renderCampo("Telefone", "telefone")}
+              {renderCampo("Email", "email")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Data de Nascimento", "data_nascimento", "date")}
             </div>
           </>
         );
       case "PROFESSOR":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderDropdown("Escola", "unidade_id", todasEscolas)}
+              {renderCampo("Matrícula", "matricula")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("CPF", "cpf")}
+              {renderCampo("RG", "rg")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderDropdown("Tipo de Contrato", "tipo_contrato", contratOptions, "label")}
+              {renderCampo("Data de Admissão", "data_admissao", "date")}
+              {renderCampo("Data de Saída", "data_saida", "date")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Cartão Rfid", "cartao_rfid")}
+              {renderCampo("Email", "email")}
+              {renderCampo("Telefone", "telefone")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Data de Nascimento", "data_nascimento", "date")}
+            </div>
+          </>
+        );
       case "PROFADM":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderDropdown("Escola", "unidade_id", todasEscolas)}
+              {renderCampo("Matrícula", "matricula")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("CPF", "cpf")}
+              {renderCampo("RG", "rg")}
+              {renderCampo("Cargo", "cargo")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderDropdown("Tipo de Contrato", "tipo_contrato", contratOptions, "label")}
+              {renderCampo("Data de Admissão", "data_admissao", "date")}
+              {renderCampo("Data de Saída", "data_saida", "date")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Email", "email")}
+              {renderCampo("Telefone", "telefone")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Data de Nascimento", "data_nascimento", "date")}
+            </div>
+          </>
+        );
       case "ADMINISTRADOR":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderDropdown("Escola", "unidade_id", todasEscolas)}
+              {renderCampo("Matrícula", "matricula")}
+              {tipo === "TERCEIRIZADO" && renderCampo("RG", "rg")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("CPF", "cpf")}
+              {tipo === "TERCEIRIZADO"
+                ? renderDropdown("Empresa", "empresa", todasEmpresas)
+                : renderCampo("RG", "rg")}
+              {tipo === "TERCEIRIZADO"
+                ? renderDropdown("Função", "funcao", funcaoOptions, "label")
+                : renderCampo("Cargo", "cargo")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderDropdown("Tipo de Contrato", "tipo_contrato", contratOptions, "label")}
+              {renderCampo("Data de Admissão", "data_admissao", "date")}
+              {renderCampo("Data de Saída", "data_saida", "date")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Email", "email")}
+              {renderCampo("Telefone", "telefone")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo("Data de Nascimento", "data_nascimento", "date")}
+            </div>
+          </>
+        );
       case "TERCEIRIZADO":
         return (
           <>

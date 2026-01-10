@@ -41,6 +41,7 @@ function Departamentos() {
     professores: [],
     administracao: [],
     terceirizados: [],
+    responsaveis: [],
   }, isLoading, error } = useQuery({
     queryKey: ['departamentos'],
     queryFn: async () => {
@@ -49,6 +50,7 @@ function Departamentos() {
       try {
         const tipos = [
           { key: "turmas", url: "ALUNO" },
+          { key: "responsaveis", url: "RESPONSAVEL" },
           { key: "professores", url: "PROFESSOR" },
           { key: "profadm", url: "PROFADM" },
           { key: "administracao", url: "ADMINISTRADOR" },
@@ -60,6 +62,7 @@ function Departamentos() {
           professores: [],
           administracao: [],
           terceirizados: [],
+          responsaveis: [],
         };
 
         // Processar tipos SEQUENCIALMENTE para evitar stall
@@ -77,6 +80,14 @@ function Departamentos() {
               `A API para /pessoas/tipo/${url} não retornou um array.`,
               pessoas
             );
+            continue;
+          }
+          
+          if (key === "responsavel") {
+            const pessoasComFlag = pessoas.map((p) => ({
+              ...p,
+            }));
+            resultado.responsaveis.push(...pessoasComFlag);
             continue;
           }
 
@@ -171,8 +182,6 @@ function Departamentos() {
       return "";
     }
   };
-
-
 
   const handleFileSelect = (file) => {
     if (file) {
@@ -380,7 +389,6 @@ function Departamentos() {
     }
   };
 
-
   const Section = ({ title, subtitle, columns, data, tipo }) => {
     return (
       <div className={styles.section}>
@@ -528,6 +536,9 @@ function Departamentos() {
                 <div className={styles.opcoesContainer}>
                   <button onClick={() => navigate("/adicionar/ALUNO")}>
                     Aluno
+                  </button>
+                  <button onClick={() => navigate("/adicionar/RESPONSAVEL")}>
+                    Responsável
                   </button>
                   <button onClick={() => navigate("/adicionar/PROFESSOR")}>
                     Professor
@@ -734,7 +745,7 @@ function Departamentos() {
         <>
           <Section
             title="Turmas"
-            subtitle="Tabela dos Alunos do 1º Ano A"
+            subtitle="Tabela dos Alunos"
             tipo="turmas"
             columns={[
               "Nome",
@@ -747,6 +758,20 @@ function Departamentos() {
           "Mais",
         ]}
         data={dados.turmas}
+      />
+      <Section
+        title="Responsáveis"
+        subtitle="Tabela dos Responsáveis"
+        tipo="responsaveis"
+        columns={[
+          "Nome",
+          "Foto",
+          "Email",
+          "Telefone",
+          "Data de Nascimento",
+          "Mais",
+        ]}
+        data={dados.responsaveis}
       />
       <Section
         title="Professores"

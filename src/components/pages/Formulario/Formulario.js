@@ -36,6 +36,7 @@ function Formulario() {
   const divOptions = [
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
+    { value: "INT", label: "INT" }
   ];
   const periodoOptions = [
     { value: "MANHA", label: "Manhã" },
@@ -385,6 +386,28 @@ function Formulario() {
             )}
           </>
         );
+      case "RESPONSAVEL":
+        return (
+          <>
+            <div className={styles.inputRow}>
+              {renderCampo("ID", "id")}
+              {renderCampo("Tipo", "tipo")}
+            </div>
+            <div className={styles.inputRow}>
+              {renderCampo(
+                "Telefone",
+                "telefone",
+                formatarTelefone(pessoa?.telefone)
+              )}
+              {renderCampo("Email", "email")}
+              {renderCampo(
+                "Data de Nascimento",
+                "data_nascimento",
+                formatarData(pessoa?.data_nascimento)
+              )}
+            </div>
+          </>
+        );
       case "TERCEIRIZADO":
         return (
           <>
@@ -611,7 +634,6 @@ function Formulario() {
       <section className={styles.dadosSection}>
         <div className={styles.header}>
           <h2>Informações</h2>
-          <button className={styles.actionButton}>Exportar</button>
           {editMode ? (
             <button className={styles.actionButton} onClick={handleSalvar}>
               <p className={styles.textBackground}>Salvar</p>

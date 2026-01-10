@@ -1,6 +1,6 @@
 import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons"; 
+import { faTimes, faSync } from "@fortawesome/free-solid-svg-icons";
 import userPlaceholder from "../../../img/user.png";
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -132,7 +132,6 @@ function Monitoramento() {
 
   const isLoadingState = isLoading && effectiveAccesses.length === 0;
 
-  // Renderização principal
   return (
     <div className={styles.monitoramentoContainer}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
@@ -185,17 +184,17 @@ function Monitoramento() {
               </p>
               <h3>{latestAccess.nome || "Nome não encontrado"}</h3>
               <p>Área: {latestAccess.area}</p>
-              <p>Dispositivo: {latestAccess.dispositivo}</p>
+              {/* O nome do dispositivo aparecerá aqui automaticamente agora */}
+              <p>Dispositivo: {latestAccess.dispositivo}</p> 
               <br />
               <p>{latestAccess.autorizacao}</p>
             </div>
           </div>
         </div>
       ) : (
-        <p>Nenhum acesso recente encontrado.</p>
+        <p style={{textAlign: 'center', margin: '20px'}}>Nenhum acesso recente encontrado.</p>
       )}
 
-      {/* Tabela de Logs */}
       <div className={styles.tableContainer}>
         {isLoading ? (
           <SkeletonLoader type="table" count={itemsPerPage} />

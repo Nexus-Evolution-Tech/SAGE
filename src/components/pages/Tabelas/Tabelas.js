@@ -39,6 +39,7 @@ function Tabelas() {
 
   const tipoMap = {
     turmas: "ALUNO",
+    responsaveis: "RESPONSAVEL",
     administracao: "ADMINISTRADOR",
     terceirizados: "TERCEIRIZADO",
     professores: "PROFESSOR",
@@ -133,6 +134,23 @@ function Tabelas() {
           );
         }
 
+        if (tipo === "responsaveis") {
+          let responsaveis = [];
+          let page = 1;
+          let totalPages = 1;
+
+          do {
+            const json = await api.get(`/pessoas/tipo/RESPONSAVEL?page=${page}&limit=100`);
+            const todos = json.data || json;
+            responsaveis = [...responsaveis, ...todos];
+            totalPages = json.totalPages || 1;
+            page++;
+          } while (page <= totalPages);
+
+          setDados(responsaveis);
+          return;
+        }
+
         setDados(data);
       } catch (err) {
         console.error("Erro ao buscar dados:", err);
@@ -223,6 +241,21 @@ function Tabelas() {
               </td>
             </>
           )}
+          {tipo === "responsaveis" && (
+            <>
+              <td>{p.rg}</td>
+              <td>{p.email}</td>
+              <td>{formatarData(p.data_nascimento)}</td>
+              <td>
+                <button
+                  className={styles.verMais}
+                  onClick={() => handleVerMais(p.id)}
+                >
+                  Ver informações
+                </button>
+              </td>
+            </>
+          )}
           {tipo === "professores" && (
             <>
               <td>{p.email}</td>
@@ -284,6 +317,14 @@ function Tabelas() {
                 {tipo === "turmas" && (
                   <>
                     <th>RM</th>
+                    <th>Email</th>
+                    <th>Data de Nascimento</th>
+                    <th>Mais informações</th>
+                  </>
+                )}
+                {tipo === "responsaveis" && (
+                  <>
+                    <th>RG</th>
                     <th>Email</th>
                     <th>Data de Nascimento</th>
                     <th>Mais informações</th>

@@ -38,10 +38,11 @@ const DIVISOES = [
   { value: "INT", label: "INT" },
   { value: "DIV A", label: "DIV A" },
   { value: "DIV B", label: "DIV B" },
-  { value: "DIV A/B", label: "DIV A/B" },
 ];
 
 function Horarios() {
+  console.log("🔄 COMPONENTE RENDERIZANDO - Horarios()");
+  
   const [horarios, setHorarios] = useState([]);
   const [turmas, setTurmas] = useState([]);
   const [catalogoAulas, setCatalogoAulas] = useState([]);
@@ -57,7 +58,9 @@ function Horarios() {
 
   useEffect(() => {
     const normalizeHorariosList = (res) => {
+      console.log("🔍 normalizeHorariosList recebido:", res);
       const list = res?.data?.data || res?.data || res || [];
+      console.log("🔍 normalizeHorariosList após processar:", list);
       return Array.isArray(list) ? list : [];
     };
 
@@ -71,12 +74,15 @@ function Horarios() {
         const turmasRes = await api.get("/turmas");
         const dataTurmas = turmasRes?.data?.data || turmasRes?.data || turmasRes || [];
 
+        console.log("📚 Turmas carregadas:", dataTurmas);
+        console.log("📚 É array?", Array.isArray(dataTurmas), "Tamanho:", Array.isArray(dataTurmas) ? dataTurmas.length : 0);
 
-  setHorarios(dataHorarios);
+        setHorarios(dataHorarios);
         setTurmas(Array.isArray(dataTurmas) ? dataTurmas : []);
+        console.log("✅ setTurmas chamado com:", Array.isArray(dataTurmas) ? dataTurmas.length : 0, "itens");
       } catch (err) {
         setError("Erro ao carregar dados.");
-        console.error(err);
+        console.error("❌ Erro no fetch:", err);
       } finally {
         setLoading(false);
       }
@@ -107,6 +113,15 @@ function Horarios() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [editor]);
 
+  // Monitor de horários para debugging
+  useEffect(() => {
+    console.log("📊 Horários state atualizado:", horarios);
+    console.log("📊 Quantidade total:", horarios.length);
+    if (horarios.length > 0) {
+      console.log("📊 Primeiro horário:", horarios[0]);
+    }
+  }, [horarios]);
+
   const groupAulasByTurma = (horariosData) => {
     return horariosData.reduce((acc, aula) => {
       const turmaId = aula.turmaId || aula.turma_id;
@@ -123,11 +138,11 @@ function Horarios() {
     return turmaEncontrada ? turmaEncontrada.nome : `Turma ${id}`;
   };
 
-  const getAulaForSlot = (turmaAulas, day, slotStart, slotEnd) => {
+  const getAulasForSlot = (turmaAulas, day, slotStart, slotEnd) => {
     const dayNormalized = normalizeDay(day);
 
     const normalizeTime = (time) => {
-      const str = String(time || "").replace(/\s+/g, "").replace(/-/g, "-");
+      const str = String(time || "").replace(/\s+/g, "");
       const match = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
       if (!match) return "";
       const h = match[1].padStart(2, "0");
@@ -151,43 +166,23 @@ function Horarios() {
     const slotStartNorm = normalizeTime(slotStart);
     const slotEndNorm = normalizeTime(slotEnd);
 
-    const toMinutes = (val) => {
-      const [hh = "0", mm = "0"] = val.split(":");
-      return Number(hh) * 60 + Number(mm);
-    };
-
-    const foundAula = turmaAulas.find((aula) => {
-      let aulaInicio = "";
-      let aulaFim = "";
-
-      // Tentar formato novo: "07:00-07:50" ou "07:30:00-08:20:00"
-      if (aula.horario && aula.horario.includes("-")) {
-        const [inicio, fim] = aula.horario.split("-");
-        aulaInicio = normalizeTime(inicio);
-        aulaFim = normalizeTime(fim);
-      } else if (aula.horario) {
-        // Se horario existe mas é só uma hora (ex: "07:30:00")
-        // Tenta campo inicio/fim separados
-        aulaInicio = normalizeTime(aula.horario || aula.inicio);
-        aulaFim = normalizeTime(aula.fim || aula.hora_fim);
-      } else {
-        // Formato antigo: campos separados
-        aulaInicio = normalizeTime(aula.inicio);
-        aulaFim = normalizeTime(aula.fim);
-      }
-
-      if (!aulaInicio || !aulaFim) return false;
-
+    const foundAulas = turmaAulas.filter((aula) => {
+      // Formato range: "07:30-08:20"
+      if (!aula.horario || !aula.horario.includes('-')) return false;
+      
+      const [inicio, fim] = aula.horario.split('-');
+      const aulaInicio = normalizeTime(inicio);
+      const aulaFim = normalizeTime(fim);
+      
       const sameDay = isSameDay(aula.dia_semana || aula.diaSemana);
-
-      const isHappening =
-        toMinutes(aulaInicio) < toMinutes(slotEndNorm) &&
-        toMinutes(aulaFim) > toMinutes(slotStartNorm);
-
-      return sameDay && isHappening;
+      
+      // Verificar se o slot da grade coincide com o horário da aula
+      const matchStart = aulaInicio === slotStartNorm;
+      
+      return sameDay && matchStart;
     });
 
-    return foundAula;
+    return foundAulas;
   };
 
   const getAulaId = (aula) => aula?.aulaId || aula?.aula?.id || aula?.id;
@@ -205,19 +200,29 @@ function Horarios() {
 
   const getAulaDivisao = (aula) => aula?.divisao || aula?.aula?.divisao;
 
-  const aulasPorTurma = useMemo(() => groupAulasByTurma(horarios), [horarios]);
+  const aulasPorTurma = useMemo(() => {
+    const grouped = groupAulasByTurma(horarios);
+    console.log("🔄 aulasPorTurma recalculado:", grouped);
+    return grouped;
+  }, [horarios]);
 
   const turmaIds = useMemo(() => {
     // Mostrar turmas que têm horários + turmas do sistema que ainda não têm horários
     const idsFromHorarios = Object.keys(aulasPorTurma);
     const idsFromTurmas = turmas.map((t) => String(t.id));
-    return Array.from(new Set([...idsFromTurmas, ...idsFromHorarios])).sort((a, b) => Number(a) - Number(b));
+    const result = Array.from(new Set([...idsFromTurmas, ...idsFromHorarios])).sort((a, b) => Number(a) - Number(b));
+    console.log("🎯 turmaIds calculado:", result);
+    console.log("  idsFromHorarios:", idsFromHorarios);
+    console.log("  idsFromTurmas:", idsFromTurmas);
+    console.log("  turmas array:", turmas);
+    return result;
   }, [aulasPorTurma, turmas]);
 
   const openEditor = (turmaId, day, slot, aulaAtual) => {
     setEditor({ turmaId, day, slot });
     const aulaId = aulaAtual?.aulaId || aulaAtual?.aula?.id || aulaAtual?.id || "";
     setSelectedAulaId(aulaId ? String(aulaId) : "");
+    // Se aulaAtual tem apenas divisao definida (slot vazio de uma divisão específica)
     const divisao = aulaAtual?.divisao || aulaAtual?.aula?.divisao || "";
     setSelectedDivisao(divisao || "");
     setSlotError(null);
@@ -245,11 +250,9 @@ function Horarios() {
     const payload = {
       turmaId: Number(editor.turmaId),
       diaSemana: normalizeDay(editor.day),
-      horario: `${editor.slot.start}-${editor.slot.end}`,
-      inicio: editor.slot.start,
-      fim: editor.slot.end,
+      horario: `${editor.slot.start}-${editor.slot.end}`, // Range completo, ex: "07:30-08:20"
       aulaId: Number(selectedAulaId),
-      divisao: selectedDivisao || null,
+      divisao: selectedDivisao || 'INT', // Padrão para INT se não especificado
       salaId: null,
     };
 
@@ -281,33 +284,63 @@ function Horarios() {
       }
 
       const turmaAulas = aulasPorTurma[editor.turmaId] || [];
-      const aulaExistente = getAulaForSlot(
+      
+      // Buscar aula existente COM A MESMA DIVISÃO
+      const aulasNoSlot = getAulasForSlot(
         turmaAulas,
         editor.day,
         editor.slot.start,
         editor.slot.end
       );
+      
+      // Filtrar pela divisão específica que estamos editando
+      const divisaoAtual = selectedDivisao || 'INT';
+      const aulaExistente = aulasNoSlot.find(a => (getAulaDivisao(a) || 'INT') === divisaoAtual);
 
-      console.log("Aula existente encontrada:", aulaExistente ? JSON.stringify(aulaExistente, null, 2) : "NENHUMA");
+      console.log("Divisão sendo editada:", divisaoAtual);
+      console.log("Aulas no slot:", aulasNoSlot.length);
+      console.log("Aula existente com mesma divisão:", aulaExistente ? JSON.stringify(aulaExistente, null, 2) : "NENHUMA");
 
       if (aulaExistente?.id) {
-        console.log(`Atualizando horário existente ID ${aulaExistente.id}`);
-        await atualizarHorario(aulaExistente.id, payload);
+        console.log(`Atualizando horário existente ID ${aulaExistente.id} (divisão: ${divisaoAtual})`);
+        try {
+          await atualizarHorario(aulaExistente.id, payload);
+          console.log("✅ Atualização bem-sucedida");
+        } catch (updateErr) {
+          console.error("❌ Erro ao atualizar:", updateErr);
+          throw updateErr;
+        }
       } else {
-        console.log("Criando novo horário");
-        await criarHorario(payload);
+        console.log(`Criando novo horário (divisão: ${divisaoAtual})`);
+        try {
+          const createRes = await criarHorario(payload);
+          console.log("✅ Criação bem-sucedida, response:", createRes);
+        } catch (createErr) {
+          console.error("❌ Erro ao criar:", createErr);
+          throw createErr;
+        }
       }
 
+      // Recarregar TODOS os horários (sem filtro de turma)
+      console.log("🔄 Recarregando todos os horários...");
       const horariosRes = await listarHorarios();
+      console.log("📥 listarHorarios() response recebida:", horariosRes);
+      console.log("📥 response.data:", horariosRes?.data);
       const dataHorarios = horariosRes?.data?.data || horariosRes?.data || horariosRes || [];
+      console.log("📥 dataHorarios após processar:", dataHorarios);
+      console.log("📥 É array?", Array.isArray(dataHorarios), "Tamanho:", Array.isArray(dataHorarios) ? dataHorarios.length : 0);
+      console.log("📥 Primeiro item:", dataHorarios[0]);
       setHorarios(Array.isArray(dataHorarios) ? dataHorarios : []);
+      console.log("✅ setHorarios chamado com:", Array.isArray(dataHorarios) ? dataHorarios.length : 0, "itens");
       closeEditor();
     } catch (err) {
       console.error("=== ERRO AO SALVAR HORÁRIO ===");
       console.error("Erro completo:", err);
+      console.error("Stack:", err?.stack);
       console.error("Status:", err?.status);
       console.error("Data:", err?.data);
       console.error("Message:", err?.message);
+      console.error("toString:", err?.toString());
       setSlotError(err.message || "Erro ao salvar horário.");
     } finally {
       setSavingSlot(false);
@@ -323,6 +356,10 @@ function Horarios() {
   if (loading) return <div className={styles.loading}>Carregando horários...</div>;
   if (error) return <div className={styles.error}>{error}</div>;
 
+  console.log("🔼 RENDERIZAÇÃO: turmaIds =", turmaIds);
+  console.log("🔼 RENDERIZAÇÃO: horarios =", horarios);
+  console.log("🔼 RENDERIZAÇÃO: aulasPorTurma =", aulasPorTurma);
+
   return (
     <div className={styles.container}>
       <div className={styles.headerRow}>
@@ -333,6 +370,9 @@ function Horarios() {
         <div className={styles.emptyState}>Nenhuma turma encontrada.</div>
       )}
 
+      {turmaIds.length > 0 && console.log("✅ Renderizando", turmaIds.length, "turmas")}
+
+      {console.log("🔍 Antes do map, turmaIds:", turmaIds)}
       {turmaIds.map((turmaId) => (
         <div key={turmaId} className={styles.turmaSection}>
           <h2 className={styles.turmaTitle}>{getNomeTurma(turmaId)}</h2>
@@ -387,12 +427,14 @@ function Horarios() {
                         </td>
 
                         {DAYS_OF_WEEK.map(({ value: dayValue }) => {
-                          const aulaEncontrada = getAulaForSlot(
+                          // Obter todas as aulas deste slot
+                          const aulasEncontradas = getAulasForSlot(
                             aulasPorTurma[turmaId] || [],
                             dayValue,
                             slot.start,
                             slot.end
                           );
+
                           const isEditing =
                             editor &&
                             editor.turmaId === turmaId &&
@@ -400,28 +442,86 @@ function Horarios() {
                             editor.slot.start === slot.start &&
                             editor.slot.end === slot.end;
 
-                          const divisao = getAulaDivisao(aulaEncontrada);
+                          // Agrupar aulas por divisão
+                          const aulaDivA = aulasEncontradas.find(a => (getAulaDivisao(a) || 'INT') === 'DIV A');
+                          const aulaDivB = aulasEncontradas.find(a => (getAulaDivisao(a) || 'INT') === 'DIV B');
+                          const aulaInt = aulasEncontradas.find(a => (getAulaDivisao(a) || 'INT') === 'INT');
+
+                          // Se tem INT, mostrar apenas INT (quadrado inteiro)
+                          const temInt = !!aulaInt;
+                          // Se tem DIV A ou DIV B, sempre mostrar os dois lados
+                          const temDivisao = !!aulaDivA || !!aulaDivB;
 
                           return (
                             <td key={dayValue} className={styles.slotCell}>
-                              <button
-                                type="button"
-                                className={styles.slotButton}
-                                onClick={() => openEditor(turmaId, dayValue, slot, aulaEncontrada)}
-                              >
-                                {aulaEncontrada ? (
+                              {temInt ? (
+                                // INT ocupa quadrado inteiro
+                                <button
+                                  type="button"
+                                  className={styles.slotButton}
+                                  onClick={() => openEditor(turmaId, dayValue, slot, aulaInt)}
+                                >
                                   <div className={styles.aulaInfo}>
                                     <span className={styles.materiaNome}>
-                                      {getAulaNome(aulaEncontrada)}
+                                      {getAulaNome(aulaInt)}
                                     </span>
-                                    {divisao && divisao !== "INT" && (
-                                      <span className={styles.divisaoTag}>{divisao}</span>
-                                    )}
                                   </div>
-                                ) : (
+                                </button>
+                              ) : temDivisao ? (
+                                // Dividir em DIV A e DIV B (sempre mostra os dois)
+                                <div className={styles.divisoesContainer}>
+                                  {/* DIV A */}
+                                  <div className={styles.divisaoSection} style={{ width: '50%' }}>
+                                    <button
+                                      type="button"
+                                      className={styles.slotButton}
+                                      onClick={() => openEditor(turmaId, dayValue, slot, aulaDivA || { divisao: 'DIV A' })}
+                                      title={aulaDivA ? `${getAulaNome(aulaDivA)} - DIV A` : 'Adicionar DIV A'}
+                                    >
+                                      {aulaDivA ? (
+                                        <div className={styles.aulaInfo}>
+                                          <span className={styles.materiaNome}>
+                                            {getAulaNome(aulaDivA)}
+                                          </span>
+                                          <span className={styles.divisaoTag}>DIV A</span>
+                                        </div>
+                                      ) : (
+                                        <span className={styles.emptySlot}>DIV A</span>
+                                      )}
+                                    </button>
+                                  </div>
+                                  
+                                  {/* DIV B */}
+                                  <div className={styles.divisaoSection} style={{ width: '50%' }}>
+                                    <button
+                                      type="button"
+                                      className={styles.slotButton}
+                                      onClick={() => openEditor(turmaId, dayValue, slot, aulaDivB || { divisao: 'DIV B' })}
+                                      title={aulaDivB ? `${getAulaNome(aulaDivB)} - DIV B` : 'Adicionar DIV B'}
+                                    >
+                                      {aulaDivB ? (
+                                        <div className={styles.aulaInfo}>
+                                          <span className={styles.materiaNome}>
+                                            {getAulaNome(aulaDivB)}
+                                          </span>
+                                          <span className={styles.divisaoTag}>DIV B</span>
+                                        </div>
+                                      ) : (
+                                        <span className={styles.emptySlot}>DIV B</span>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Slot completamente vazio
+                                <button
+                                  type="button"
+                                  className={styles.slotButton}
+                                  onClick={() => openEditor(turmaId, dayValue, slot, null)}
+                                >
                                   <span className={styles.emptySlot}>Selecionar</span>
-                                )}
-                              </button>
+                                </button>
+                              )}
 
                               {isEditing && (
                                 <div className={styles.slotPopover} ref={popoverRef}>

@@ -87,11 +87,14 @@ function getAuthHeaders(isFormData = false) {
 }
 
 async function get(endpoint) {
+  console.log(`📤 GET ${endpoint}`);
   const response = await fetch(`${API_URL}${endpoint}`, {
   method: 'GET',
   headers: getAuthHeaders(),
   });
-  return handleResponse(response);
+  const result = await handleResponse(response);
+  console.log(`📥 GET ${endpoint} response:`, result);
+  return result;
 }
 
 async function post(endpoint, body) {

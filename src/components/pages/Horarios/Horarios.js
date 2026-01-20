@@ -34,8 +34,7 @@ const DAYS_OF_WEEK = [
 const normalizeDay = (day) => (day || "").toUpperCase().replace("Ç", "C");
 
 const DIVISOES = [
-  { value: "", label: "Nenhuma (INT)" },
-  { value: "INT", label: "INT" },
+  { value: "", label: "INT" },
   { value: "DIV A", label: "DIV A" },
   { value: "DIV B", label: "DIV B" },
 ];
@@ -51,6 +50,7 @@ function Horarios() {
   const [editor, setEditor] = useState(null); // { turmaId, day, slot }
   const [selectedAulaId, setSelectedAulaId] = useState("");
   const [selectedDivisao, setSelectedDivisao] = useState("");
+  const [originalDivisao, setOriginalDivisao] = useState(""); // Divisão original quando editor foi aberto
   const [savingSlot, setSavingSlot] = useState(false);
   const [slotError, setSlotError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -225,6 +225,7 @@ function Horarios() {
     // Se aulaAtual tem apenas divisao definida (slot vazio de uma divisão específica)
     const divisao = aulaAtual?.divisao || aulaAtual?.aula?.divisao || "";
     setSelectedDivisao(divisao || "");
+    setOriginalDivisao(divisao || ""); // Guardar divisão original
     setSlotError(null);
     setSearchTerm("");
   };
@@ -233,56 +234,18 @@ function Horarios() {
     setEditor(null);
     setSelectedAulaId("");
     setSelectedDivisao("");
+    setOriginalDivisao("");
     setSlotError(null);
     setSearchTerm("");
   };
 
   const handleSaveSlot = async () => {
     if (!editor) return;
-    if (!selectedAulaId) {
-      setSlotError("Selecione uma aula.");
-      return;
-    }
 
     setSavingSlot(true);
     setSlotError(null);
 
-    const payload = {
-      turmaId: Number(editor.turmaId),
-      diaSemana: normalizeDay(editor.day),
-      horario: `${editor.slot.start}-${editor.slot.end}`, // Range completo, ex: "07:30-08:20"
-      aulaId: Number(selectedAulaId),
-      divisao: selectedDivisao || 'INT', // Padrão para INT se não especificado
-      salaId: null,
-    };
-
-    console.log("=== HORÁRIOS DEBUG ===");
-    console.log("Payload a ser enviado:", JSON.stringify(payload, null, 2));
-
     try {
-      // Validação prévia (se disponível)
-      try {
-        await validarHorario(payload);
-      } catch (err) {
-        if (err?.status === 404) {
-          console.warn("Validação de horário indisponível (404)");
-        } else if (err?.status === 409 && err?.data?.conflicts) {
-          const msg = err.data.conflicts.map((c) => {
-            if (c.type === "professor") {
-              return `Professor em conflito: ${c.details?.professorNome} (${c.details?.aulaConflito} - ${c.details?.turmaConflito})`;
-            } else if (c.type === "sala") {
-              return `Sala em conflito: ${c.details?.salaId || c.details?.salaNome} (${c.details?.turmaConflito})`;
-            }
-            return c.message || "Conflito de horário";
-          }).join("\n");
-          setSlotError(msg);
-          setSavingSlot(false);
-          return; // não prossegue com save
-        } else {
-          console.warn("Falha na validação de horário", err);
-        }
-      }
-
       const turmaAulas = aulasPorTurma[editor.turmaId] || [];
       
       // Buscar aula existente COM A MESMA DIVISÃO
@@ -293,31 +256,98 @@ function Horarios() {
         editor.slot.end
       );
       
-      // Filtrar pela divisão específica que estamos editando
-      const divisaoAtual = selectedDivisao || 'INT';
-      const aulaExistente = aulasNoSlot.find(a => (getAulaDivisao(a) || 'INT') === divisaoAtual);
+      // Usar divisão original (quando editor foi aberto) para encontrar a aula
+      // Isso permite mudar a divisão de uma aula existente (ex: DIV A -> INT)
+      const divisaoOriginal = originalDivisao || 'INT';
+      const novaDiv = selectedDivisao || 'INT';
+      const aulaExistente = aulasNoSlot.find(a => (getAulaDivisao(a) || 'INT') === divisaoOriginal);
 
-      console.log("Divisão sendo editada:", divisaoAtual);
+      console.log("Divisão original:", divisaoOriginal);
+      console.log("Nova divisão:", novaDiv);
       console.log("Aulas no slot:", aulasNoSlot.length);
-      console.log("Aula existente com mesma divisão:", aulaExistente ? JSON.stringify(aulaExistente, null, 2) : "NENHUMA");
+      console.log("Aula existente com divisão original:", aulaExistente ? JSON.stringify(aulaExistente, null, 2) : "NENHUMA");
 
-      if (aulaExistente?.id) {
-        console.log(`Atualizando horário existente ID ${aulaExistente.id} (divisão: ${divisaoAtual})`);
-        try {
-          await atualizarHorario(aulaExistente.id, payload);
-          console.log("✅ Atualização bem-sucedida");
-        } catch (updateErr) {
-          console.error("❌ Erro ao atualizar:", updateErr);
-          throw updateErr;
+      // Se nenhuma aula foi selecionada (clicou em "Nenhum")
+      if (!selectedAulaId) {
+        if (aulaExistente?.id) {
+          // Deletar a aula existente
+          console.log(`Deletando horário existente ID ${aulaExistente.id}`);
+          try {
+            const deleteRes = await fetch(`http://localhost:3000/horarios-aulas/${aulaExistente.id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+
+            if (!deleteRes.ok) {
+              throw new Error('Erro ao deletar horário');
+            }
+
+            console.log("✅ Horário deletado com sucesso, ID:", aulaExistente.id);
+          } catch (deleteErr) {
+            console.error("❌ Erro ao deletar:", deleteErr);
+            throw deleteErr;
+          }
+        } else {
+          // Não existe aula para deletar, então apenas fecha o editor
+          console.log("Nenhuma aula para remover neste slot");
         }
       } else {
-        console.log(`Criando novo horário (divisão: ${divisaoAtual})`);
+        // Usuário selecionou uma aula - criar ou atualizar
+        const payload = {
+          turmaId: Number(editor.turmaId),
+          diaSemana: normalizeDay(editor.day),
+          horario: `${editor.slot.start}-${editor.slot.end}`,
+          aulaId: Number(selectedAulaId),
+          divisao: novaDiv,
+          salaId: null,
+        };
+
+        console.log("=== HORÁRIOS DEBUG ===");
+        console.log("Payload a ser enviado:", JSON.stringify(payload, null, 2));
+
+        // Validação prévia (se disponível)
         try {
-          const createRes = await criarHorario(payload);
-          console.log("✅ Criação bem-sucedida, response:", createRes);
-        } catch (createErr) {
-          console.error("❌ Erro ao criar:", createErr);
-          throw createErr;
+          await validarHorario(payload);
+        } catch (err) {
+          if (err?.status === 404) {
+            console.warn("Validação de horário indisponível (404)");
+          } else if (err?.status === 409 && err?.data?.conflicts) {
+            const msg = err.data.conflicts.map((c) => {
+              if (c.type === "professor") {
+                return `Professor em conflito: ${c.details?.professorNome} (${c.details?.aulaConflito} - ${c.details?.turmaConflito})`;
+              } else if (c.type === "sala") {
+                return `Sala em conflito: ${c.details?.salaId || c.details?.salaNome} (${c.details?.turmaConflito})`;
+              }
+              return c.message || "Conflito de horário";
+            }).join("\n");
+            setSlotError(msg);
+            setSavingSlot(false);
+            return;
+          } else {
+            console.warn("Falha na validação de horário", err);
+          }
+        }
+
+        if (aulaExistente?.id) {
+          console.log(`Atualizando horário existente ID ${aulaExistente.id} (${divisaoOriginal} → ${novaDiv})`);
+          try {
+            await atualizarHorario(aulaExistente.id, payload);
+            console.log("✅ Atualização bem-sucedida");
+          } catch (updateErr) {
+            console.error("❌ Erro ao atualizar:", updateErr);
+            throw updateErr;
+          }
+        } else {
+          console.log(`Criando novo horário (divisão: ${novaDiv})`);
+          try {
+            const createRes = await criarHorario(payload);
+            console.log("✅ Criação bem-sucedida, response:", createRes);
+          } catch (createErr) {
+            console.error("❌ Erro ao criar:", createErr);
+            throw createErr;
+          }
         }
       }
 
@@ -364,6 +394,12 @@ function Horarios() {
     <div className={styles.container}>
       <div className={styles.headerRow}>
         <h1 className={styles.pageTitle}>Horários</h1>
+        <button
+          className={styles.btnAdd}
+          onClick={() => window.open("/aulas", "_blank")}
+        >
+          <FontAwesomeIcon icon={faPlus} /> Gerenciar aulas
+        </button>
       </div>
 
       {turmaIds.length === 0 && (
@@ -380,7 +416,6 @@ function Horarios() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h3>Tabela do Horário</h3>
-              <button className={styles.expandButton}>+</button>
             </div>
 
             <div className={styles.tableResponsive}>
@@ -555,6 +590,15 @@ function Horarios() {
                                     >
                                       + Criar nova aula
                                     </button>
+                                    {selectedAulaId && (
+                                      <button
+                                        type="button"
+                                        className={styles.popoverItem}
+                                        onClick={() => setSelectedAulaId("")}
+                                      >
+                                        <span className={styles.popoverItemName} style={{ color: '#999' }}>Nenhum</span>
+                                      </button>
+                                    )}
                                     {filteredAulas.map((a) => (
                                       <button
                                         type="button"
@@ -602,15 +646,6 @@ function Horarios() {
                   })}
                 </tbody>
               </table>
-            </div>
-
-            <div className={styles.actionsFooter}>
-              <button
-                className={styles.btnAdd}
-                onClick={() => window.open("/aulas", "_blank")}
-              >
-                <FontAwesomeIcon icon={faPlus} /> Gerenciar aulas
-              </button>
             </div>
           </div>
         </div>

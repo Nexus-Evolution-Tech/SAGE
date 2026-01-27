@@ -1,0 +1,24 @@
+.wrapper {
+  display: flex;
+  gap: 10px;
+}
+
+.btn,
+.btnGhost {
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+  border: 1px solid #0ea5e9;
+}
+
+.btn {
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+  color: #0b1224;
+  box-shadow: 0 10px 22px rgba(14, 165, 233, 0.35);
+}
+
+.btnGhost {
+  background: transparent;
+  color: #0ea5e9;
+}

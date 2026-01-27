@@ -220,6 +220,53 @@ export async function validarHorario(data) {
   );
 }
 
+function buildRelatorioQuery(params = {}) {
+  const query = new URLSearchParams();
+
+  if (params.grupo) query.append('grupo', params.grupo);
+  if (params.tipo_funcionario) query.append('tipo_funcionario', params.tipo_funcionario);
+  if (params.turma_id) query.append('turma_id', params.turma_id);
+  if (params.periodo) query.append('periodo', params.periodo);
+  if (params.data_inicio) query.append('data_inicio', params.data_inicio);
+  if (params.data_fim) query.append('data_fim', params.data_fim);
+
+  return query;
+}
+
+export async function getRelatorioAcessoResumo(params = {}) {
+  const query = buildRelatorioQuery(params);
+  const qs = query.toString();
+  const suffix = qs ? `?${qs}` : '';
+
+  return withFallback(
+    () => get(`/api/relatorios/acesso/resumo${suffix}`),
+    () => get(`/api/relatorios/acesso${suffix}`)
+  );
+}
+
+export async function getRelatorioAcessoDetalhes(params = {}) {
+  const query = buildRelatorioQuery(params);
+  if (params.page) query.append('page', params.page);
+  if (params.limit) query.append('limit', params.limit);
+
+  const qs = query.toString();
+  const suffix = qs ? `?${qs}` : '';
+
+  return withFallback(
+    () => get(`/api/relatorios/acesso/detalhes${suffix}`),
+    () => get(`/api/relatorios/acesso${suffix}`)
+  );
+}
+
+export async function getRelatorioTurmas() {
+  return get('/api/relatorios/turmas');
+}
+
+// Acessos (entrada/saída)
+export async function criarAcesso(data) {
+  return post('/acessos', data);
+}
+
 export const api = {
   get,
   post,
@@ -236,4 +283,8 @@ export const api = {
   atualizarHorario,
   deletarHorario,
   validarHorario,
+  getRelatorioAcessoResumo,
+  getRelatorioAcessoDetalhes,
+  getRelatorioTurmas,
+  criarAcesso,
 };

@@ -1,19 +1,52 @@
-.container{
-    max-width: 1200px;
-    display: flex;
-    justify-content: space-between;
-    margin: 0 auto;
-    flex-wrap: wrap;
+.container {
+  max-width: 1400px;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 0 24px;
+  gap: 16px;
 }
 
-.min-height{
-    min-height: 75%;
+.min-height {
+  min-height: 75%;
 }
 
 .start {
-    justify-content: flex-start;
+  justify-content: flex-start;
 }
 
 .collumn {
-    flex-direction: column;
+  flex-direction: column;
+}
+
+/* Tablets grandes */
+@media (max-width: 1200px) {
+  .container {
+    max-width: 1200px;
+    padding: 0 20px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding: 0 18px;
+  }
+}
+
+/* Tablets pequenos */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
 }

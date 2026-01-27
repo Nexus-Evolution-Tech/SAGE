@@ -11,11 +11,33 @@ import {
 } from "recharts";
 import styles from "./GraficosLinha.module.css";
 
+const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+function formatarDia(dataStr) {
+  if (!dataStr) return "";
+  
+  try {
+    const data = new Date(dataStr + "T00:00:00");
+    const dia = DIAS_SEMANA[data.getUTCDay()];
+    const diaMes = String(data.getUTCDate()).padStart(2, "0");
+    
+    return `${dia.slice(0, 3)} ${diaMes}`;
+  } catch {
+    return dataStr;
+  }
+}
+
 export default function GraficosLinha({ dados = [], titulo = "Evolução" }) {
   const safeData = Array.isArray(dados) ? dados : [];
   
+  // Transforma os dados adicionando um label formatado
+  const dataFormatada = safeData.map((item) => ({
+    ...item,
+    horario: item.dia ? formatarDia(item.dia) : item.horario || item.label,
+  }));
+  
   // Verifica se há números válidos para exibir
-  const hasData = safeData.some((item) =>
+  const hasData = dataFormatada.some((item) =>
     ["no_horario", "atrasados", "faltantes"].some((k) => Number(item[k]) > 0)
   );
 
@@ -34,7 +56,7 @@ export default function GraficosLinha({ dados = [], titulo = "Evolução" }) {
         <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
-              data={safeData} 
+              data={dataFormatada} 
               /* Ajuste de margem esquerda negativa para centralizar melhor */
               margin={{ top: 8, right: 30, left: -20, bottom: 8 }}
             >
@@ -59,9 +81,9 @@ export default function GraficosLinha({ dados = [], titulo = "Evolução" }) {
                 dataKey="no_horario" 
                 name="No horário" 
                 stroke="#4CAF50" 
-                strokeWidth={3} // Linha um pouco mais grossa fica melhor sem pontos
+                strokeWidth={3}
                 dot={false} 
-                activeDot={{ r: 6 }} // Mostra o ponto apenas no hover
+                activeDot={{ r: 6 }}
               />
               <Line type="monotone" dataKey="atrasados" name="Atrasados" stroke="#FFC107" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
               <Line type="monotone" dataKey="faltantes" name="Faltantes" stroke="#F44336" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />

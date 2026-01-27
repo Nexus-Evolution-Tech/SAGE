@@ -48,7 +48,7 @@ function AppContent() {
         </>
       )}
 
-      <div className="content">
+      <div className={`content ${isPublicPage ? 'public-page' : ''}`}>
         <Container customClass="min-height">
           <Routes>
             <Route path="/" element={<Login />} />

@@ -1,38 +1,53 @@
 .card {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  background: #ffffff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 18px 16px;
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .label {
-  font-size: 13px;
-  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .value {
-  font-size: 22px;
+  font-size: 28px;
+  font-weight: 700;
   color: #0f172a;
+  line-height: 1;
 }
 
 .helper {
-  font-size: 12px;
-  color: #64748b;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
 }
+

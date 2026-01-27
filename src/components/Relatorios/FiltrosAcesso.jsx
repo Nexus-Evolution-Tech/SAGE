@@ -43,7 +43,14 @@ export default function FiltrosAcesso({ filtros, onChange, turmas = [], onRefres
           <h2 className={styles.title}>Acesso & Presença</h2>
         </div>
         <div className={styles.actions}>
-          <button className={styles.refresh} onClick={onRefresh}>Atualizar</button>
+          <button 
+            className={styles.refresh} 
+            onClick={onRefresh}
+            title="Atualizar dados"
+            aria-label="Atualizar"
+          >
+            ⟳
+          </button>
         </div>
       </div>
 

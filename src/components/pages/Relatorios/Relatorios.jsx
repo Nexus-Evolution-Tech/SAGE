@@ -155,33 +155,32 @@ export default function Relatorios() {
           <p className={styles.helper}>
             Frequência: {metricas.percentual_presenca ? `${metricas.percentual_presenca}%` : "0%"}
           </p>
-        </div>
-        <div className={styles.actionButtons}>
-          <button 
-            className={styles.simulateBtn}
-            onClick={() => setShowSimularAcesso(true)}
-            title="Simular entrada/saída de aluno para testes"
-          >
-            + Simular Acesso
-          </button>
-          <BotaoExportar onExport={handleExport} />
+          <div className={styles.actionButtons}>
+            <button 
+              className={styles.simulateBtn}
+              onClick={() => setShowSimularAcesso(true)}
+              title="Simular entrada/saída de aluno para testes"
+            >
+              + Simular Acesso
+            </button>
+            <BotaoExportar onExport={handleExport} />
+          </div>
         </div>
       </div>
-
-      <SimularAcesso
-        isOpen={showSimularAcesso}
-        onClose={() => setShowSimularAcesso(false)}
-        onSuccess={() => {
-          // Invalida todas as queries de relatório para forçar refetch
-          queryClient.invalidateQueries({ queryKey: ["relatorios"] });
-          setShowSimularAcesso(false);
-        }}
-      />
 
       <TabelaDetalhes
         linhas={linhasTabela}
         loading={detalhesQuery.isLoading}
         onSearch={setBusca}
+      />
+
+      <SimularAcesso
+        isOpen={showSimularAcesso}
+        onClose={() => setShowSimularAcesso(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["relatorios"] });
+          setShowSimularAcesso(false);
+        }}
       />
 
       {resumoQuery.isError && (

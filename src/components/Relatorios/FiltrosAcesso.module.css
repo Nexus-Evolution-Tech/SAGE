@@ -1,52 +1,84 @@
 .card {
-  background: #0f172a;
+  background: linear-gradient(135deg, #0f172a 0%, #1a2942 100%);
   color: #e2e8f0;
-  border-radius: 16px;
-  padding: 18px;
+  border-radius: 12px;
+  padding: 20px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.4);
   border: 1px solid rgba(148, 163, 184, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  border-color: rgba(148, 163, 184, 0.5);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.5);
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: #94a3b8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .title {
   margin: 0;
   color: #f8fafc;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .refresh {
-  background: linear-gradient(135deg, #22d3ee, #6366f1);
+  background: linear-gradient(135deg, #22d3ee 0%, #6366f1 100%);
   color: #0b1224;
   border: none;
-  border-radius: 10px;
-  padding: 10px 14px;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.refresh:hover {
+  transform: translateY(-2px) rotate(90deg);
+  box-shadow: 0 16px 40px rgba(99, 102, 241, 0.5);
+}
+
+.refresh:active {
+  transform: translateY(0) rotate(90deg);
 }
 
 .grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  width: 100%;
 }
 
 .groupBox {
@@ -59,8 +91,9 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(120px, 1fr));
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 4px;
+  gap: 4px;
 }
 
 .segment {
@@ -68,39 +101,60 @@
   background: transparent;
   color: #cbd5e1;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 13px;
 }
 
 .segment:hover {
   color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .active {
-  background: #fff;
+  background: #ffffff;
   color: #0f172a;
   font-weight: 700;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .label {
-  font-size: 13px;
+  font-size: 12px;
   color: #cbd5e1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .select {
   width: 100%;
-  border-radius: 10px;
-  border: 1px solid #1f2937;
+  border-radius: 8px;
+  border: 1px solid #1e293b;
   padding: 10px 12px;
-  background: #111827;
+  background: rgba(30, 41, 59, 0.8);
   color: #f8fafc;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.select:hover {
+  border-color: #475569;
+  background: rgba(30, 41, 59, 1);
+}
+
+.select:focus {
+  outline: none;
+  border-color: #22d3ee;
+  background: rgba(30, 41, 59, 1);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
 }
 
 .range {
@@ -108,3 +162,58 @@
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .card {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .refresh {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .segmented {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .refresh {
+    width: 100%;
+  }
+}
+

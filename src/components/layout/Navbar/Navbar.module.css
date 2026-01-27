@@ -13,8 +13,26 @@
   top: 0;
   z-index: 999;
   color: var(--primary-color);
-  overflow: visible; 
+  overflow: visible;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Tablets pequenos - esconde navbar */
+@media (max-width: 768px) {
+  .navbar {
+    transform: translateX(-100%);
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+/* Tablets grandes - reduz um pouco */
+@media (max-width: 1024px) {
+  .navbar {
+    width: 220px;
+  }
+}
+
 
 .logoLink {
   margin-bottom: 2.5em; 

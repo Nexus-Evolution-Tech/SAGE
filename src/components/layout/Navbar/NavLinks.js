@@ -7,7 +7,7 @@ const navLinks = [
   { to: "/dispositivos", label: "Dispositivos", icon: faGlobe },
   { to: "/areas", label: "Áreas", icon: faClock },
   { to: "/horarios", label: "Horários", icon: faFileLines, match: ["/aulas"] },
-  { to: "/relatorios", label: "Relatórios", icon: faChartSimple },
+  { to: "/relatorios", label: "Relatórios", icon: faChartSimple, match: ["/relatorios/acesso"] },
 ];
 
 export const userLink = { to: "/profile", icon: faUser };

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import styles from "./Home.module.css";
 import FiltrosAcesso from '../../Relatorios/FiltrosAcesso';
 import MetricasCards from '../../Relatorios/MetricasCards';
 import GraficosPizza from '../../Relatorios/GraficosPizza';
 import GraficosLinha from '../../Relatorios/GraficosLinha';
-import Monitoring from '../Monitoring/Monitoring';
 import { api } from '../../../services/api';
+import styles from './Acesso.module.css';
 
-function Home() {
+export default function AcessoRelatorio() {
   const [filtro, setFiltro] = useState({
     grupo: 'ALUNOS',
     tipo: 'TODOS'
@@ -17,28 +16,41 @@ function Home() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
 
+  // Função de busca de dados (sem dependências)
   const buscarDados = async (filtroAtual) => {
     setCarregando(true);
     setErro(null);
     try {
       const params = { grupo: filtroAtual.grupo, tipo: filtroAtual.tipo };
-      const response = await api.get('/api/relatorios/acesso', { params });
-      const payload = response?.data || response;
-      setDados(payload);
+      console.log('[ACESSO] Iniciando busca com filtros:', params);
+
+      try {
+        console.log('[ACESSO] Tentando GET /api/relatorios/acesso com params:', params);
+        const response = await api.get('/api/relatorios/acesso', { params });
+        const payload = response?.data || response;
+        console.log('[ACESSO] Dados recebidos da API:', payload);
+        console.log('[ACESSO] Estrutura: metricas =', payload?.metricas, ', pizza =', payload?.pizza, ', linha =', payload?.linha);
+        setDados(payload);
+      } catch (err) {
+        console.error('[ACESSO-ERROR] Erro na requisição:', err);
+        throw err;
+      }
     } catch (err) {
-      console.error('[HOME] Erro ao buscar dados:', err);
+      console.error('[ACESSO-ERROR] Erro ao buscar dados:', err);
       setErro(err.message || 'Não foi possível carregar os dados.');
     } finally {
       setCarregando(false);
     }
   };
 
+  // Effect que roda quando filtro muda
   useEffect(() => {
+    console.log('[ACESSO] Filtro mudou:', filtro);
     buscarDados(filtro);
   }, [filtro]);
 
   return (
-    <div className={styles.homeContainer}>
+    <div className={styles.container}>
       <header className={styles.header}>
         <div>
           <p className={styles.kicker}>Relatórios</p>
@@ -80,16 +92,9 @@ function Home() {
               <GraficosPizza dados={dados.pizza} />
               <GraficosLinha dados={dados.linha} />
             </div>
-
-            <div className={styles.monitoringSection}>
-              <h2 className={styles.monitoringTitle}>Monitoramento em Tempo Real</h2>
-              <Monitoring />
-            </div>
           </>
         )}
       </div>
     </div>
   );
 }
-
-export default Home;

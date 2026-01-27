@@ -13,7 +13,8 @@ import Dispositivos from "./components/pages/Dispositivos/Dispositivos";
 import Container from "./components/layout/Container/Container";
 import Navbar from "./components/layout/Navbar/Navbar";
 import Footer from "./components/layout/Footer/Footer";
-import Monitoramento from "./components/pages/Home/Home";
+import Home from "./components/pages/Home/Home";
+import Monitoring from "./components/pages/Monitoring/Monitoring";
 import Login from "./components/pages/Login/Login";
 import Cadastro from "./components/pages/Cadastro/Cadastro";
 import Tabelas from "././components/pages/Tabelas/Tabelas";
@@ -26,6 +27,8 @@ import Regras from "./components/pages/Regras/Regras";
 import Horarios from "./components/pages/Horarios/Horarios";
 import Areas from "./components/pages/Areas/Areas";
 import Aulas from "./components/pages/Aulas/Aulas";
+import AcessoRelatorio from "./components/pages/Relatorios/Acesso";
+import { Navigate } from "react-router-dom";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
 import { ReactQueryProvider } from './contexts/ReactQueryProvider';
@@ -56,10 +59,10 @@ function AppContent() {
 
             <Route element={<ProtectedRoute />}>
               <Route path="/pessoas" element={<Pessoas />} />
-              <Route path="/inicio" element={<Inicio />} />
+              <Route path="/inicio" element={<Home />} />
               <Route path="/departamentos" element={<Departamentos />} />
               <Route path="/dispositivos" element={<Dispositivos />} />
-              <Route path="/monitoramento" element={<Monitoramento />} />
+              <Route path="/monitoramento" element={<Monitoring />} />
               <Route path="/tabelas/:tipo" element={<Tabelas />} />
               <Route path="/tabelas/:tipo/:turmaId" element={<Tabelas />} />
               <Route path="/formulario/:tipo/:id" element={<Formulario />} />
@@ -69,6 +72,8 @@ function AppContent() {
               <Route path="/horarios" element={<Horarios />} />
               <Route path="/aulas" element={<Aulas />} />
               <Route path="/areas" element={<Areas />} />
+              <Route path="/relatorios" element={<Navigate to="/relatorios/acesso" replace />} />
+              <Route path="/relatorios/acesso" element={<AcessoRelatorio />} />
             </Route>
             
 

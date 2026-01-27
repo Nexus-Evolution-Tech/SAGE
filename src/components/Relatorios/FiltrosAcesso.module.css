@@ -1,0 +1,82 @@
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  background: #f8f9fc;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grupo label,
+.tipo label {
+  font-weight: 700;
+  color: var(--primary-color, #021932);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.radio {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.radio button {
+  padding: 12px 16px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color, #021932);
+}
+
+.radio button:hover {
+  border-color: var(--blue, #032f5e);
+  box-shadow: 0 8px 14px rgba(3, 47, 94, 0.14);
+  transform: translateY(-1px);
+}
+
+.radio button.ativo {
+  background: var(--primary-color, #021932);
+  color: #fff;
+  border-color: var(--primary-color, #021932);
+  box-shadow: 0 10px 18px rgba(2, 25, 50, 0.22);
+}
+
+.tipo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tipo select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tipo select:focus {
+  outline: none;
+  border-color: var(--blue, #032f5e);
+  box-shadow: 0 0 0 3px rgba(3, 47, 94, 0.12);
+}
+
+@media (max-width: 768px) {
+  .filtros {
+    grid-template-columns: 1fr;
+  }
+}

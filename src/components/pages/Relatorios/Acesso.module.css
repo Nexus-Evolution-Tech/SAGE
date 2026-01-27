@@ -1,18 +1,5 @@
-:root {
-  --white: #ffffff;
-  --black: #000000;
-  --primary-color: #021932;
-  --gray: #5b5b5b;
-  --lightGray: #aeaeae;
-  --green: #008001;
-  --light-green: #a4c284;
-  --extra-light-green: #f5f5c7;
-  --blue: #032f5e;
-  --light-red: #032f5e;
-  --extra-light-red: #efa5a5;
-}
 
-.homeContainer {
+.container {
   padding: 28px 20px 40px 180px;
   width: 100%;
   min-height: 100vh;
@@ -113,28 +100,25 @@
 
 .graficos {
   display: flex;
+  flex-direction: row;
   gap: 24px;
   width: 100%;
-  align-items: stretch;
+  overflow: visible;
 }
 
-.monitoringSection {
-  margin-top: 24px;
-}
-
-.monitoringTitle {
-  margin: 0 0 12px 0;
-  color: var(--primary-color, #021932);
-  font-size: 22px;
+.graficos > * {
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
 }
 
 @media (max-width: 1200px) {
-  .homeContainer {
+  .container {
     padding: 24px 18px 32px;
   }
 
   .graficos {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -153,4 +137,3 @@
     padding: 18px;
   }
 }
-

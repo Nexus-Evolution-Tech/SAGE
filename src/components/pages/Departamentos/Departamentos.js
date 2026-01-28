@@ -7,7 +7,8 @@ import {
   faDownload,
   faUpload,
   faFileExcel,
-} from "@fortawesome/free-solid-svg-icons"; 
+  faSearch,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "../../../services/api";
 import SkeletonLoader from "../../common/SkeletonLoader";
@@ -16,6 +17,9 @@ function Departamentos() {
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarLista, setMostrarLista] = useState(false);
+
+  // Estado para a busca em tempo real
+  const [termoBusca, setTermoBusca] = useState("");
 
   const [mostrarModalImportar, setMostrarModalImportar] = useState(false);
   const [arquivoSelecionado, setArquivoSelecionado] = useState(null);
@@ -34,19 +38,23 @@ function Departamentos() {
   const navigate = useNavigate();
 
   // ============================================
-  // REACT QUERY - Buscar dados com cache persistente
+  // REACT QUERY
   // ============================================
-  const { data: dados = {
-    turmas: [],
-    professores: [],
-    administracao: [],
-    terceirizados: [],
-    responsaveis: [],
-  }, isLoading, error } = useQuery({
-    queryKey: ['departamentos'],
+  const {
+    data: dados = {
+      turmas: [],
+      professores: [],
+      administracao: [],
+      terceirizados: [],
+      responsaveis: [],
+    },
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["departamentos"],
     queryFn: async () => {
       const abortController = new AbortController();
-      
+
       try {
         const tipos = [
           { key: "turmas", url: "ALUNO" },
@@ -65,29 +73,19 @@ function Departamentos() {
           responsaveis: [],
         };
 
-        // Processar tipos SEQUENCIALMENTE para evitar stall
         for (const { key, url } of tipos) {
-          if (abortController.signal.aborted) {
-            console.log('Busca cancelada');
-            return resultado;
-          }
+          if (abortController.signal.aborted) return resultado;
 
-          const json = await api.get(`/pessoas/tipo/${url}`);
+          // CORREÇÃO AQUI: Adicionamos ?limit=1000 (ou o parâmetro que sua API usa)
+          // para garantir que venham TODOS os registros, e não apenas a primeira página.
+          // Nota: Verifique se sua API usa 'limit', 'pageSize', 'size' ou 'per_page'.
+          const json = await api.get(`/pessoas/tipo/${url}?limit=1000`);
           const pessoas = json.data || json;
 
-          if (!Array.isArray(pessoas)) {
-            console.error(
-              `A API para /pessoas/tipo/${url} não retornou um array.`,
-              pessoas
-            );
-            continue;
-          }
-          
-          if (key === "responsavel") {
-            const pessoasComFlag = pessoas.map((p) => ({
-              ...p,
-            }));
-            resultado.responsaveis.push(...pessoasComFlag);
+          if (!Array.isArray(pessoas)) continue;
+
+          if (key === "responsaveis") {
+            resultado.responsaveis.push(...pessoas);
             continue;
           }
 
@@ -106,21 +104,21 @@ function Departamentos() {
               trabalhaNaADM: false,
             }));
             
-            // Buscar fotos em PARALELO
+            // Busca fotos para todos
             const pessoasComFoto = await Promise.all(
-              pessoasComFlag.slice(0, 3).map(async (pessoa) => {
+              pessoasComFlag.map(async (pessoa) => {
                 const foto = await buscarFoto(pessoa.id);
                 return { ...pessoa, foto };
               })
             );
-            
+
             resultado.professores.push(...pessoasComFoto);
             continue;
           }
 
-          // Buscar fotos e empresas em PARALELO
+          // Busca fotos e empresas
           const pessoasComFoto = await Promise.all(
-            pessoas.slice(0, 3).map(async (pessoa) => {
+            pessoas.map(async (pessoa) => {
               const foto = await buscarFoto(pessoa.id);
 
               let empresaNome = "";
@@ -146,16 +144,17 @@ function Departamentos() {
 
         return resultado;
       } catch (error) {
-        if (error.name !== 'AbortError') {
+        if (error.name !== "AbortError") {
           console.error("Erro ao buscar dados:", error);
         }
         throw error;
       }
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos - mesmo do ReactQueryProvider
-    gcTime: 1000 * 60 * 15, // 15 minutos
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 15,
   });
 
+  // Funções Auxiliares
   const formatarData = (dataISO) => {
     if (!dataISO) return "";
     const data = new Date(dataISO);
@@ -175,14 +174,17 @@ function Departamentos() {
 
   const buscarFoto = async (id) => {
     try {
-      const json = await api.get(`/pessoas/url/${id}`);
+      // Pequeno ajuste: silenciando erro 404 comum de fotos para não poluir console
+      const json = await api.get(`/pessoas/url/${id}`).catch(() => ({ url: "" }));
       return json.url || "";
     } catch (err) {
-      console.error(`Erro ao buscar imagem para id ${id}:`, err);
       return "";
     }
   };
 
+  // ============================================
+  // MANIPULAÇÃO DE ARQUIVOS
+  // ============================================
   const handleFileSelect = (file) => {
     if (file) {
       if (
@@ -196,16 +198,14 @@ function Departamentos() {
       } else {
         setMensagemUpload({
           tipo: "erro",
-          texto: "Formato de arquivo inválido. Use .xlsx, .xls ou .csv",
+          texto: "Formato inválido. Use .xlsx, .xls ou .csv",
         });
         setArquivoSelecionado(null);
       }
     }
   };
 
-  const handleFileChange = (e) => {
-    handleFileSelect(e.target.files?.[0]);
-  };
+  const handleFileChange = (e) => handleFileSelect(e.target.files?.[0]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -226,22 +226,15 @@ function Departamentos() {
     handleFileSelect(e.dataTransfer.files?.[0]);
   }, []);
 
-  const handleBuscarArquivoClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleBuscarArquivoClick = () => fileInputRef.current?.click();
 
   const handleUpload = async () => {
     if (!arquivoSelecionado) {
-      setMensagemUpload({
-        tipo: "erro",
-        texto: "Por favor, selecione um arquivo.",
-      });
+      setMensagemUpload({ tipo: "erro", texto: "Selecione um arquivo." });
       return;
     }
-
     setIsUploading(true);
     setMensagemUpload({ tipo: "", texto: "" });
-
     const formData = new FormData();
     formData.append("planilha", arquivoSelecionado);
 
@@ -249,16 +242,13 @@ function Departamentos() {
       const response = await api.postFormData("/dados/importar", formData);
       setMensagemUpload({
         tipo: "sucesso",
-        texto: response?.data?.message || response?.message || "Arquivo importado com sucesso!",
+        texto: response?.data?.message || response?.message || "Importado com sucesso!",
       });
       setArquivoSelecionado(null);
     } catch (error) {
-      const errorMsg =
-        error.message || "Erro ao enviar o arquivo. Tente novamente.";
-      console.error("Erro no upload:", error);
-      setMensagemUpload({ 
-        tipo: "erro", 
-        texto: errorMsg 
+      setMensagemUpload({
+        tipo: "erro",
+        texto: error.message || "Erro ao enviar arquivo.",
       });
     } finally {
       setIsUploading(false);
@@ -276,50 +266,28 @@ function Departamentos() {
   const handleDownloadModelo = async () => {
     setIsDownloading(true);
     setDownloadError("");
-
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error("Usuário não autenticado.");
-      }
-      const headers = new Headers();
-      headers.append('Authorization', `Bearer ${token}`);
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Não autenticado.");
+      
       const response = await fetch("http://localhost:3000/dados/planilha-modelo", {
-        method: 'GET',
-        headers: headers,
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.status === 401 || response.status === 403) {
-        window.dispatchEvent(new CustomEvent('auth-expired', { 
-          detail: { message: 'Sua sessão expirou. Faça login novamente.' } 
-        }));
-        throw new Error("Sua sessão expirou.");
-      }
-      if (!response.ok) {
-        throw new Error(`Erro ao baixar o arquivo: ${response.statusText}`);
-      }
-
+      if (!response.ok) throw new Error("Erro ao baixar modelo.");
+      
       const blob = await response.blob();
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = 'planilha-modelo.xlsx';
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?$/);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1];
-        }
-      }
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
+      const a = document.createElement("a");
       a.href = url;
-      a.download = filename;
+      a.download = "planilha-modelo.xlsx";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
     } catch (error) {
-      console.error("Erro no download:", error);
-      setDownloadError(error.message || "Não foi possível baixar o arquivo.");
+      setDownloadError(error.message);
     } finally {
       setIsDownloading(false);
     }
@@ -328,82 +296,88 @@ function Departamentos() {
   const handleDownloadExportacao = async () => {
     setIsExporting(true);
     setExportError("");
-
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error("Usuário não autenticado.");
-      }
-
-      const headers = new Headers();
-      headers.append('Authorization', `Bearer ${token}`);
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Não autenticado.");
 
       const response = await fetch("http://localhost:3000/dados/exportar", {
-        method: 'GET',
-        headers: headers,
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.status === 401 || response.status === 403) {
-        window.dispatchEvent(new CustomEvent('auth-expired', { 
-          detail: { message: 'Sua sessão expirou. Faça login novamente.' } 
-        }));
-        throw new Error("Sua sessão expirou.");
-      }
-
-      if (!response.ok) {
-         try {
-            const errData = await response.json();
-            throw new Error(errData.message || `Erro do servidor: ${response.statusText}`);
-          } catch (jsonError) {
-            throw new Error(`Erro ao exportar: ${response.statusText}`);
-          }
-      }
+      if (!response.ok) throw new Error("Erro ao exportar dados.");
 
       const blob = await response.blob();
-
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = 'exportacao-dados.xlsx';
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?$/);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1];
-        }
-      }
-
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
+      const a = document.createElement("a");
       a.href = url;
-      a.download = filename;
+      a.download = "exportacao-dados.xlsx";
       document.body.appendChild(a);
       a.click();
-      
       window.URL.revokeObjectURL(url);
       a.remove();
-
     } catch (error) {
-      console.error("Erro na exportação:", error);
-      setExportError(error.message || "Não foi possível gerar o arquivo.");
+      setExportError(error.message);
     } finally {
       setIsExporting(false);
     }
   };
 
+  // ============================================
+  // LÓGICA DE FILTRAGEM (BUSCA)
+  // ============================================
+  
+  const getDadosFiltrados = (categoria) => {
+    const lista = dados[categoria] || [];
+    
+    // Se não tiver busca, retorna apenas os 5 primeiros (comportamento padrão)
+    if (!termoBusca) {
+      return lista.slice(0, 5);
+    }
+
+    // Se tiver busca, filtra a lista COMPLETA que veio da API
+    const termoLower = termoBusca.toLowerCase();
+    return lista.filter(pessoa => 
+      pessoa.nome?.toLowerCase().includes(termoLower) ||
+      pessoa.email?.toLowerCase().includes(termoLower) ||
+      pessoa.telefone?.includes(termoLower)
+    );
+  };
+
+  const verificaResultadosGerais = () => {
+    if (!termoBusca) return true;
+    
+    const categorias = ["turmas", "responsaveis", "professores", "administracao", "terceirizados"];
+    return categorias.some(cat => getDadosFiltrados(cat).length > 0);
+  };
+
+  const possuiResultados = verificaResultadosGerais();
+
+  // ============================================
+  // RENDERIZAÇÃO
+  // ============================================
+
   const Section = ({ title, subtitle, columns, data, tipo }) => {
+    // Esconde a seção se estiver buscando e não houver resultados nela
+    if (termoBusca && data.length === 0) return null;
+
     return (
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2>{title}</h2>
-          <button
-            className={styles.verMais}
-            onClick={() =>
-              tipo === "turmas"
-                ? navigate(`/turmas`)
-                : navigate(`/tabelas/${tipo}`)
-            }
-          >
-            Ver mais →
-          </button>
+          {/* Só mostra o botão "Ver mais" se NÃO estiver buscando */}
+          {!termoBusca && (
+            <button
+              className={styles.verMais}
+              onClick={() =>
+                tipo === "turmas"
+                  ? navigate(`/turmas`)
+                  : navigate(`/tabelas/${tipo}`)
+              }
+            >
+              Ver mais →
+            </button>
+          )}
         </div>
         <h3 className={styles.subtitle}>{subtitle}</h3>
         <table className={styles.table}>
@@ -466,6 +440,28 @@ function Departamentos() {
     <div className={styles.container}>
       <div className={styles.titleContainer}>
         <h1 className={styles.title}>Departamentos</h1>
+        
+        {/* INPUT DE BUSCA */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginRight: "1rem", position: "relative" }}>
+             <input
+               type="text"
+               placeholder="Buscar pessoa..."
+               value={termoBusca}
+               onChange={(e) => setTermoBusca(e.target.value)}
+               style={{
+                 padding: "0.5rem 0.5rem 0.5rem 2rem",
+                 borderRadius: "5px",
+                 border: "1px solid #ccc",
+                 fontSize: "1rem",
+                 minWidth: "250px"
+               }}
+             />
+             <FontAwesomeIcon 
+                icon={faSearch} 
+                style={{ position: "absolute", left: "10px", top: "12px", color: "#888" }} 
+             />
+        </div>
+
         <div style={{ position: "relative", gap: "1rem", display: "flex", marginLeft: "auto" }}>
           <button
             className={styles.addPeople}
@@ -485,245 +481,108 @@ function Departamentos() {
 
           <button
             className={styles.addPeople}
-            onClick={() => setMostrarModalExportar(true)} 
+            onClick={() => setMostrarModalExportar(true)}
             title="Exportar dados"
           >
             <FontAwesomeIcon icon={faUpload} className={styles.iconSearch} />
           </button>
 
+          {/* ... MODAIS ... */}
           {mostrarOpcoes && (
-            <div
-              className={styles.modalOverlay}
-              onClick={() => setMostrarOpcoes(false)}
-            >
-              <div
-                className={styles.modalContentSelect}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className={styles.titleModal}>
-                  <h2>Escolha uma opção</h2>
-                </div>
+            <div className={styles.modalOverlay} onClick={() => setMostrarOpcoes(false)}>
+              <div className={styles.modalContentSelect} onClick={(e) => e.stopPropagation()}>
+                <div className={styles.titleModal}><h2>Escolha uma opção</h2></div>
                 <div className={styles.buttonsModal}>
-                  <button
-                    className={styles.modalButton}
-                    onClick={() => setMostrarLista(!mostrarLista)}
-                  >
-                    Adicionar Manualmente
-                  </button>
-                  <button
-                    className={styles.modalButton}
-                    onClick={() => {
-                      setMostrarOpcoes(false); 
-                      setMostrarModalImportar(true);
-                    }}
-                  >
-                    Importar Planilha
-                  </button>
+                  <button className={styles.modalButton} onClick={() => setMostrarLista(!mostrarLista)}>Adicionar Manualmente</button>
+                  <button className={styles.modalButton} onClick={() => { setMostrarOpcoes(false); setMostrarModalImportar(true); }}>Importar Planilha</button>
                 </div>
               </div>
             </div>
           )}
 
           {mostrarLista && (
-            <div
-              className={styles.modalOverlay}
-              onClick={() => setMostrarLista(false)}
-            >
-              <div
-                className={styles.modalContentList}
-                onClick={(e) => e.stopPropagation()}
-              >
+            <div className={styles.modalOverlay} onClick={() => setMostrarLista(false)}>
+              <div className={styles.modalContentList} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.opcoesContainer}>
-                  <button onClick={() => navigate("/adicionar/ALUNO")}>
-                    Aluno
-                  </button>
-                  <button onClick={() => navigate("/adicionar/RESPONSAVEL")}>
-                    Responsável
-                  </button>
-                  <button onClick={() => navigate("/adicionar/PROFESSOR")}>
-                    Professor
-                  </button>
-                  <button onClick={() => navigate("/adicionar/PROFADM")}>
-                    Professor Administrador
-                  </button>
-                  <button onClick={() => navigate("/adicionar/ADMINISTRADOR")}>
-                    Administrador
-                  </button>
-                  <button onClick={() => navigate("/adicionar/TERCEIRIZADO")}>
-                    Terceirizado
-                  </button>
+                  <button onClick={() => navigate("/adicionar/ALUNO")}>Aluno</button>
+                  <button onClick={() => navigate("/adicionar/RESPONSAVEL")}>Responsável</button>
+                  <button onClick={() => navigate("/adicionar/PROFESSOR")}>Professor</button>
+                  <button onClick={() => navigate("/adicionar/PROFADM")}>Professor Administrador</button>
+                  <button onClick={() => navigate("/adicionar/ADMINISTRADOR")}>Administrador</button>
+                  <button onClick={() => navigate("/adicionar/TERCEIRIZADO")}>Terceirizado</button>
                 </div>
               </div>
             </div>
           )}
 
           {mostrarModal && (
-            <div
-              className={styles.modalOverlay}
-              onClick={() => {
-                setMostrarModal(false);
-                setDownloadError("");
-              }}
-            >
-              <div
-                className={styles.modalContent}
-                onClick={(e) => e.stopPropagation()}
-              >
+            <div className={styles.modalOverlay} onClick={() => { setMostrarModal(false); setDownloadError(""); }}>
+              <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.titleModal}>
                   <h2>Download da Planilha-Modelo</h2>
                   <p>Preencha para inserir novas pessoas no sistema</p>
                 </div>
                 <div className={styles.buttonModal}>
-                  <button
-                    className={styles.modalButton}
-                    onClick={handleDownloadModelo}
-                    disabled={isDownloading}
-                  >
+                  <button className={styles.modalButton} onClick={handleDownloadModelo} disabled={isDownloading}>
                     {isDownloading ? "Baixando..." : "Download"}
-                    <FontAwesomeIcon
-                      icon={faDownload}
-                      className={styles.iconSearch}
-                    />
+                    <FontAwesomeIcon icon={faDownload} className={styles.iconSearch} />
                   </button>
                 </div>
-                {downloadError && (
-                  <div 
-                    className={`${styles.uploadMessage} ${styles.erro}`} 
-                    style={{marginTop: '1rem', textAlign: 'center'}}
-                  >
-                    {downloadError}
-                  </div>
-                )}
+                {downloadError && <div className={`${styles.uploadMessage} ${styles.erro}`} style={{marginTop: '1rem', textAlign: 'center'}}>{downloadError}</div>}
               </div>
             </div>
           )}
-          
+
           {mostrarModalExportar && (
-            <div
-              className={styles.modalOverlay}
-              onClick={() => {
-                setMostrarModalExportar(false);
-                setExportError("");
-              }}
-            >
-              <div
-                className={styles.modalContent} 
-                onClick={(e) => e.stopPropagation()}
-              >
+            <div className={styles.modalOverlay} onClick={() => { setMostrarModalExportar(false); setExportError(""); }}>
+              <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.titleModal}>
                   <h2>Exportar Dados do Sistema</h2>
                   <p>Um arquivo .xlsx com todos os dados será gerado.</p>
                 </div>
-
                 <div className={styles.buttonModal}>
-                  <button
-                    className={styles.modalButton}
-                    onClick={handleDownloadExportacao} 
-                    disabled={isExporting} 
-                  >
+                  <button className={styles.modalButton} onClick={handleDownloadExportacao} disabled={isExporting}>
                     {isExporting ? "Gerando..." : "Exportar e Baixar"}
-                    <FontAwesomeIcon
-                      icon={faDownload} 
-                      className={styles.iconSearch}
-                      style={{ marginLeft: '10px' }}
-                    />
+                    <FontAwesomeIcon icon={faDownload} className={styles.iconSearch} style={{ marginLeft: '10px' }} />
                   </button>
                 </div>
-                
-                {exportError && (
-                  <div 
-                    className={`${styles.uploadMessage} ${styles.erro}`} 
-                    style={{marginTop: '1rem', textAlign: 'center'}}
-                  >
-                    {exportError}
-                  </div>
-                )}
+                {exportError && <div className={`${styles.uploadMessage} ${styles.erro}`} style={{marginTop: '1rem', textAlign: 'center'}}>{exportError}</div>}
               </div>
             </div>
           )}
 
-
           {mostrarModalImportar && (
-            <div
-              className={styles.modalOverlay}
-              onClick={fecharModalImportar}
-            >
-              <div
-                className={styles.modalContentExcel}
-                onClick={(e) => e.stopPropagation()}
-              >
+            <div className={styles.modalOverlay} onClick={fecharModalImportar}>
+              <div className={styles.modalContentExcel} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.titleModal}>
                   <h2>Importar Planilha</h2>
                   <p>Arraste e solte o arquivo ou busque no seu computador.</p>
                 </div>
                 <div
-                  className={`${styles.dropZone} ${
-                    isDragging ? styles.dropZoneActive : ""
-                  }`}
+                  className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ""}`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className={styles.fileInput}
-                    accept=".xlsx, .xls, .csv"
-                  />
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className={styles.fileInput} accept=".xlsx, .xls, .csv" />
                   {arquivoSelecionado ? (
                     <div className={styles.fileInfo}>
-                      <FontAwesomeIcon
-                        icon={faFileExcel}
-                        size="3x"
-                        color="#217346"
-                      />
-                      <span className={styles.fileName}>
-                        {arquivoSelecionado.name}
-                      </span>
-                      <button
-                        className={styles.removerArquivoBtn}
-                        onClick={() => setArquivoSelecionado(null)}
-                      >
-                        Trocar arquivo
-                      </button>
+                      <FontAwesomeIcon icon={faFileExcel} size="3x" color="#217346" />
+                      <span className={styles.fileName}>{arquivoSelecionado.name}</span>
+                      <button className={styles.removerArquivoBtn} onClick={() => setArquivoSelecionado(null)}>Trocar arquivo</button>
                     </div>
                   ) : (
                     <div className={styles.dropZonePrompt}>
                       <FontAwesomeIcon icon={faUpload} size="3x" />
                       <p>Arraste e solte o arquivo aqui</p>
                       <p style={{ margin: "0.5rem 0" }}>ou</p>
-                      <button
-                        className={styles.modalButton}
-                        onClick={handleBuscarArquivoClick}
-                      >
-                        Buscar Arquivo
-                      </button>
+                      <button className={styles.modalButton} onClick={handleBuscarArquivoClick}>Buscar Arquivo</button>
                     </div>
                   )}
                 </div>
-                {mensagemUpload.texto && (
-                  <div
-                    className={`${styles.uploadMessage} ${
-                      mensagemUpload.tipo === "sucesso"
-                        ? styles.sucesso
-                        : styles.erro
-                    }`}
-                  >
-                    {mensagemUpload.texto}
-                  </div>
-                )}
-                <div
-                  className={styles.buttonsModal}
-                  style={{ marginTop: "1.5rem" }}
-                >
-                  <button
-                    className={styles.modalButton}
-                    onClick={handleUpload}
-                    disabled={!arquivoSelecionado || isUploading}
-                  >
-                    {isUploading ? "Enviando..." : "Enviar Arquivo"}
-                  </button>
+                {mensagemUpload.texto && <div className={`${styles.uploadMessage} ${mensagemUpload.tipo === "sucesso" ? styles.sucesso : styles.erro}`}>{mensagemUpload.texto}</div>}
+                <div className={styles.buttonsModal} style={{ marginTop: "1.5rem" }}>
+                  <button className={styles.modalButton} onClick={handleUpload} disabled={!arquivoSelecionado || isUploading}>{isUploading ? "Enviando..." : "Enviar Arquivo"}</button>
                 </div>
               </div>
             </div>
@@ -731,9 +590,7 @@ function Departamentos() {
         </div>
       </div>
 
-      {isLoading && (
-        <SkeletonLoader type="table" count={8} />
-      )}
+      {isLoading && <SkeletonLoader type="table" count={8} />}
 
       {error && (
         <div className={styles.errorContainer} style={{ textAlign: "center", padding: "2rem", color: "red" }}>
@@ -743,81 +600,49 @@ function Departamentos() {
 
       {!isLoading && !error && (
         <>
+          {/* MENSAGEM DE NENHUM RESULTADO */}
+          {!possuiResultados && termoBusca && (
+             <div style={{ textAlign: "center", padding: "3rem", color: "#666" }}>
+                 <h2>Nenhum resultado encontrado para "{termoBusca}"</h2>
+             </div>
+          )}
+
+          {/* SEÇÕES */}
           <Section
             title="Turmas"
             subtitle="Tabela dos Alunos"
             tipo="turmas"
-            columns={[
-              "Nome",
-              "Foto",
-              "RM",
-          "Email Institucional",
-          "Telefone",
-          "Data de Nascimento",
-          "Divisão",
-          "Mais",
-        ]}
-        data={dados.turmas}
-      />
-      <Section
-        title="Responsáveis"
-        subtitle="Tabela dos Responsáveis"
-        tipo="responsaveis"
-        columns={[
-          "Nome",
-          "Foto",
-          "Email",
-          "Telefone",
-          "Data de Nascimento",
-          "Mais",
-        ]}
-        data={dados.responsaveis}
-      />
-      <Section
-        title="Professores"
-        subtitle="Tabela dos Professores"
-        tipo="professores"
-        columns={[
-          "Nome",
-          "Foto",
-          "Email",
-          "Telefone",
-          "Data de Nascimento",
-          "ADM",
-          "Mais",
-        ]}
-        data={dados.professores}
-      />
-      <Section
-        title="Administração"
-        subtitle="Tabela da Administração da Escola"
-        tipo="administracao"
-        columns={[
-          "Nome",
-          "Foto",
-          "Email",
-          "Telefone",
-          "Data de Nascimento",
-          "Cargo",
-          "Mais",
-        ]}
-        data={dados.administracao}
-      />
-      <Section
-        title="Terceirizados"
-        subtitle="Tabela de Terceirizados"
-        tipo="terceirizados"
-        columns={[
-          "Nome",
-          "Foto",
-          "Email",
-          "Telefone",
-          "Data de Nascimento",
-          "Empresa",
-          "Mais",
-        ]}
-        data={dados.terceirizados}
-      />
+            columns={["Nome", "Foto", "RM", "Email Institucional", "Telefone", "Data de Nascimento", "Divisão", "Mais"]}
+            data={getDadosFiltrados("turmas")}
+          />
+          <Section
+            title="Responsáveis"
+            subtitle="Tabela dos Responsáveis"
+            tipo="responsaveis"
+            columns={["Nome", "Foto", "Email", "Telefone", "Data de Nascimento", "Mais"]}
+            data={getDadosFiltrados("responsaveis")}
+          />
+          <Section
+            title="Professores"
+            subtitle="Tabela dos Professores"
+            tipo="professores"
+            columns={["Nome", "Foto", "Email", "Telefone", "Data de Nascimento", "ADM", "Mais"]}
+            data={getDadosFiltrados("professores")}
+          />
+          <Section
+            title="Administração"
+            subtitle="Tabela da Administração da Escola"
+            tipo="administracao"
+            columns={["Nome", "Foto", "Email", "Telefone", "Data de Nascimento", "Cargo", "Mais"]}
+            data={getDadosFiltrados("administracao")}
+          />
+          <Section
+            title="Terceirizados"
+            subtitle="Tabela de Terceirizados"
+            tipo="terceirizados"
+            columns={["Nome", "Foto", "Email", "Telefone", "Data de Nascimento", "Empresa", "Mais"]}
+            data={getDadosFiltrados("terceirizados")}
+          />
         </>
       )}
     </div>

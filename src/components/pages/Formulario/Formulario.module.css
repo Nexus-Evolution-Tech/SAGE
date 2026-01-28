@@ -76,6 +76,16 @@
   cursor: pointer;
 }
 
+.qrButtonContainer button {
+  padding: 8px;
+  border: none;
+  background: var(--primary-color);
+  color: var(--white);
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
 .qrButton {
   padding: 8px;
   border: none;
@@ -214,9 +224,9 @@
   text-align: center;
 }
 
-.subtitle{
-    text-align: center;
-    padding-bottom: .5rem;
+.subtitle {
+  text-align: center;
+  padding-bottom: 0.5rem;
 }
 
 .fotoPreview {
@@ -248,4 +258,3 @@ button {
   border-radius: 6px;
   cursor: pointer;
 }
-

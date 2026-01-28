@@ -36,7 +36,7 @@ function Formulario() {
   const divOptions = [
     { value: "DIV A", label: "DIV A" },
     { value: "DIV B", label: "DIV B" },
-    { value: "INT", label: "INT" }
+    { value: "INT", label: "INT" },
   ];
   const periodoOptions = [
     { value: "MANHA", label: "Manhã" },
@@ -61,6 +61,7 @@ function Formulario() {
     }
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`.trim();
   };
+
   const formatarData = (data) => {
     if (!data) return "";
     const parsed = new Date(data);
@@ -89,7 +90,7 @@ function Formulario() {
         if (pessoaData.tipo === "ALUNO") {
           const turmasData = await api.get(`/turmas`);
           setTodasTurmas(
-            turmasData.data.map((t) => ({ value: t.id, label: t.nome }))
+            turmasData.data.map((t) => ({ value: t.id, label: t.nome })),
           );
 
           if (pessoaData.turma_id) {
@@ -109,14 +110,18 @@ function Formulario() {
           }
 
           const respData = await api.get(
-            `/pessoas/tipo/responsavel?aluno_id=${id}`
+            `/pessoas/tipo/responsavel?aluno_id=${id}`,
           );
           setResponsavel(respData[0] || null);
 
           if (!pessoaData.qr_code) {
             try {
-              const novaCarteirinha = await api.post(`/pessoas/gerar_qrcode/${id}`, {});
-              const qrValue = novaCarteirinha?.qr_code || novaCarteirinha?.data?.qr_code;
+              const novaCarteirinha = await api.post(
+                `/pessoas/gerar_qrcode/${id}`,
+                {},
+              );
+              const qrValue =
+                novaCarteirinha?.qr_code || novaCarteirinha?.data?.qr_code;
               if (qrValue) {
                 setPessoa((prev) => ({ ...prev, qr_code: qrValue }));
                 setFormData((prev) => ({ ...prev, qr_code: qrValue }));
@@ -143,12 +148,12 @@ function Formulario() {
           pessoaData.empresa_id
         ) {
           const empresaData = await api.get(
-            `/empresas/${pessoaData.empresa_id}`
+            `/empresas/${pessoaData.empresa_id}`,
           );
           setEmpresaNome(
             Array.isArray(empresaData)
               ? empresaData[0]?.nome
-              : empresaData?.nome || ""
+              : empresaData?.nome || "",
           );
         }
       } catch (error) {
@@ -159,11 +164,14 @@ function Formulario() {
     fetchData();
   }, [id]);
 
-  useEffect(() => () => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop());
-    }
-  }, [cameraStream]);
+  useEffect(
+    () => () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+      }
+    },
+    [cameraStream],
+  );
 
   const handleInputChange = (campo, valor) => {
     let proximoValor = valor;
@@ -194,20 +202,29 @@ function Formulario() {
     }
   };
 
-  const handleGerarQRCode = async () => {
+  // --- FUNÇÃO CORRIGIDA PARA GERAR E SALVAR ---
+  const handleGerarESalvar = async () => {
     try {
+      // 1. Gera o QR Code
       const updatedPessoa = await api.post(`/pessoas/gerar_qrcode/${id}`, {});
       const qrValue = updatedPessoa?.qr_code || updatedPessoa?.data?.qr_code;
+
       if (!qrValue) throw new Error("Erro ao gerar QR Code");
 
+      // Atualiza o estado local imediatamente
+      const novosDados = { ...formData, qr_code: qrValue };
       setPessoa((prev) => ({ ...prev, qr_code: qrValue }));
-      setFormData((prev) => ({ ...prev, qr_code: qrValue }));
+      setFormData(novosDados);
       setQrCode(qrValue);
 
+      // Exibe modal de sucesso do QR code (opcional, já que vamos salvar)
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 1500);
+
+      // 2. Chama a função de salvar passando os dados atualizados (ou usando o estado se ele tivesse atualizado, mas é mais seguro passar direto)
+      await salvarDados(novosDados);
     } catch (error) {
-      console.error("Erro ao gerar QR Code:", error);
+      console.error("Erro ao gerar QR Code e Salvar:", error);
     }
   };
 
@@ -228,10 +245,17 @@ function Formulario() {
       })
       .catch((err) => console.error("Erro ao baixar QR Code:", err));
   };
+
   const tirarFoto = () => {
     if (!canvasRef.current || !videoRef.current) return;
     const context = canvasRef.current.getContext("2d");
-    context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+    context.drawImage(
+      videoRef.current,
+      0,
+      0,
+      canvasRef.current.width,
+      canvasRef.current.height,
+    );
 
     canvasRef.current.toBlob((blob) => {
       if (!blob) return;
@@ -247,9 +271,10 @@ function Formulario() {
     }
   };
 
-  const handleSalvar = async () => {
+  // Separei a lógica de salvar para poder reutilizar e receber dados opcionais
+  const salvarDados = async (dadosParaSalvar = formData) => {
     try {
-      await api.patch(`/pessoas/${id}`, formData);
+      await api.patch(`/pessoas/${id}`, dadosParaSalvar);
 
       if (novaFoto) {
         const formDataUpload = new FormData();
@@ -264,29 +289,43 @@ function Formulario() {
 
       console.log("Pessoa atualizada com sucesso!");
       setEditMode(false);
-      setPessoa(formData);
+      setPessoa(dadosParaSalvar); // Atualiza o objeto pessoa principal com os novos dados salvos
     } catch (error) {
       console.error("Erro ao atualizar pessoa:", error);
     }
   };
 
+  // Função wrapper para o botão "Salvar" normal
+  const handleSalvarClick = () => {
+    salvarDados(formData);
+  };
+
   if (!pessoa) return <p className={styles.loading}>Carregando dados...</p>;
 
-  const breadcrumbLabel = pessoa?.tipo === "ALUNO" ? "Departamentos / Alunos" : "Departamentos";
+  const breadcrumbLabel =
+    pessoa?.tipo === "ALUNO" ? "Departamentos / Alunos" : "Departamentos";
 
-  const renderCampo = (label, campo, valor, isReadOnly = false, type = "text") => {
+  const renderCampo = (
+    label,
+    campo,
+    valor,
+    isReadOnly = false,
+    type = "text",
+  ) => {
     const isDateField = type === "date";
+    const inputType = isDateField && !editMode ? "text" : type;
+
     const value = editMode
       ? isDateField
         ? toDateInputValue(formData[campo] || valor)
-        : formData[campo] ?? ""
-      : valor ?? formData[campo] ?? "";
+        : (formData[campo] ?? "")
+      : (valor ?? formData[campo] ?? "");
 
     return (
       <div className={styles.inputGroup}>
         <label>{label}</label>
         <input
-          type={type}
+          type={inputType}
           value={value}
           readOnly={isReadOnly || !editMode}
           onChange={(e) => handleInputChange(campo, e.target.value)}
@@ -345,7 +384,7 @@ function Formulario() {
               {renderCampo(
                 "Telefone",
                 "telefone",
-                formatarTelefone(pessoa?.telefone)
+                formatarTelefone(pessoa?.telefone),
               )}
             </div>
             <div className={styles.inputRow}>
@@ -355,7 +394,7 @@ function Formulario() {
                 "data_nascimento",
                 formatarData(pessoa?.data_nascimento),
                 false,
-                "date"
+                "date",
               )}
             </div>
 
@@ -367,19 +406,19 @@ function Formulario() {
                     "Nome do Responsável",
                     "resp_nome",
                     responsavel?.nome,
-                    true
+                    true,
                   )}
                   {renderCampo(
                     "Email do Responsável",
                     "resp_email",
                     responsavel?.email,
-                    true
+                    true,
                   )}
                   {renderCampo(
                     "Telefone do Responsável",
                     "resp_telefone",
                     formatarTelefone(responsavel?.telefone),
-                    true
+                    true,
                   )}
                 </div>
               </>
@@ -397,13 +436,15 @@ function Formulario() {
               {renderCampo(
                 "Telefone",
                 "telefone",
-                formatarTelefone(pessoa?.telefone)
+                formatarTelefone(pessoa?.telefone),
               )}
               {renderCampo("Email", "email")}
               {renderCampo(
                 "Data de Nascimento",
                 "data_nascimento",
-                formatarData(pessoa?.data_nascimento)
+                formatarData(pessoa?.data_nascimento),
+                false,
+                "date",
               )}
             </div>
           </>
@@ -420,26 +461,28 @@ function Formulario() {
               {renderCampo("Tipo de Contrato", "tipo_contrato")}
               {renderCampo(
                 "Data de Admissão",
-                "data_saida",
-                formatarData(pessoa?.data_admissao)
+                "data_admissao",
+                formatarData(pessoa?.data_admissao),
+                false,
+                "date",
               )}
               {renderCampo(
                 "Data de Saída",
                 "data_saida",
-                formatarData(pessoa?.data_saida)
+                formatarData(pessoa?.data_saida),
+                false,
+                "date",
               )}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo(
-                "Telefone",
-                "telefone",
-                formatarTelefone(pessoa?.telefone)
-              )}
+              {renderCampo("Cartão Rfid", "cartao_rfid")}
               {renderCampo("Email", "email")}
               {renderCampo(
                 "Data de Nascimento",
                 "data_nascimento",
-                formatarData(pessoa?.data_nascimento)
+                formatarData(pessoa?.data_nascimento),
+                false,
+                "date",
               )}
             </div>
           </>
@@ -453,7 +496,7 @@ function Formulario() {
               {renderCampo(
                 "Telefone",
                 "telefone",
-                formatarTelefone(pessoa?.telefone)
+                formatarTelefone(pessoa?.telefone),
               )}
             </div>
             <div className={styles.inputRow}>
@@ -461,26 +504,28 @@ function Formulario() {
               {renderCampo(
                 "Data de Admissão",
                 "data_admissao",
-                formatarData(pessoa?.data_admissao)
+                formatarData(pessoa?.data_admissao),
+                false,
+                "date",
               )}
               {renderCampo(
                 "Data de Saída",
                 "data_saida",
-                formatarData(pessoa?.data_saida)
+                formatarData(pessoa?.data_saida),
+                false,
+                "date",
               )}
             </div>
             <div className={styles.inputRow}>
-              {renderCampo(
-                "Telefone",
-                "telefone",
-                formatarTelefone(pessoa?.telefone)
-              )}
               {renderCampo("Email", "email")}
               {renderCampo(
                 "Data de Nascimento",
                 "data_nascimento",
-                formatarData(pessoa?.data_nascimento)
+                formatarData(pessoa?.data_nascimento),
+                false,
+                "date",
               )}
+              {renderCampo("Cartão Rfid", "cartao_rfid")}
             </div>
           </>
         );
@@ -493,7 +538,7 @@ function Formulario() {
               {renderCampo(
                 "Telefone",
                 "telefone",
-                formatarTelefone(pessoa?.telefone)
+                formatarTelefone(pessoa?.telefone),
               )}
             </div>
             <div className={styles.inputRow}>
@@ -501,29 +546,36 @@ function Formulario() {
               {renderCampo(
                 "Data de Admissão",
                 "data_admissao",
-                formatarData(pessoa?.data_admissao)
+                formatarData(pessoa?.data_admissao),
+                false,
+                "date",
               )}
               {renderCampo(
                 "Data de Saída",
                 "data_saida",
-                formatarData(pessoa?.data_saida)
+                formatarData(pessoa?.data_saida),
+                false,
+                "date",
               )}
             </div>
             <div className={styles.inputRow}>
               {renderCampo(
                 "Telefone",
                 "telefone",
-                formatarTelefone(pessoa?.telefone)
+                formatarTelefone(pessoa?.telefone),
               )}
               {renderCampo("Email", "email")}
               {renderCampo(
                 "Data de Nascimento",
                 "data_nascimento",
-                formatarData(pessoa?.data_nascimento)
+                formatarData(pessoa?.data_nascimento),
+                false,
+                "date",
               )}
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Cargo", "cargo")}
+              {renderCampo("Cartão Rfid", "cartao_rfid")}
             </div>
           </>
         );
@@ -536,20 +588,24 @@ function Formulario() {
               {renderCampo(
                 "Telefone",
                 "telefone",
-                formatarTelefone(pessoa?.telefone)
+                formatarTelefone(pessoa?.telefone),
               )}
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Tipo de Contrato", "tipo_contrato")}
               {renderCampo(
                 "Data de Admissão",
-                "data_saida",
-                formatarData(pessoa?.data_admissao)
+                "data_admissao",
+                formatarData(pessoa?.data_admissao),
+                false,
+                "date",
               )}
               {renderCampo(
                 "Data de Saída",
                 "data_saida",
-                formatarData(pessoa?.data_saida)
+                formatarData(pessoa?.data_saida),
+                false,
+                "date",
               )}
             </div>
             <div className={styles.inputRow}>
@@ -557,11 +613,14 @@ function Formulario() {
               {renderCampo(
                 "Data de Nascimento",
                 "data_nascimento",
-                formatarData(pessoa?.data_nascimento)
+                formatarData(pessoa?.data_nascimento),
+                false,
+                "date",
               )}
             </div>
             <div className={styles.inputRow}>
               {renderCampo("Cargo", "cargo")}
+              {renderCampo("Cartão Rfid", "cartao_rfid")}
             </div>
           </>
         );
@@ -620,9 +679,14 @@ function Formulario() {
           className={styles.fotoPreview}
         />
 
-        <button className={styles.qrButton} onClick={handleGerarQRCode}>
-          Gerar QR Code
-        </button>
+        {(editMode || fotoUrl === "foto_exemplo.png") && (
+          <div className={styles.qrButtonContainer}>
+            {/* CORREÇÃO AQUI: Botão chama a nova função combinada */}
+            <button className={styles.qrButton} onClick={handleGerarESalvar}>
+              Gerar QR Code
+            </button>
+          </div>
+        )}
 
         {pessoa?.qr_code && (
           <button className={styles.qrButton} onClick={handleDownloadQRCode}>
@@ -635,7 +699,7 @@ function Formulario() {
         <div className={styles.header}>
           <h2>Informações</h2>
           {editMode ? (
-            <button className={styles.actionButton} onClick={handleSalvar}>
+            <button className={styles.actionButton} onClick={handleSalvarClick}>
               <p className={styles.textBackground}>Salvar</p>
             </button>
           ) : (
@@ -657,7 +721,7 @@ function Formulario() {
       {showSuccessModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
-            <p>QR Code gerado com sucesso!</p>
+            <p>QR Code gerado e salvo com sucesso!</p>
             <button onClick={() => setShowSuccessModal(false)}>Fechar</button>
           </div>
         </div>

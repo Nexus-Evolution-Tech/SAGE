@@ -2,28 +2,30 @@ import { useEffect, useState } from "react";
 import styles from "./Turmas.module.css";
 import TableSection from "../../layout/Table/Table";
 import { api } from "../../../services/api";
-import SkeletonLoader from "../../common/SkeletonLoader"; // --- Adicionar Skeleton
+import SkeletonLoader from "../../common/SkeletonLoader";
+import { faSearch } from "@fortawesome/free-solid-svg-icons"; // Importando ícone
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Turmas() {
   const [dadosPorTurma, setDadosPorTurma] = useState({});
-  const [loading, setLoading] = useState(true); // --- MUDANÇA 2: Estado de Loading
-  const [error, setError] = useState(null); // --- MUDANÇA 3: Estado de Erro
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Novo estado para a busca
+  const [termoBusca, setTermoBusca] = useState("");
 
   useEffect(() => {
     const fetchTurmas = async () => {
       setLoading(true);
       setError(null);
       try {
-        // --- MUDANÇA 4: Usar api.get() para buscar alunos ---
-        const alunosJson = await api.get(
-          "/pessoas/tipo/ALUNO?limit=1000"
-        );
-        // Garantir que estamos pegando o array, mesmo que a API não retorne .data
+        // Busca todos os alunos (limit alto para garantir que a busca funcione em todos)
+        const alunosJson = await api.get("/pessoas/tipo/ALUNO?limit=1000");
         const alunos = alunosJson.data || alunosJson || [];
 
         const agrupados = {};
         alunos.forEach((aluno) => {
-          const turmaId = aluno.turma_id || 0; // Agrupa alunos sem turma em '0'
+          const turmaId = aluno.turma_id || 0;
           if (!agrupados[turmaId])
             agrupados[turmaId] = { alunos: [], nome: "" };
           agrupados[turmaId].alunos.push(aluno);
@@ -37,14 +39,11 @@ function Turmas() {
               return;
             }
             try {
-              // --- MUDANÇA 5: Usar api.get() para buscar nome da turma ---
               const turmaData = await api.get(`/turmas/${turmaId}`);
-              
-              // Lógica para encontrar o nome (robusta)
               agrupados[turmaId].nome =
                 turmaData.data?.[0]?.nome ||
                 turmaData[0]?.nome ||
-                turmaData.nome || // Caso a resposta seja um objeto único
+                turmaData.nome ||
                 `Turma ${turmaId}`;
             } catch (err) {
               console.error(`Erro ao buscar turma ${turmaId}:`, err);
@@ -55,7 +54,6 @@ function Turmas() {
 
         setDadosPorTurma(agrupados);
       } catch (err) {
-        // --- MUDANÇA 6: Tratamento de erro centralizado ---
         console.error("Erro ao buscar alunos:", err);
         setError(err.message || "Falha ao carregar dados dos alunos.");
       } finally {
@@ -69,51 +67,112 @@ function Turmas() {
   const formatarData = (d) =>
     d ? new Date(d).toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "";
 
-  const formatarTelefone = (t) => {
-    if (!t) return "";
-    const n = t.replace(/\D/g, "");
-    return n.length === 11
-      ? `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`
-      : t;
-  };
+  // Lógica de Filtragem e Processamento para exibição
+  const turmasProcessadas = Object.entries(dadosPorTurma)
+    .map(([turmaId, { nome, alunos }]) => {
+      let alunosFiltrados = alunos;
+
+      // 1. Se tiver busca, filtra a lista completa
+      if (termoBusca) {
+        const termo = termoBusca.toLowerCase();
+        alunosFiltrados = alunos.filter(
+          (a) =>
+            a.nome?.toLowerCase().includes(termo) ||
+            (a.rm && String(a.rm).toLowerCase().includes(termo)) ||
+            a.email?.toLowerCase().includes(termo)
+        );
+      } else {
+        // 2. Se NÃO tiver busca, aplica o limite de 5 visualização original
+        alunosFiltrados = alunos.slice(0, 5);
+      }
+
+      return {
+        turmaId,
+        nome,
+        alunosParaExibir: alunosFiltrados,
+      };
+    })
+    // Remove turmas que ficaram vazias após o filtro (apenas visualmente)
+    .filter((grupo) => grupo.alunosParaExibir.length > 0);
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Turmas</h1>
+      <div className={styles.headerContainer} style={{ marginBottom: "1.5rem" }}>
+        <h1 className={styles.title}>Turmas</h1>
 
-      {/* --- MUDANÇA 7: Renderizar estado de loading ou erro --- */}
+        {/* --- CAMPO DE BUSCA --- */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            position: "relative",
+            maxWidth: "400px",
+            marginTop: "1rem",
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Buscar aluno por nome, RM ou email..."
+            value={termoBusca}
+            onChange={(e) => setTermoBusca(e.target.value)}
+            style={{
+              padding: "0.5rem 0.5rem 0.5rem 2rem",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+              fontSize: "1rem",
+              width: "100%",
+              minWidth: "300px",
+            }}
+          />
+          <FontAwesomeIcon
+            icon={faSearch}
+            style={{ position: "absolute", left: "10px", color: "#888", top: "12px" }}
+          />
+        </div>
+      </div>
+
       {loading && <SkeletonLoader type="table" count={6} />}
       {error && <p className={styles.errorMessage}>{error}</p>}
 
-      {!loading &&
-        !error &&
-        Object.entries(dadosPorTurma).map(([turmaId, { nome, alunos }]) => {
-          const rows = alunos.slice(0, 5).map((a) => ({
-            Nome: a.nome,
-            RM: a.rm || a.matricula || "-",
-            Email: a.email || "-",
-            "Data Nascimento": formatarData(a.data_nascimento),
-            id: a.id, // ID usado para o link 'Ver mais'
-          }));
+      {!loading && !error && (
+        <>
+          {/* Mensagem de Nenhum Resultado */}
+          {turmasProcessadas.length === 0 && termoBusca && (
+            <div style={{ textAlign: "center", padding: "3rem", color: "#666" }}>
+              <h3>Nenhum aluno encontrado para "{termoBusca}"</h3>
+            </div>
+          )}
 
-          return (
-            <TableSection
-              key={turmaId}
-              title={nome}
-              subtitle={`Tabela do ${nome}`}
-              // --- MUDANÇA 8: Adicionada a coluna "Telefone" ---
-              columns={[
-                "Nome",
-                "RM",
-                "Email",
-                "Data Nascimento",
-              ]}
-              data={rows}
-              tipo="aluno"
-              link={`/tabelas/turmas/${turmaId}`}
-            />
-          );
-        })}
+          {/* Renderização das Tabelas */}
+          {turmasProcessadas.map(({ turmaId, nome, alunosParaExibir }) => {
+            const rows = alunosParaExibir.map((a) => ({
+              Nome: a.nome,
+              RM: a.rm || a.matricula || "-",
+              Email: a.email || "-",
+              "Data Nascimento": formatarData(a.data_nascimento),
+              id: a.id,
+            }));
+
+            return (
+              <TableSection
+                key={turmaId}
+                title={nome}
+                subtitle={termoBusca ? `Resultados da busca em ${nome}` : `Tabela do ${nome}`}
+                columns={[
+                  "Nome",
+                  "RM",
+                  "Email",
+                  "Data Nascimento",
+                ]}
+                data={rows}
+                tipo="aluno"
+                // Se tiver busca, talvez queira bloquear o link ou mantê-lo. Mantive o link.
+                link={`/tabelas/turmas/${turmaId}`}
+              />
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }

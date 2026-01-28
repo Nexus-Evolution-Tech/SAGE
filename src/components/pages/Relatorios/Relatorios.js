@@ -33,6 +33,7 @@ function Relatorios() {
     loadDispositivos();
     loadAreas();
     loadAcessos(); // Carregar acessos iniciais
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Função para carregar dispositivos
@@ -79,7 +80,8 @@ function Relatorios() {
         params.append("dispositivo_id", filterParams.dispositivoId);
       }
       if (filterParams.status) {
-        params.append("status", filterParams.status);
+        // Convert string "true"/"false" to actual param the API expects
+        params.append("permitido", filterParams.status);
       }
       if (filterParams.areaId) {
         params.append("area_id", filterParams.areaId);
@@ -89,7 +91,7 @@ function Relatorios() {
       const response = await api.get(`/acessos?${queryString}`);
       
       // Verificar se a resposta tem a estrutura esperada
-      if (response && Array.isArray(response.data)) {
+      if (response && typeof response === 'object' && Array.isArray(response.data)) {
         setAcessos(response.data);
         setTotalRecords(response.total || response.data.length);
       } else if (Array.isArray(response)) {
@@ -123,7 +125,7 @@ function Relatorios() {
       }
 
       // Validar período máximo de 90 dias
-      const diffTime = Math.abs(fim - inicio);
+      const diffTime = fim - inicio;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
       if (diffDays > 90) {
@@ -267,6 +269,7 @@ function Relatorios() {
               <option value="PROFESSOR">Professor</option>
               <option value="ADMINISTRADOR">Administrador</option>
               <option value="TERCEIRIZADO">Terceirizado</option>
+              <option value="VISITANTE">Visitante</option>
             </select>
           </div>
 
@@ -331,10 +334,18 @@ function Relatorios() {
 
         {/* Botões de ação */}
         <div className={styles.filterActions}>
-          <button onClick={handleFilter} className={styles.btnFilter}>
+          <button 
+            onClick={handleFilter} 
+            className={styles.btnFilter}
+            aria-label="Filtrar registros de acesso"
+          >
             Filtrar
           </button>
-          <button onClick={handleClearFilters} className={styles.btnClear}>
+          <button 
+            onClick={handleClearFilters} 
+            className={styles.btnClear}
+            aria-label="Limpar todos os filtros"
+          >
             Limpar
           </button>
         </div>
@@ -401,6 +412,8 @@ function Relatorios() {
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className={styles.btnPage}
+            aria-label="Ir para página anterior"
+            aria-disabled={currentPage === 1}
           >
             Anterior
           </button>
@@ -413,6 +426,8 @@ function Relatorios() {
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
             className={styles.btnPage}
+            aria-label="Ir para próxima página"
+            aria-disabled={currentPage >= totalPages}
           >
             Próxima
           </button>

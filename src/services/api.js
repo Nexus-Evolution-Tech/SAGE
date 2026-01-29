@@ -220,6 +220,7 @@ export async function validarHorario(data) {
   );
 }
 
+// Objeto centralizador para facilitar o uso em componentes antigos
 export const api = {
   get,
   post,
@@ -235,5 +236,49 @@ export const api = {
   criarHorario,
   atualizarHorario,
   deletarHorario,
-  validarHorario,
+  validarHorario
+};
+
+// ==========================================================
+// --- SAGE RELATÓRIOS API (MOCKS PARA DESENVOLVIMENTO) ---
+// ==========================================================
+
+export const getRelatorioAcessoResumo = async (filtros) => {
+  console.log('[API Mock] Buscando resumo com filtros:', filtros);
+  return { 
+    metricas: { 
+      total: 101, 
+      no_horario: 95, 
+      atrasados: 5, 
+      faltantes: 1,
+      percentual_presenca: 94.05
+    }, 
+    dados_pizza: [
+      { label: "No Horário", value: 95, color: "#4CAF50" },
+      { label: "Atrasados", value: 5, color: "#FFC107" },
+      { label: "Faltantes", value: 1, color: "#F44336" }
+    ], 
+    dados_linha: [
+      { label: "07:30", no_horario: 40, atrasados: 2, faltantes: 1 },
+      { label: "08:20", no_horario: 30, atrasados: 2, faltantes: 0 },
+      { label: "09:10", no_horario: 25, atrasados: 1, faltantes: 0 }
+    ] 
+  };
+};
+
+export const getRelatorioAcessoDetalhes = async (filtros) => {
+  return { 
+    dados: [
+      { id: 1, nome: "João Silva", status: "NO_HORARIO", horario_previsto: "07:30", horario_chegada: "07:25" },
+      { id: 2, nome: "Maria Souza", status: "ATRASADO", horario_previsto: "07:30", horario_chegada: "07:45" }
+    ] 
+  };
+};
+
+export const getRelatorioTurmas = async () => {
+  return [
+    { id: 1, nome: "1º Ano A - Informática" },
+    { id: 2, nome: "2º Ano A - Informática" },
+    { id: 3, nome: "3º Ano A - Informática" }
+  ];
 };

@@ -1,0 +1,124 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.groupLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+
+.group button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  background: #fff;
+  color: #475569;
+}
+
+.group button:hover {
+  border-color: #021932;
+  color: #021932;
+}
+
+.group button.active {
+  background: #021932 !important;
+  color: #fff !important;
+  border-color: #021932;
+}
+
+.selectGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  min-width: 180px;
+  background: #fff;
+  color: #1e293b;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #021932;
+}
+
+.refresh {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #021932;
+  background: #021932;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.refresh:hover {
+  background: #0f2942;
+  border-color: #0f2942;
+}
+
+.dateRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dateField label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.input {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  min-width: 140px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #021932;
+}

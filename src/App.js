@@ -26,6 +26,7 @@ import Regras from "./components/pages/Regras/Regras";
 import Horarios from "./components/pages/Horarios/Horarios";
 import Areas from "./components/pages/Areas/Areas";
 import Aulas from "./components/pages/Aulas/Aulas";
+import RelatoriosAcesso from "./components/pages/Relatorios/RelatoriosAcesso";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
 import { ReactQueryProvider } from './contexts/ReactQueryProvider';
@@ -67,6 +68,7 @@ function AppContent() {
               <Route path="/adicionar/:tipo" element={<Adicionar />} />
               <Route path="/regras" element={<Regras />} />
               <Route path="/horarios" element={<Horarios />} />
+              <Route path="/relatorios" element={<RelatoriosAcesso />} />
               <Route path="/aulas" element={<Aulas />} />
               <Route path="/areas" element={<Areas />} />
             </Route>

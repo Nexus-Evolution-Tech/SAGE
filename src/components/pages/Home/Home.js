@@ -305,7 +305,7 @@ function Monitoramento() {
         <div className={styles.paginationNav}>
           <span className={styles.paginationInfo}>
             {total > 0
-              ? `Mostrando ${(currentPage - 1) * limit + 1}–${Math.min(currentPage * limit, total)} de ${total}`
+              ? `${list.length} de ${total} registros`
               : "Nenhum registro"}
           </span>
           <span className={styles.paginationPages}>

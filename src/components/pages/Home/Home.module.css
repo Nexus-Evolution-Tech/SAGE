@@ -119,6 +119,14 @@
   object-fit: cover;
 }
 
+.avatarImg {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 .profileDetails h3 {
   margin: 0;
   font-size: 1.5rem;
@@ -308,5 +316,70 @@
 .dropdown:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+/* Liberar acesso (acesso negado) */
+.liberarAcesso {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.liberarLabel {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.liberarBtn {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 1rem;
+  min-width: 32px;
+  transition: background 0.2s;
+}
+
+.liberarBtn:hover {
+  background: #218838;
+}
+
+.liberarSep {
+  color: #888;
+  font-weight: 600;
+}
+
+.negarBtn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  min-width: 32px;
+  transition: background 0.2s;
+}
+
+.negarBtn:hover {
+  background: #c82333;
+}
+
+.liberadoLabel {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.negadoLabel {
+  color: #dc3545;
+  font-weight: 600;
 }
 

@@ -3,6 +3,7 @@
   width: 2500px;
   margin: 0 auto;
   padding-left: 250px;
+  position: relative;
 }
 
 .title {

@@ -1,9 +1,13 @@
 .container {
-  padding: 20px;
-  background: #f0f2f5;
+  padding: 30px 20px 40px 180px;
+  width: 100%;
   min-height: 100vh;
-  margin-left: 200px;
-  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-sizing: border-box;
+  font-family: "Roboto Slab", sans-serif;
+  position: relative;
 }
 
 .header {
@@ -16,8 +20,16 @@
 
 .title {
   margin: 0;
-  color: var(--primary-color, #002e5d);
-  font-size: 36px;
+  color: #021932;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .headerActions {

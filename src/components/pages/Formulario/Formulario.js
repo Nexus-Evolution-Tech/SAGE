@@ -2,12 +2,14 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import styles from "./Formulario.module.css";
 import { api } from "../../../services/api";
+import BackButton from "../../layout/BackButton/BackButton";
+import defaultUserImg from "../../../img/user.png";
 
 function Formulario() {
   const { id } = useParams();
   const [pessoa, setPessoa] = useState(null);
   const [formData, setFormData] = useState({});
-  const [fotoUrl, setFotoUrl] = useState("foto_exemplo.png");
+  const [fotoUrl, setFotoUrl] = useState(defaultUserImg);
 
   const [cursoNome, setCursoNome] = useState("");
   const [turmaNome, setTurmaNome] = useState("");
@@ -85,7 +87,7 @@ function Formulario() {
         setFormData(pessoaData);
 
         const fotoData = await api.get(`/pessoas/url/${id}`);
-        setFotoUrl(fotoData.url || "foto_exemplo.png");
+        setFotoUrl(fotoData.url || defaultUserImg);
 
         if (pessoaData.tipo === "ALUNO") {
           const turmasData = await api.get(`/turmas`);
@@ -283,7 +285,7 @@ function Formulario() {
         await api.postFormData(`/pessoas/upload/${id}`, formDataUpload);
 
         const data = await api.get(`/pessoas/url/${id}`);
-        setFotoUrl(data.url || "foto_exemplo.png");
+        setFotoUrl(data.url || defaultUserImg);
         setNovaFoto(null);
       }
 
@@ -631,6 +633,7 @@ function Formulario() {
 
   return (
     <div className={styles.cadastroContainer}>
+      <BackButton />
       <div className={styles.pageHeader}>
         <div className={styles.pageTitles}>
           <span className={styles.pageBreadcrumb}>{breadcrumbLabel}</span>
@@ -643,8 +646,9 @@ function Formulario() {
           src={fotoUrl}
           alt="Foto de perfil"
           className={styles.fotoPreview}
+          onError={(e) => { e.target.onerror = null; e.target.src = defaultUserImg; }}
         />
-        {(editMode || fotoUrl === "foto_exemplo.png") && (
+        {(editMode || fotoUrl === defaultUserImg) && (
           <div className={styles.btnGroup}>
             <input
               type="file"
@@ -679,7 +683,7 @@ function Formulario() {
           className={styles.fotoPreview}
         />
 
-        {(editMode || fotoUrl === "foto_exemplo.png") && (
+        {(editMode || fotoUrl === defaultUserImg) && (
           <div className={styles.qrButtonContainer}>
             {/* CORREÇÃO AQUI: Botão chama a nova função combinada */}
             <button className={styles.qrButton} onClick={handleGerarESalvar}>

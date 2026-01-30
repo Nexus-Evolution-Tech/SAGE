@@ -4,6 +4,7 @@
   margin: 0 auto;
   font-family: Arial, sans-serif;
   margin-left: 150px;
+  position: relative;
 }
 
 .title {

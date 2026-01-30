@@ -27,10 +27,12 @@ import Horarios from "./components/pages/Horarios/Horarios";
 import Areas from "./components/pages/Areas/Areas";
 import Aulas from "./components/pages/Aulas/Aulas";
 import RelatoriosAcesso from "./components/pages/Relatorios/RelatoriosAcesso";
+import Settings from "./components/pages/Settings/Settings";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
 import { ReactQueryProvider } from './contexts/ReactQueryProvider';
 import { WebSocketProvider } from './contexts/WebSocketContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 function AppContent() {
   const location = useLocation();
@@ -69,6 +71,7 @@ function AppContent() {
               <Route path="/regras" element={<Regras />} />
               <Route path="/horarios" element={<Horarios />} />
               <Route path="/relatorios" element={<RelatoriosAcesso />} />
+              <Route path="/configuracoes" element={<Settings />} />
               <Route path="/aulas" element={<Aulas />} />
               <Route path="/areas" element={<Areas />} />
             </Route>
@@ -87,8 +90,10 @@ function App() {
     <Router>
       <ReactQueryProvider>
         <WebSocketProvider>
-          <AuthInterceptor />
-          <AppContent />
+          <NotificationProvider>
+            <AuthInterceptor />
+            <AppContent />
+          </NotificationProvider>
         </WebSocketProvider>
       </ReactQueryProvider>
     </Router>

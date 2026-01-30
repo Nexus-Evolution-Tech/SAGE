@@ -1,8 +1,8 @@
 import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faSync } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faUnlock } from "@fortawesome/free-solid-svg-icons";
 import userPlaceholder from "../../../img/user.png";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api";
 import { useWebSocket } from "../../../hooks/useWebSocket";
@@ -132,6 +132,59 @@ function Monitoramento() {
 
   const isLoadingState = isLoading && effectiveAccesses.length === 0;
 
+  // Liberar acesso: quando último acesso é negado, mostrar L | x (5 min limite; 1 min sem resposta = negado)
+  const currentDeniedKey = latestAccess?.status === "denied"
+    ? `${latestAccess.pessoa_id ?? "x"}-${latestAccess.data_hora ?? Date.now()}`
+    : null;
+  const [pendingDeniedKey, setPendingDeniedKey] = useState(null);
+  const [pendingAt, setPendingAt] = useState(null);
+  const [userChoice, setUserChoice] = useState(null); // 'liberar' | 'negar' | null
+
+  useEffect(() => {
+    if (currentDeniedKey && currentDeniedKey !== pendingDeniedKey) {
+      setPendingDeniedKey(currentDeniedKey);
+      setPendingAt(Date.now());
+      setUserChoice(null);
+    }
+  }, [currentDeniedKey, pendingDeniedKey]);
+
+  // 1 min sem resposta = considerado negado
+  useEffect(() => {
+    if (!pendingAt || userChoice !== null) return;
+    const t = setTimeout(() => {
+      setUserChoice("negar");
+    }, 60 * 1000);
+    return () => clearTimeout(t);
+  }, [pendingAt, userChoice]);
+
+  // 5 min: remove o bloco Liberar acesso
+  useEffect(() => {
+    if (!pendingAt) return;
+    const t = setInterval(() => {
+      if (Date.now() - pendingAt > 5 * 60 * 1000) {
+        setPendingDeniedKey(null);
+        setPendingAt(null);
+        setUserChoice(null);
+      }
+    }, 5000);
+    return () => clearInterval(t);
+  }, [pendingAt]);
+
+  const showLiberarAcesso =
+    latestAccess?.status === "denied" &&
+    pendingDeniedKey === currentDeniedKey &&
+    pendingAt &&
+    Date.now() - pendingAt <= 5 * 60 * 1000;
+
+  const handleLiberar = () => {
+    setUserChoice("liberar");
+    // TODO: acionar endpoint na catraca para liberar acesso
+  };
+
+  const handleNegar = () => {
+    setUserChoice("negar");
+  };
+
   return (
     <div className={styles.monitoramentoContainer}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
@@ -176,6 +229,7 @@ function Monitoramento() {
               <img
                 src={latestAccess.foto || userPlaceholder}
                 alt="Foto de perfil"
+                onError={(e) => { e.target.onerror = null; e.target.src = userPlaceholder; }}
               />
             </div>
             <div className={styles.profileDetails}>
@@ -185,9 +239,41 @@ function Monitoramento() {
               <h3>{latestAccess.nome || "Nome não encontrado"}</h3>
               <p>Área: {latestAccess.area}</p>
               {/* O nome do dispositivo aparecerá aqui automaticamente agora */}
-              <p>Dispositivo: {latestAccess.dispositivo}</p> 
+              <p>Dispositivo: {latestAccess.dispositivo}</p>
               <br />
               <p>{latestAccess.autorizacao}</p>
+              {latestAccess.status === "denied" && showLiberarAcesso && (
+                <div className={styles.liberarAcesso}>
+                  <span className={styles.liberarLabel}>Liberar acesso:</span>
+                  {userChoice === null ? (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.liberarBtn}
+                        onClick={handleLiberar}
+                        title="Liberar acesso"
+                      >
+                        L
+                      </button>
+                      <span className={styles.liberarSep}>|</span>
+                      <button
+                        type="button"
+                        className={styles.negarBtn}
+                        onClick={handleNegar}
+                        title="Manter negado"
+                      >
+                        ×
+                      </button>
+                    </>
+                  ) : userChoice === "liberar" ? (
+                    <span className={styles.liberadoLabel}>
+                      <FontAwesomeIcon icon={faUnlock} /> Liberado
+                    </span>
+                  ) : (
+                    <span className={styles.negadoLabel}>Negado</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -217,12 +303,8 @@ function Monitoramento() {
                     <img
                       src={log.foto || userPlaceholder}
                       alt="Foto"
-                      style={{
-                        width: "80px",
-                        height: "80px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
+                      className={styles.avatarImg}
+                      onError={(e) => { e.target.onerror = null; e.target.src = userPlaceholder; }}
                     />
                   </td>
                   <td>{log.dataHora}</td>

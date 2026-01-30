@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSearch, faTrash, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faTrash, faEdit } from "@fortawesome/free-solid-svg-icons";
 import styles from "./Aulas.module.css";
 import BackButton from "../../layout/BackButton/BackButton";
 import {
@@ -20,6 +20,7 @@ function Aulas() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [deletingMateriaId, setDeletingMateriaId] = useState(null);
+  const [deletingSalaId, setDeletingSalaId] = useState(null);
   const [editing, setEditing] = useState(null);
   const [professores, setProfessores] = useState([]);
   const [salas, setSalas] = useState([]);
@@ -168,6 +169,27 @@ function Aulas() {
     }
   };
 
+  const handleDeleteSala = async (id) => {
+    if (!id) return;
+    const confirmed = window.confirm("Apagar esta sala? As aulas que usam esta sala precisarão ser atualizadas.");
+    if (!confirmed) return;
+
+    setDeletingSalaId(id);
+    try {
+      await api.delete(`/salas/${id}`);
+      await loadSalas();
+
+      setForm((prev) =>
+        String(prev.salaPadraoId) === String(id) ? { ...prev, salaPadraoId: "" } : prev
+      );
+    } catch (err) {
+      console.error("[Aulas] Erro ao apagar sala:", err);
+      alert("Erro ao apagar sala: " + (err.message || err));
+    } finally {
+      setDeletingSalaId(null);
+    }
+  };
+
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Apagar esta aula? Os horários que usarem esta aula ficarão vazios."
@@ -251,7 +273,6 @@ function Aulas() {
       <div className={styles.header}>
         <div className={styles.headerActions}>
           <div className={styles.searchBox}>
-            <FontAwesomeIcon icon={faSearch} className={styles.searchIcon} />
             <input
               type="search"
               placeholder="Buscar por nome"
@@ -379,19 +400,59 @@ function Aulas() {
 
               <label>
                 Sala padrão (opcional)
-                <select
-                  name="salaPadraoId"
-                  value={form.salaPadraoId}
-                  onChange={handleChange}
-                  className={styles.selectField}
-                >
-                  <option value="">Selecione uma sala</option>
-                  {salas.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nome || s.numero || `Sala ${s.id}`}
-                    </option>
-                  ))}
-                </select>
+                <div className={styles.fieldWithAction}>
+                  <select
+                    name="salaPadraoId"
+                    value={form.salaPadraoId}
+                    onChange={handleChange}
+                    className={styles.selectField}
+                  >
+                    <option value="">Selecione uma sala</option>
+                    {salas.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nome || s.numero || `Sala ${s.id}`}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className={styles.addNewBtn}
+                    onClick={async () => {
+                      const novaSala = prompt("Digite o nome da nova sala:");
+                      if (novaSala?.trim()) {
+                        try {
+                          console.log("[Aulas] Criando sala:", novaSala);
+                          const resultado = await api.post("/salas", { nome: novaSala.trim() });
+                          console.log("[Aulas] Sala criada:", resultado);
+                          
+                          await loadSalas();
+                          
+                          // Selecionar automaticamente a sala recém-criada
+                          const salaId = resultado?.id || resultado?.data?.id;
+                          if (salaId) {
+                            setForm(prev => ({ ...prev, salaPadraoId: String(salaId) }));
+                          }
+                          
+                          alert("Sala criada com sucesso!");
+                        } catch (err) {
+                          console.error("[Aulas] Erro ao criar sala:", err);
+                          alert("Erro ao criar sala: " + (err.message || err));
+                        }
+                      }
+                    }}
+                  >
+                    + Nova
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.deleteMateriaBtn}
+                    onClick={() => handleDeleteSala(form.salaPadraoId)}
+                    disabled={!form.salaPadraoId || deletingSalaId === form.salaPadraoId}
+                    title="Apagar sala selecionada"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </div>
               </label>
               <label>
                 Observação (opcional)

@@ -7,11 +7,11 @@ import {
   faDownload,
   faUpload,
   faFileExcel,
-  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "../../../services/api";
 import SkeletonLoader from "../../common/SkeletonLoader";
+import defaultUserImg from "../../../img/user.png";
 
 function Departamentos() {
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
@@ -393,16 +393,15 @@ function Departamentos() {
               <tr key={i}>
                 <td>{p.nome}</td>
                 <td>
-                  {p.foto ? (
-                    <img
-                      src={p.foto}
-                      alt="Foto"
-                      className={styles.fotoMiniatura}
-                      onError={(e) => (e.target.style.display = "none")}
-                    />
-                  ) : (
-                    "-"
-                  )}
+                  <img
+                    src={p.foto || defaultUserImg}
+                    alt="Foto"
+                    className={styles.fotoMiniatura}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = defaultUserImg;
+                    }}
+                  />
                 </td>
                 {"rm" in p && <td>{p.rm || "-"}</td>}
                 <td>{p.email || "-"}</td>
@@ -442,23 +441,19 @@ function Departamentos() {
         <h1 className={styles.title}>Departamentos</h1>
         
         {/* INPUT DE BUSCA */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginRight: "1rem", position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginRight: "1rem" }}>
              <input
                type="text"
                placeholder="Buscar pessoa..."
                value={termoBusca}
                onChange={(e) => setTermoBusca(e.target.value)}
                style={{
-                 padding: "0.5rem 0.5rem 0.5rem 2rem",
+                 padding: "0.5rem",
                  borderRadius: "5px",
                  border: "1px solid #ccc",
                  fontSize: "1rem",
                  minWidth: "250px"
                }}
-             />
-             <FontAwesomeIcon 
-                icon={faSearch} 
-                style={{ position: "absolute", left: "10px", top: "12px", color: "#888" }} 
              />
         </div>
 

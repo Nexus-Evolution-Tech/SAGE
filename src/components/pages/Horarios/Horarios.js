@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import styles from "./Horarios.module.css";
@@ -55,6 +56,7 @@ function Horarios() {
   const [slotError, setSlotError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const popoverRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const normalizeHorariosList = (res) => {
@@ -396,7 +398,7 @@ function Horarios() {
         <h1 className={styles.pageTitle}>Horários</h1>
         <button
           className={styles.btnAdd}
-          onClick={() => window.open("/aulas", "_blank")}
+          onClick={() => navigate("/aulas")}
         >
           <FontAwesomeIcon icon={faPlus} /> Gerenciar aulas
         </button>
@@ -586,7 +588,7 @@ function Horarios() {
                                     <button
                                       type="button"
                                       className={styles.popoverItemPrimary}
-                                      onClick={() => window.open("/aulas", "_blank")}
+                                      onClick={() => navigate("/aulas")}
                                     >
                                       + Criar nova aula
                                     </button>

@@ -3,8 +3,7 @@ import styles from "./Turmas.module.css";
 import TableSection from "../../layout/Table/Table";
 import { api } from "../../../services/api";
 import SkeletonLoader from "../../common/SkeletonLoader";
-import { faSearch } from "@fortawesome/free-solid-svg-icons"; // Importando ícone
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import BackButton from "../../layout/BackButton/BackButton";
 
 function Turmas() {
   const [dadosPorTurma, setDadosPorTurma] = useState({});
@@ -97,6 +96,7 @@ function Turmas() {
 
   return (
     <div className={styles.container}>
+      <BackButton />
       <div className={styles.headerContainer} style={{ marginBottom: "1.5rem" }}>
         <h1 className={styles.title}>Turmas</h1>
 
@@ -116,17 +116,13 @@ function Turmas() {
             value={termoBusca}
             onChange={(e) => setTermoBusca(e.target.value)}
             style={{
-              padding: "0.5rem 0.5rem 0.5rem 2rem",
+              padding: "0.5rem",
               borderRadius: "5px",
               border: "1px solid #ccc",
               fontSize: "1rem",
               width: "100%",
               minWidth: "300px",
             }}
-          />
-          <FontAwesomeIcon
-            icon={faSearch}
-            style={{ position: "absolute", left: "10px", color: "#888", top: "12px" }}
           />
         </div>
       </div>

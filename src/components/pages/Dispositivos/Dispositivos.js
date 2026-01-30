@@ -334,9 +334,11 @@ function Dispositivos() {
                   required
                 />
 
-                <button type="submit" className={styles.reloadButton}>
-                  Salvar
-                </button>
+                <div style={{ marginTop: "1rem" }}>
+                  <button type="submit" className={styles.reloadButton}>
+                    Salvar
+                  </button>
+                </div>
               </div>
             </form>
           </div>

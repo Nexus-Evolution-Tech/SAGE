@@ -1,9 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styles from "./Tabelas.module.css";
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "../../../services/api";
+import BackButton from "../../layout/BackButton/BackButton";
 
 function Tabelas() {
   const { tipo, turmaId } = useParams();
@@ -178,6 +177,7 @@ function Tabelas() {
 
   const commonHeader = (
     <div className={styles.header}>
+      <BackButton />
       <h2 className={styles.title}>
         {tipo === "turmas" && turmaId
           ? `Alunos da Turma ${formatarTurma(turmaId)}`
@@ -191,9 +191,6 @@ function Tabelas() {
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
-        <button className={styles.searchButton} type="button">
-          <FontAwesomeIcon icon={faSearch} className={styles.iconSearch} />
-        </button>
       </div>
     </div>
   );

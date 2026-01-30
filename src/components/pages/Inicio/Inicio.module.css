@@ -1,25 +1,384 @@
+/* Design system: cores e tipografia (index.css / outras páginas) */
 .container {
-  width: 3500px;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  margin-left: 200px;
+  padding: 30px 20px 40px 180px;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-sizing: border-box;
+  font-family: "Roboto Slab", sans-serif;
 }
 
-.cardsContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+/* Título padrão como Departamentos / Monitoramento / Dispositivos */
+.header {
+  margin-bottom: 0;
 }
 
-.topCards {
+.titleContainer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.card img {
-  height: 150px;
+.title {
+  text-align: left;
+  color: var(--primary-color);
+  font-size: 36px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.apiBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--lightGray);
+  color: var(--primary-color);
+}
+
+.apiBadge[data-online="true"] {
+  background: var(--light-green);
+  color: var(--primary-color);
+}
+
+.apiBadge[data-online="false"] {
+  background: var(--extra-light-red);
+  color: var(--primary-color);
+}
+
+.apiDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Surface: card branco (design system) */
+.surface {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid #eee;
+}
+
+/* Grid de métricas: mosaico principal */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.card {
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border-left: 4px solid var(--blue);
+  border: 1px solid #eee;
+  border-left-width: 4px;
+  border-left-color: var(--blue);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cardIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  color: var(--blue);
+}
+
+.cardIcon[data-color="green"] {
+  color: var(--green);
+}
+
+.cardIcon[data-color="purple"] {
+  color: #6b4e9e;
+}
+
+.cardContent {
+  min-width: 0;
+}
+
+.cardLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.cardValue {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1.2;
+}
+
+.cardValue[aria-busy="true"] {
+  color: var(--lightGray);
+}
+
+.cardSub {
+  display: block;
+  font-size: 13px;
+  color: var(--gray);
+  margin-top: 4px;
+}
+
+.cardSub .online {
+  color: var(--green);
+}
+
+.cardSub .offline {
+  color: var(--gray);
+}
+
+/* Linha: Últimos acessos + Atalhos */
+.dashboardRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* Bloco Últimos acessos (só dashboard, não relatório) */
+.ultimosAcessos {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid #eee;
+}
+
+.ultimosHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.ultimosTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ultimosIcon {
+  font-size: 0.9rem;
+  color: var(--blue);
+}
+
+.verTodos {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.verTodos:hover {
+  text-decoration: underline;
+}
+
+.ultimosList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ultimosItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.ultimosItem:last-child {
+  border-bottom: none;
+}
+
+.ultimosNome {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.ultimosHora {
+  color: var(--gray);
+  font-size: 13px;
+}
+
+.ultimosOk {
+  color: var(--green);
+  font-size: 0.9rem;
+}
+
+.ultimosNok {
+  color: #c9302c;
+  font-size: 0.9rem;
+}
+
+.ultimosSkeleton {
+  color: var(--lightGray);
+}
+
+.ultimosEmpty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--gray);
+}
+
+/* Atalhos */
+.atalhosGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.atalhoCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.atalhoCard:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-color: var(--blue);
+}
+
+.atalhoIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(3, 47, 94, 0.1);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.atalhoText {
+  flex: 1;
+  min-width: 0;
+}
+
+.atalhoLabel {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.15rem;
+}
+
+.atalhoDesc {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.atalhoArrow {
+  font-size: 0.8rem;
+  color: var(--lightGray);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.atalhoCard:hover .atalhoArrow {
+  color: var(--blue);
+}
+
+/* CTA */
+.cta {
+  margin-top: auto;
+  padding-top: 16px;
+  text-align: center;
+  border-top: 1px solid #eee;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: var(--primary-color);
+  color: var(--white);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(2, 25, 50, 0.2);
+  transition: background 0.2s ease;
+}
+
+.ctaButton:hover {
+  background: var(--blue);
+}
+
+/* Responsivo */
+@media (max-width: 1200px) {
+  .container {
+    padding-left: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px 32px 20px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardRow {
+    grid-template-columns: 1fr;
+  }
+
+  .atalhosGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .surface {
+    padding: 16px;
+  }
+
+  .cardValue {
+    font-size: 24px;
+  }
 }

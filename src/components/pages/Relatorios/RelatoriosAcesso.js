@@ -123,20 +123,11 @@ export default function RelatoriosAcesso() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <div>
-          <p className={styles.kicker}>Relatórios SAGE</p>
+        <div className={styles.titleContainer}>
           <h1 className={styles.title}>Acesso e Presença</h1>
-          <p className={styles.data}>
-            {new Date().toLocaleDateString("pt-BR", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        </div>
-        <div className={styles.status}>
-          {resumoQuery.isFetching ? "Atualizando..." : "Conectado"}
+          <span className={styles.status}>
+            {resumoQuery.isFetching ? "Atualizando..." : "Conectado"}
+          </span>
         </div>
       </header>
 

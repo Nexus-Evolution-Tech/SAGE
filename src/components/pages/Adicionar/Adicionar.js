@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styles from "./Adicionar.module.css";
 import { api } from "../../../services/api";
+import BackButton from "../../layout/BackButton/BackButton";
 
 function Adicionar() {
   const { tipo } = useParams();
@@ -339,6 +340,7 @@ function Adicionar() {
 
   return (
     <div className={styles.cadastroContainer}>
+      <BackButton />
       <section className={styles.dadosSection}>
         <div className={styles.header}>
           <h2>Adicionar {tipo}</h2>

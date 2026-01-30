@@ -4,6 +4,7 @@ import styles from "./Navbar.module.css";
 
 import logo from "../../../img/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGear } from "@fortawesome/free-solid-svg-icons";
 import navLinks, { userLink } from "./NavLinks.js";
 
 function Navbar() {
@@ -90,7 +91,15 @@ function Navbar() {
       </div>
 
       <div className={styles.bottomNav}>
-  
+        <NavLink
+          to="/configuracoes"
+          className={({ isActive }) =>
+            `${styles.bottomLink} ${isActive ? styles.activeBottom : ""}`
+          }
+          title="Configurações"
+        >
+          <FontAwesomeIcon icon={faGear} />
+        </NavLink>
 
         <div className={styles.userMenuContainer}>
           <button

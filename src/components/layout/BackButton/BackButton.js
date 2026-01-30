@@ -3,11 +3,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import styles from "./BackButton.module.css";
 
-function BackButton() {
+function BackButton({ fallback }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(-1);
+    if (fallback) {
+      navigate(fallback);
+    } else {
+      navigate(-1);
+    }
   };
 
   return (

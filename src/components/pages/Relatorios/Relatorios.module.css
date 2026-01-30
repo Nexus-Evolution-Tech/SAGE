@@ -2,7 +2,6 @@
   padding: 30px 20px 40px 180px; /* Recuo para a sidebar lateral */
   width: 100%;
   min-height: 100vh;
-  background-color: #f4f7f6;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -12,14 +11,21 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
+}
+
+.titleContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .title {
   margin: 0;
-  color: #021932;
-  font-size: 32px;
-  font-weight: 800;
+  color: var(--primary-color, #021932);
+  font-size: 36px;
+  font-weight: bold;
 }
 
 .kicker {

@@ -340,7 +340,7 @@ function Adicionar() {
 
   return (
     <div className={styles.cadastroContainer}>
-      <BackButton />
+      <BackButton fallback="/pessoas" />
       <section className={styles.dadosSection}>
         <div className={styles.header}>
           <h2>Adicionar {tipo}</h2>

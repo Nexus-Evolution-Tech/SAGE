@@ -96,10 +96,11 @@ function Turmas() {
 
   return (
     <div className={styles.container}>
-      <BackButton />
-      <div className={styles.headerContainer} style={{ marginBottom: "1.5rem" }}>
+      <div className={styles.pageHeaderRow}>
+        <BackButton fallback="/pessoas" />
         <h1 className={styles.title}>Turmas</h1>
-
+      </div>
+      <div className={styles.headerContainer} style={{ marginBottom: "1.5rem" }}>
         {/* --- CAMPO DE BUSCA --- */}
         <div
           style={{

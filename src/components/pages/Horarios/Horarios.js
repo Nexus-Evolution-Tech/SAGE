@@ -304,12 +304,13 @@ function Horarios() {
           aulaId: Number(selectedAulaId),
           divisao: novaDiv,
           salaId: null,
+          ...(aulaExistente?.id && { horarioIdExcluir: aulaExistente.id }),
         };
 
         console.log("=== HORÁRIOS DEBUG ===");
         console.log("Payload a ser enviado:", JSON.stringify(payload, null, 2));
 
-        // Validação prévia (se disponível)
+        // Validação prévia (detecta conflito de professor e duplicatas)
         try {
           await validarHorario(payload);
         } catch (err) {
@@ -368,12 +369,20 @@ function Horarios() {
     } catch (err) {
       console.error("=== ERRO AO SALVAR HORÁRIO ===");
       console.error("Erro completo:", err);
-      console.error("Stack:", err?.stack);
-      console.error("Status:", err?.status);
-      console.error("Data:", err?.data);
-      console.error("Message:", err?.message);
-      console.error("toString:", err?.toString());
-      setSlotError(err.message || "Erro ao salvar horário.");
+      if (err?.status === 409 && err?.data?.conflicts) {
+        const msg = err.data.conflicts.map((c) => {
+          if (c.type === "professor") {
+            return `Professor em conflito: ${c.details?.professorNome} (${c.details?.aulaConflito} - ${c.details?.turmaConflito})`;
+          }
+          if (c.type === "sala") {
+            return `Sala em conflito: ${c.details?.salaId || c.details?.salaNome} (${c.details?.turmaConflito})`;
+          }
+          return c.message || "Conflito de horário";
+        }).join("\n");
+        setSlotError(msg);
+      } else {
+        setSlotError(err.message || "Erro ao salvar horário.");
+      }
     } finally {
       setSavingSlot(false);
     }

@@ -177,12 +177,14 @@ function Tabelas() {
 
   const commonHeader = (
     <div className={styles.header}>
-      <BackButton />
-      <h2 className={styles.title}>
-        {tipo === "turmas" && turmaId
-          ? `Alunos da Turma ${formatarTurma(turmaId)}`
-          : tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-      </h2>
+      <div className={styles.headerLeft}>
+        <BackButton fallback="/pessoas" />
+        <h2 className={styles.title}>
+          {tipo === "turmas" && turmaId
+            ? `Alunos da Turma ${formatarTurma(turmaId)}`
+            : tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+        </h2>
+      </div>
       <div className={styles.searchContainer}>
         <input
           type="search"

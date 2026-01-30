@@ -633,8 +633,8 @@ function Formulario() {
 
   return (
     <div className={styles.cadastroContainer}>
-      <BackButton />
       <div className={styles.pageHeader}>
+        <BackButton fallback="/pessoas" />
         <div className={styles.pageTitles}>
           <span className={styles.pageBreadcrumb}>{breadcrumbLabel}</span>
           <h2 className={styles.pageMainTitle}>{pessoa?.nome || "Aluno"}</h2>

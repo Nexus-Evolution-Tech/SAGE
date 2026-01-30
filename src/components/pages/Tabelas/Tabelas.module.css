@@ -25,6 +25,21 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 1rem;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.headerLeft .title {
+  margin: 0;
+  text-align: left;
 }
 
 .sectionHeader h2,

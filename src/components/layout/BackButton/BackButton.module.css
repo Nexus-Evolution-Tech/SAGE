@@ -10,10 +10,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-  position: fixed;
-  top: 24px;
-  left: 260px;
-  z-index: 100;
+  flex-shrink: 0;
 }
 
 .backButton:hover {

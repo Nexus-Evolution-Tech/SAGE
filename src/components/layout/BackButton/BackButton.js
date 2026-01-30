@@ -7,10 +7,10 @@ function BackButton({ fallback }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (fallback) {
-      navigate(fallback);
-    } else {
+    if (window.history.length > 1) {
       navigate(-1);
+    } else {
+      navigate(fallback || "/inicio");
     }
   };
 

@@ -27,6 +27,7 @@ import Horarios from "./components/pages/Horarios/Horarios";
 import Areas from "./components/pages/Areas/Areas";
 import Aulas from "./components/pages/Aulas/Aulas";
 import Dados from "./components/pages/Dados/DadosEscolares";
+import Monitoring from "./components/pages/Monitoring/Monitoring";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
 import { ReactQueryProvider } from './contexts/ReactQueryProvider';
@@ -71,6 +72,7 @@ function AppContent() {
               <Route path="/aulas" element={<Aulas />} />
               <Route path="/areas" element={<Areas />} />
               <Route path="/dados" element={<Dados />} />
+              <Route path="/monitoring" element={<Monitoring />} />
             </Route>
             
 

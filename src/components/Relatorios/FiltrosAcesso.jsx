@@ -8,6 +8,13 @@ const PERIODOS = [
   { value: "CUSTOM", label: "Personalizado" },
 ];
 
+const TIPOS_FUNCIONARIO = [
+  { value: "TODOS", label: "Todos" },
+  { value: "PROFESSOR", label: "Professores" },
+  { value: "ADMINISTRADOR", label: "Administração" },
+  { value: "TERCEIRIZADO", label: "Terceirizados" },
+];
+
 export default function FiltrosAcesso({
   filtros,
   onChange,
@@ -15,6 +22,8 @@ export default function FiltrosAcesso({
   onRefresh,
 }) {
   const isCustom = filtros.periodo === "CUSTOM";
+  const isAlunos = filtros.grupo === "ALUNOS";
+  const isFuncionarios = filtros.grupo === "FUNCIONARIOS";
 
   return (
     <div className={styles.container}>
@@ -23,15 +32,15 @@ export default function FiltrosAcesso({
           <span className={styles.groupLabel}>Grupo</span>
           <button
             type="button"
-            onClick={() => onChange({ ...filtros, grupo: "ALUNOS" })}
-            className={filtros.grupo === "ALUNOS" ? styles.active : ""}
+            onClick={() => onChange({ ...filtros, grupo: "ALUNOS", funcionario_tipo: "TODOS" })}
+            className={isAlunos ? styles.active : ""}
           >
             Alunos
           </button>
           <button
             type="button"
-            onClick={() => onChange({ ...filtros, grupo: "FUNCIONARIOS" })}
-            className={filtros.grupo === "FUNCIONARIOS" ? styles.active : ""}
+            onClick={() => onChange({ ...filtros, grupo: "FUNCIONARIOS", turma_id: "TODOS" })}
+            className={isFuncionarios ? styles.active : ""}
           >
             Funcionários
           </button>
@@ -57,7 +66,7 @@ export default function FiltrosAcesso({
           ))}
         </div>
 
-        {turmas.length > 0 && (
+        {isAlunos && turmas.length > 0 && (
           <div className={styles.selectGroup}>
             <label className={styles.groupLabel} htmlFor="turma">
               Turma
@@ -74,6 +83,28 @@ export default function FiltrosAcesso({
               {turmas.map((t) => (
                 <option key={t.id} value={String(t.id)}>
                   {t.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {isFuncionarios && (
+          <div className={styles.selectGroup}>
+            <label className={styles.groupLabel} htmlFor="funcionario_tipo">
+              Tipo
+            </label>
+            <select
+              id="funcionario_tipo"
+              value={filtros.funcionario_tipo || "TODOS"}
+              onChange={(e) =>
+                onChange({ ...filtros, funcionario_tipo: e.target.value })
+              }
+              className={styles.select}
+            >
+              {TIPOS_FUNCIONARIO.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
                 </option>
               ))}
             </select>

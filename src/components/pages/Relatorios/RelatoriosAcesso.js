@@ -16,6 +16,7 @@ const filtrosIniciais = {
   grupo: "ALUNOS",
   tipo_funcionario: "TODOS",
   turma_id: "TODOS",
+  funcionario_tipo: "TODOS",
   periodo: "TODAY",
   data_inicio: "",
   data_fim: "",

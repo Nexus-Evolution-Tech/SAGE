@@ -240,45 +240,37 @@ export const api = {
 };
 
 // ==========================================================
-// --- SAGE RELATÓRIOS API (MOCKS PARA DESENVOLVIMENTO) ---
+// --- SAGE RELATÓRIOS API (BACKEND REAL) ---
 // ==========================================================
 
+function buildRelatorioQuery(filtros, extras = {}) {
+  const params = new URLSearchParams();
+  if (filtros.grupo) params.append('grupo', filtros.grupo);
+  if (filtros.turma_id) params.append('turma_id', filtros.turma_id);
+  if (filtros.funcionario_tipo) params.append('funcionario_tipo', filtros.funcionario_tipo);
+  if (filtros.periodo) params.append('periodo', filtros.periodo);
+  if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
+  if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
+  Object.entries(extras).forEach(([k, v]) => {
+    if (v !== undefined && v !== '') params.append(k, String(v));
+  });
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
 export const getRelatorioAcessoResumo = async (filtros) => {
-  console.log('[API Mock] Buscando resumo com filtros:', filtros);
-  return { 
-    metricas: { 
-      total: 101, 
-      no_horario: 95, 
-      atrasados: 5, 
-      faltantes: 1,
-      percentual_presenca: 94.05
-    }, 
-    dados_pizza: [
-      { label: "No Horário", value: 95, color: "#4CAF50" },
-      { label: "Atrasados", value: 5, color: "#FFC107" },
-      { label: "Faltantes", value: 1, color: "#F44336" }
-    ], 
-    dados_linha: [
-      { label: "07:30", no_horario: 40, atrasados: 2, faltantes: 1 },
-      { label: "08:20", no_horario: 30, atrasados: 2, faltantes: 0 },
-      { label: "09:10", no_horario: 25, atrasados: 1, faltantes: 0 }
-    ] 
-  };
+  const query = buildRelatorioQuery(filtros || {});
+  return get(`/relatorios/acesso/resumo${query}`);
 };
 
 export const getRelatorioAcessoDetalhes = async (filtros) => {
-  return { 
-    dados: [
-      { id: 1, nome: "João Silva", status: "NO_HORARIO", horario_previsto: "07:30", horario_chegada: "07:25" },
-      { id: 2, nome: "Maria Souza", status: "ATRASADO", horario_previsto: "07:30", horario_chegada: "07:45" }
-    ] 
-  };
+  const query = buildRelatorioQuery(filtros || {}, {
+    limit: filtros?.limit ?? 20,
+    offset: filtros?.offset ?? 0,
+  });
+  return get(`/relatorios/acesso/detalhes${query}`);
 };
 
 export const getRelatorioTurmas = async () => {
-  return [
-    { id: 1, nome: "1º Ano A - Informática" },
-    { id: 2, nome: "2º Ano A - Informática" },
-    { id: 3, nome: "3º Ano A - Informática" }
-  ];
+  return get('/relatorios/turmas');
 };

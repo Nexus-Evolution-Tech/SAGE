@@ -108,12 +108,12 @@ export default function RelatoriosAcesso() {
         detalhesQuery.data?.detalhes ||
         detalhesQuery.data
     );
-    if (!busca) return base;
-    const term = busca.toLowerCase();
+    if (!busca.trim()) return base;
+    const term = busca.trim().toLowerCase();
     return base.filter((linha) =>
       [linha.nome, linha.tipo, linha.turma, linha.status]
         .filter(Boolean)
-        .some((field) => field.toString().toLowerCase().includes(term))
+        .some((field) => String(field).toLowerCase().includes(term))
     );
   }, [detalhesQuery.data, busca]);
 
@@ -177,14 +177,21 @@ export default function RelatoriosAcesso() {
           onSearch={setBusca}
         />
 
-        {resumoQuery.isError && (
+        {(resumoQuery.isError || detalhesQuery.isError) && (
           <div className={styles.error}>
-            Erro ao carregar resumo: {resumoQuery.error?.message}
-          </div>
-        )}
-        {detalhesQuery.isError && (
-          <div className={styles.error}>
-            Erro ao carregar detalhes: {detalhesQuery.error?.message}
+            {resumoQuery.isError && (
+              <span>Resumo: {resumoQuery.error?.message || "Erro ao carregar."} </span>
+            )}
+            {detalhesQuery.isError && (
+              <span>Detalhes: {detalhesQuery.error?.message || "Erro ao carregar."}</span>
+            )}
+            <button
+              type="button"
+              className={styles.retryBtn}
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["relatorios"] })}
+            >
+              Tentar novamente
+            </button>
           </div>
         )}
       </div>

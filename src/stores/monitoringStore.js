@@ -83,6 +83,7 @@ const useMonitoringStore = create(
         deviceStatuses: data.deviceStatuses || [],
         connectedUsers: data.connectedUsers || [],
         stats: data.stats || null,
+        recentAccesses: data.recentAccesses || get().recentAccesses || [],
         lastUpdate: new Date().toISOString()
       }),
 

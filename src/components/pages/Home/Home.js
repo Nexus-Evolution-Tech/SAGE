@@ -10,8 +10,11 @@ import useMonitoringStore from "../../../stores/monitoringStore";
 import SkeletonLoader from "../../common/SkeletonLoader";
 import { shallow } from "zustand/shallow";
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
 function Monitoramento() {
-  const itemsPerPage = 10;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const recentAccesses = useMonitoringStore((state) => state.recentAccesses, shallow);
 
@@ -63,31 +66,29 @@ function Monitoramento() {
 
   // Carregar acessos iniciais via React Query e preencher o store
   const {
-    data,
+    data: paginatedData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["home", "acessos"],
+    queryKey: ["home", "acessos", page, limit],
     queryFn: async () => {
-      const acessosResponse = await api.get("/acessos?page=1&limit=50");
-
-      if (!acessosResponse.data || !Array.isArray(acessosResponse.data)) {
-        throw new Error("Formato de resposta inesperado da API.");
-      }
-
-      const acessosArray = acessosResponse.data.sort((a, b) => {
-        return new Date(b.data_hora) - new Date(a.data_hora);
-      });
-
-      const enrichedAccesses = await Promise.all(
-        acessosArray.map(enrichAccess)
-      );
-      return enrichedAccesses;
+      const res = await api.get(`/acessos?page=${page}&limit=${limit}`);
+      const body = res?.data ?? res;
+      const rawList = Array.isArray(body?.data) ? body.data : (Array.isArray(body) ? body : []);
+      const sorted = [...rawList].sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+      const enrichedAccesses = await Promise.all(sorted.map(enrichAccess));
+      return {
+        list: enrichedAccesses,
+        total: body?.total ?? enrichedAccesses.length,
+        totalPages: body?.totalPages ?? Math.max(1, Math.ceil((body?.total ?? 0) / limit)),
+        page: body?.page ?? page,
+        limit: body?.limit ?? limit,
+      };
     },
-    staleTime: 10000, // 10 segundos para permitir updates rápidos
+    staleTime: 2000, // 2s: considerar dados “velhos” para refetch mais rápido
     gcTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-    refetchInterval: 3000, // polling a cada 3s garante updates rápidos
+    refetchOnWindowFocus: true, // ao voltar à aba, atualiza a lista
+    refetchInterval: 2000, // polling a cada 2s para nova passagem aparecer logo
   });
 
   // WebSocket para receber novos acessos em tempo real
@@ -124,11 +125,16 @@ function Monitoramento() {
     retry: 1,
   });
 
-  const fallbackAccesses = data || [];
-  const effectiveAccesses = recentAccesses.length > 0 ? recentAccesses : fallbackAccesses;
+  // Lista paginada da API; store só como fallback quando não há dados da API
+  const list = paginatedData?.list ?? [];
+  const total = paginatedData?.total ?? 0;
+  const totalPages = paginatedData?.totalPages ?? 1;
+  const currentPage = paginatedData?.page ?? page;
+  const effectiveAccesses = list.length > 0 ? list : recentAccesses;
 
-  const latestAccess = effectiveAccesses[0];
-  const accessLogs = effectiveAccesses.slice(1);
+  // Na página 1: card = primeiro da lista, tabela = resto; nas outras páginas: só tabela
+  const latestAccess = currentPage === 1 ? effectiveAccesses[0] : null;
+  const accessLogs = currentPage === 1 ? effectiveAccesses.slice(1) : effectiveAccesses;
 
   const isLoadingState = isLoading && effectiveAccesses.length === 0;
 
@@ -281,9 +287,52 @@ function Monitoramento() {
         <p style={{textAlign: 'center', margin: '20px'}}>Nenhum acesso recente encontrado.</p>
       )}
 
+      {/* Paginação: tamanho da página e navegação */}
+      <div className={styles.paginationBar}>
+        <div className={styles.paginationSize}>
+          <span>Mostrar por página:</span>
+          {PAGE_SIZE_OPTIONS.map((n) => (
+            <button
+              key={n}
+              type="button"
+              className={limit === n ? styles.paginationSizeActive : styles.paginationSizeBtn}
+              onClick={() => { setLimit(n); setPage(1); }}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <div className={styles.paginationNav}>
+          <span className={styles.paginationInfo}>
+            {total > 0
+              ? `Mostrando ${(currentPage - 1) * limit + 1}–${Math.min(currentPage * limit, total)} de ${total}`
+              : "Nenhum registro"}
+          </span>
+          <span className={styles.paginationPages}>
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            type="button"
+            className={styles.paginationBtn}
+            disabled={currentPage <= 1 || isLoading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Anterior
+          </button>
+          <button
+            type="button"
+            className={styles.paginationBtn}
+            disabled={currentPage >= totalPages || isLoading}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Próxima
+          </button>
+        </div>
+      </div>
+
       <div className={styles.tableContainer}>
         {isLoading ? (
-          <SkeletonLoader type="table" count={itemsPerPage} />
+          <SkeletonLoader type="table" count={limit} />
         ) : (
           <table className={styles.accessTable}>
             <thead>
@@ -297,7 +346,7 @@ function Monitoramento() {
               </tr>
             </thead>
             <tbody>
-              {accessLogs.slice(0, itemsPerPage).map((log) => (
+              {accessLogs.map((log) => (
                 <tr key={log.id}>
                   <td>
                     <img

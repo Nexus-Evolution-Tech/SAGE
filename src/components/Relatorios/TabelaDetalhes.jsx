@@ -38,6 +38,7 @@ export default function TabelaDetalhes({ linhas = [], loading, onSearch }) {
             <thead>
               <tr>
                 <th>Nome</th>
+                {linhas.some((r) => r.turma) && <th>Turma</th>}
                 <th>Status</th>
                 <th>Horário previsto</th>
                 <th>Horário chegada</th>
@@ -47,6 +48,7 @@ export default function TabelaDetalhes({ linhas = [], loading, onSearch }) {
               {linhas.map((row) => (
                 <tr key={row.id ?? row.nome}>
                   <td>{row.nome ?? "—"}</td>
+                  {linhas.some((r) => r.turma) && <td>{row.turma ?? "—"}</td>}
                   <td>
                     <StatusBadge status={row.status} />
                   </td>

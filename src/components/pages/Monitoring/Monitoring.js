@@ -23,7 +23,7 @@ const Monitoring = () => {
     autoSubscribeSync: true
   });
 
-  // Buscar dados iniciais
+  // Buscar dados iniciais e manter store sincronizado com o backend
   const { data: initialState } = useQuery({
     queryKey: ['monitoring', 'state'],
     queryFn: async () => {
@@ -31,14 +31,15 @@ const Monitoring = () => {
       if (!response.ok) throw new Error('Falha ao buscar estado do monitoramento');
       return response.json();
     },
-    refetchInterval: 10000, // Refetch a cada 10 segundos como fallback
-    onSuccess: (data) => {
-      // Atualizar store com dados iniciais
-      if (data.data) {
-        useMonitoringStore.getState().updateFullState(data.data);
-      }
-    }
+    refetchInterval: 10000, // Refetch a cada 10 segundos (lista de acessos sempre atualizada)
   });
+
+  // Aplicar snapshot ao store sempre que a API devolver dados (lista mais recente do banco)
+  React.useEffect(() => {
+    if (initialState?.data) {
+      useMonitoringStore.getState().updateFullState(initialState.data);
+    }
+  }, [initialState]);
 
   const currentStats = stats || initialState?.data?.stats;
 
@@ -56,10 +57,14 @@ const Monitoring = () => {
     return `${seconds}s`;
   };
 
-  // Formatar data
+  // Formatar data em horário local (pt-BR)
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString('pt-BR');
+    return new Date(dateString).toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'medium',
+      hour12: false
+    });
   };
 
   return (
@@ -197,13 +202,13 @@ const Monitoring = () => {
           <div className={styles.accessList}>
             {recentAccesses && recentAccesses.length > 0 ? (
               recentAccesses.slice(0, 10).map((access, index) => (
-                <div key={index} className={styles.accessItem}>
+                <div key={access.id ?? `access-${index}`} className={styles.accessItem}>
                   <div className={styles.accessIcon}>
                     {access.permitido ? '✅' : '❌'}
                   </div>
                   <div className={styles.accessContent}>
                     <div className={styles.accessHeader}>
-                      <strong>Pessoa #{access.pessoa_id}</strong>
+                      <strong>{access.pessoa_nome || `Pessoa #${access.pessoa_id}`}</strong>
                       <span className={`${styles.badge} ${styles[access.status?.toLowerCase()]}`}>
                         {access.status}
                       </span>

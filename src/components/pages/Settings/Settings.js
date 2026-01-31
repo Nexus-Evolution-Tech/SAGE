@@ -22,6 +22,7 @@ const DADOS_UNIDADE_INICIAL = {
   numero_unidade: "206",
   cnpj: "62823257000109",
   login: "admin",
+  email: "",
   logradouro: "Rua Pedro Bracale",
   numero: "79",
   complemento: "",
@@ -59,6 +60,7 @@ function Settings() {
   const [erroUnidade, setErroUnidade] = useState(null);
 
   const [mostrarTrocarSenha, setMostrarTrocarSenha] = useState(false);
+  const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
@@ -107,12 +109,7 @@ function Settings() {
       await api.patch("/unidade", payload);
       setEditandoUnidade(false);
     } catch (err) {
-      try {
-        localStorage.setItem(STORAGE_UNIDADE, JSON.stringify(payload));
-        setEditandoUnidade(false);
-      } catch {
-        setErroUnidade(err?.message || "Erro ao salvar. Tente novamente.");
-      }
+      setErroUnidade(err?.message || "Erro ao salvar. Tente novamente.");
     } finally {
       setSalvandoUnidade(false);
     }
@@ -121,8 +118,12 @@ function Settings() {
   const handleTrocarSenha = async (e) => {
     e.preventDefault();
     setErroSenha(null);
+    if (!senhaAtual.trim()) {
+      setErroSenha("Informe a senha atual.");
+      return;
+    }
     if (novaSenha.length < 6) {
-      setErroSenha("A senha deve ter no mínimo 6 caracteres.");
+      setErroSenha("A nova senha deve ter no mínimo 6 caracteres.");
       return;
     }
     if (novaSenha !== confirmarSenha) {
@@ -131,7 +132,11 @@ function Settings() {
     }
     setSalvandoSenha(true);
     try {
-      await api.patch("/unidade/trocar-senha", { nova_senha: novaSenha });
+      await api.patch("/unidade/trocar-senha", {
+        senha_atual: senhaAtual,
+        nova_senha: novaSenha,
+      });
+      setSenhaAtual("");
       setNovaSenha("");
       setConfirmarSenha("");
       setMostrarTrocarSenha(false);
@@ -175,6 +180,10 @@ function Settings() {
                 <div className={styles.unidadeItem}>
                   <span className={styles.unidadeLabel}>Login</span>
                   <span className={styles.unidadeValue}>{unidade.login || "—"}</span>
+                </div>
+                <div className={styles.unidadeItem}>
+                  <span className={styles.unidadeLabel}>Email</span>
+                  <span className={styles.unidadeValue}>{unidade.email || "—"}</span>
                 </div>
                 <div className={styles.unidadeItem}>
                   <span className={styles.unidadeLabel}>Logradouro</span>
@@ -235,16 +244,17 @@ function Settings() {
           ) : (
             <>
               <div className={styles.formGrid}>
-                {["nome", "numero_unidade", "cnpj", "login"].map((key) => (
+                {["nome", "numero_unidade", "cnpj", "login", "email"].map((key) => (
                   <div key={key} className={styles.formGroup}>
                     <label className={styles.formLabel}>
-                      {key === "numero_unidade" ? "Nº Unidade" : key === "login" ? "Login" : key.toUpperCase()}
+                      {key === "numero_unidade" ? "Nº Unidade" : key === "login" ? "Login" : key === "email" ? "Email" : key.toUpperCase()}
                     </label>
                     <input
-                      type="text"
+                      type={key === "email" ? "email" : "text"}
                       className={styles.formInput}
                       value={unidade[key] ?? ""}
                       onChange={(e) => handleChangeUnidade(key, e.target.value)}
+                      placeholder={key === "email" ? "exemplo@etec.sp.gov.br" : undefined}
                     />
                   </div>
                 ))}
@@ -352,7 +362,19 @@ function Settings() {
         {mostrarTrocarSenha && (
           <div className={`${styles.card} ${styles.trocarSenhaCard}`}>
             <h3 className={styles.trocarSenhaTitle}>Trocar senha</h3>
+            <p className={styles.trocarSenhaDesc}>Para sua segurança, informe a senha atual antes de definir a nova.</p>
             <form onSubmit={handleTrocarSenha} className={styles.trocarSenhaForm}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Senha atual</label>
+                <input
+                  type="password"
+                  className={styles.formInput}
+                  value={senhaAtual}
+                  onChange={(e) => setSenhaAtual(e.target.value)}
+                  placeholder="Digite sua senha atual"
+                  autoComplete="current-password"
+                />
+              </div>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Nova senha</label>
                 <input
@@ -382,6 +404,7 @@ function Settings() {
                   className={styles.btnSecondary}
                   onClick={() => {
                     setMostrarTrocarSenha(false);
+                    setSenhaAtual("");
                     setNovaSenha("");
                     setConfirmarSenha("");
                     setErroSenha(null);

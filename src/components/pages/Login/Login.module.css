@@ -90,6 +90,19 @@ body {
   background: #032F5E;
 }
 
+.linkEsqueci {
+  display: block;
+  text-align: center;
+  margin-top: 0.75rem;
+  color: #021932;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.linkEsqueci:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 480px) {
   .cardContainer {
     padding: 2rem 1.5rem;

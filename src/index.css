@@ -1,5 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap");
 
+:root {
+  /* Status do sistema (SystemStatusBadge) - usado em Home, Monitoramento, Relatórios, Início, Dispositivos */
+  --status-online: #0f9d58;
+  --status-online-bg: #e6f4ea;
+  --status-offline: #d93025;
+  --status-offline-bg: #fce8e6;
+  --status-loading: #5f6368;
+  --status-loading-bg: #f1f3f4;
+}
+
 * {
   margin: 0;
   padding: 0;

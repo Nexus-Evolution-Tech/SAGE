@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from "react-router-dom";
 import styles from "./Login.module.css";
 import logo from '../../../img/logo.png';
 
@@ -158,6 +158,10 @@ function Login() {
           <button type="submit" className={styles.btn}>
             ENTRAR
           </button>
+
+          <Link to="/esqueci-senha" className={styles.linkEsqueci}>
+            Esqueci a senha
+          </Link>
         </form>
       </div>
     </div>

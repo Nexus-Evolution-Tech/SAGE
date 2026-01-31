@@ -18,6 +18,7 @@ const filtrosIniciais = {
   tipo_funcionario: "TODOS",
   turma_id: "TODOS",
   funcionario_tipo: "TODOS",
+  tipo_movimento: "ENTRADA",
   periodo: "TODAY",
   data_inicio: "",
   data_fim: "",
@@ -70,9 +71,12 @@ function normalizarTabela(data) {
   return [];
 }
 
+const PAGE_SIZE = 25;
+
 export default function RelatoriosAcesso() {
   const [filtros, setFiltros] = useState(filtrosIniciais);
   const [busca, setBusca] = useState("");
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
 
   const turmasQuery = useQuery({
@@ -89,11 +93,19 @@ export default function RelatoriosAcesso() {
   });
 
   const detalhesQuery = useQuery({
-    queryKey: ["relatorios", "detalhes", filtros],
-    queryFn: () => getRelatorioAcessoDetalhes({ ...filtros, limit: 20 }),
+    queryKey: ["relatorios", "detalhes", filtros, page],
+    queryFn: () =>
+      getRelatorioAcessoDetalhes({
+        ...filtros,
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+      }),
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
+
+  const totalDetalhes = detalhesQuery.data?.total ?? 0;
+  const totalPages = Math.ceil(totalDetalhes / PAGE_SIZE) || 1;
 
   const metricas = resumoQuery.data?.metricas || emptyMetricas;
   const pizza = normalizarPizza(
@@ -134,16 +146,16 @@ export default function RelatoriosAcesso() {
       <header className={styles.header}>
         <div className={styles.titleContainer}>
           <h1 className={styles.title}>Acesso e Presença</h1>
-          <span className={styles.status}>
-            {resumoQuery.isFetching ? "Atualizando..." : "Conectado"}
-          </span>
         </div>
       </header>
 
       <div className={styles.surface}>
         <FiltrosAcesso
           filtros={filtros}
-          onChange={setFiltros}
+          onChange={(f) => {
+            setFiltros(f);
+            setPage(1);
+          }}
           turmas={turmasQuery.data || []}
           onRefresh={handleRefresh}
         />
@@ -171,21 +183,20 @@ export default function RelatoriosAcesso() {
 
         <div className={styles.metricsGrid}>
           <MetricasCard label="Total" value={metricas.total} color="#0ea5e9" />
-          <MetricasCard
-            label="No horário"
-            value={metricas.no_horario}
-            color={cores.verde}
-          />
-          <MetricasCard
-            label="Atrasados"
-            value={metricas.atrasados}
-            color={cores.amarelo}
-          />
-          <MetricasCard
-            label="Faltantes"
-            value={metricas.faltantes}
-            color={cores.vermelho}
-          />
+          {resumoQuery.data?.tipo_movimento === "SAIDA" ? (
+            <>
+              <MetricasCard label="Saiu no horário" value={metricas.saida_no_horario ?? metricas.no_horario} color={cores.verde} />
+              <MetricasCard label="Saiu antes" value={metricas.saida_antes ?? 0} color="#94a3b8" />
+              <MetricasCard label="Saiu depois" value={metricas.saida_depois ?? metricas.atrasados} color={cores.amarelo} />
+              <MetricasCard label="Sem saída" value={metricas.faltantes} color={cores.vermelho} />
+            </>
+          ) : (
+            <>
+              <MetricasCard label="No horário" value={metricas.no_horario} color={cores.verde} />
+              <MetricasCard label="Atrasados" value={metricas.atrasados} color={cores.amarelo} />
+              <MetricasCard label="Faltantes" value={metricas.faltantes} color={cores.vermelho} />
+            </>
+          )}
         </div>
 
         {metricas.percentual_presenca != null && (
@@ -204,6 +215,13 @@ export default function RelatoriosAcesso() {
           linhas={linhasTabela}
           loading={detalhesQuery.isLoading}
           onSearch={setBusca}
+          pagination={{
+            page,
+            totalPages,
+            total: totalDetalhes,
+            pageSize: PAGE_SIZE,
+            onPageChange: setPage,
+          }}
         />
 
         {(resumoQuery.isError || detalhesQuery.isError) && (

@@ -10,6 +10,7 @@ import {
 import { useState, useEffect } from "react";
 import { api } from "../../../services/api";
 import SkeletonLoader from "../../common/SkeletonLoader";
+import SystemStatusBadge from "../../common/SystemStatusBadge/SystemStatusBadge";
 
 function Dispositivos() {
   const [dispositivos, setDispositivos] = useState([]);
@@ -162,26 +163,11 @@ function Dispositivos() {
     <div className={styles.container}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
         <h1 className={styles.title}>Dispositivos</h1>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            fontSize: "0.95rem",
-            color: onlineCount > 0 ? "#0f9d58" : "#d93025",
-          }}
-        >
-          <span
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: onlineCount > 0 ? "#0f9d58" : "#d93025",
-              boxShadow: onlineCount > 0 ? "0 0 6px #0f9d58" : "0 0 6px #d93025",
-            }}
-          />
-          {onlineCount} online / {offlineCount} offline
-        </span>
+        <SystemStatusBadge
+          countOnline={onlineCount}
+          countOffline={offlineCount}
+          title={onlineCount > 0 ? "Dispositivos ativos" : "Nenhum dispositivo online"}
+        />
       </div>
 
       <div className={styles.cards}>

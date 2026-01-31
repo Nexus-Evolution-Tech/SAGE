@@ -286,6 +286,7 @@ function buildRelatorioQuery(filtros, extras = {}) {
   if (filtros.grupo) params.append('grupo', filtros.grupo);
   if (filtros.turma_id) params.append('turma_id', filtros.turma_id);
   if (filtros.funcionario_tipo) params.append('funcionario_tipo', filtros.funcionario_tipo);
+  if (filtros.tipo_movimento) params.append('tipo_movimento', filtros.tipo_movimento);
   if (filtros.periodo) params.append('periodo', filtros.periodo);
   if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
   if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
@@ -322,4 +323,14 @@ export const postRelatorioBackfillPresenca = async (dataInicio, dataFim) => {
   if (dataInicio) body.data_inicio = dataInicio;
   if (dataFim) body.data_fim = dataFim;
   return post('/relatorios/acesso/backfill-presenca', body);
+};
+
+export const getRelatorioPessoaHistorico = async (pessoaId, filtros = {}) => {
+  const params = new URLSearchParams();
+  if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
+  if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
+  if (filtros.limit) params.append('limit', filtros.limit);
+  if (filtros.offset) params.append('offset', filtros.offset);
+  const qs = params.toString();
+  return get(`/relatorios/pessoa/${pessoaId}/historico${qs ? `?${qs}` : ''}`);
 };

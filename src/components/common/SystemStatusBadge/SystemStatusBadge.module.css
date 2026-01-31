@@ -1,0 +1,62 @@
+/* Padrão unificado para indicador de status do sistema em todo o SAGE */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Online: verde */
+.badge.online {
+  background: var(--status-online-bg, #e6f4ea);
+  color: var(--status-online, #0f9d58);
+}
+
+.badge.online .dot {
+  background: currentColor;
+  box-shadow: 0 0 0 2px rgba(15, 157, 88, 0.25);
+}
+
+/* Offline: vermelho */
+.badge.offline {
+  background: var(--status-offline-bg, #fce8e6);
+  color: var(--status-offline, #d93025);
+}
+
+.badge.offline .dot {
+  background: currentColor;
+  box-shadow: 0 0 0 2px rgba(217, 48, 37, 0.25);
+}
+
+/* Loading: cinza/âmbar */
+.badge.loading {
+  background: var(--status-loading-bg, #f1f3f4);
+  color: var(--status-loading, #5f6368);
+}
+
+.badge.loading .dot {
+  background: currentColor;
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

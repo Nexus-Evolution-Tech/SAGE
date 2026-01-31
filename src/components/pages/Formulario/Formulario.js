@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import styles from "./Formulario.module.css";
 import { api } from "../../../services/api";
 import BackButton from "../../layout/BackButton/BackButton";
+import HorarioFixoForm from "../../Relatorios/HorarioFixoForm";
 import defaultUserImg from "../../../img/user.png";
 
 function Formulario() {
@@ -487,6 +488,7 @@ function Formulario() {
                 "date",
               )}
             </div>
+            <HorarioFixoForm pessoaId={id} tipo="TERCEIRIZADO" />
           </>
         );
       case "PROFESSOR":
@@ -579,6 +581,7 @@ function Formulario() {
               {renderCampo("Cargo", "cargo")}
               {renderCampo("Cartão Rfid", "cartao_rfid")}
             </div>
+            <HorarioFixoForm pessoaId={id} tipo="PROFADM" />
           </>
         );
       case "ADMINISTRADOR":
@@ -624,6 +627,7 @@ function Formulario() {
               {renderCampo("Cargo", "cargo")}
               {renderCampo("Cartão Rfid", "cartao_rfid")}
             </div>
+            <HorarioFixoForm pessoaId={id} tipo="ADMINISTRADOR" />
           </>
         );
       default:

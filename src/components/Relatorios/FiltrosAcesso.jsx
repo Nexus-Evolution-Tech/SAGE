@@ -15,6 +15,12 @@ const TIPOS_FUNCIONARIO = [
   { value: "TERCEIRIZADO", label: "Terceirizados" },
 ];
 
+const TIPOS_MOVIMENTO = [
+  { value: "ENTRADA", label: "Entrada" },
+  { value: "SAIDA", label: "Saída" },
+  { value: "AMBOS", label: "Entrada e saída" },
+];
+
 export default function FiltrosAcesso({
   filtros,
   onChange,
@@ -60,6 +66,20 @@ export default function FiltrosAcesso({
                 })
               }
               className={filtros.periodo === p.value ? styles.active : ""}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.group}>
+          <span className={styles.groupLabel}>Movimento</span>
+          {TIPOS_MOVIMENTO.map((p) => (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => onChange({ ...filtros, tipo_movimento: p.value })}
+              className={(filtros.tipo_movimento || "ENTRADA") === p.value ? styles.active : ""}
             >
               {p.label}
             </button>

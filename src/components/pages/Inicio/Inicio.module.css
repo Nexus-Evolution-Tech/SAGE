@@ -30,35 +30,6 @@
   margin: 0;
 }
 
-.apiBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--lightGray);
-  color: var(--primary-color);
-}
-
-.apiBadge[data-online="true"] {
-  background: var(--light-green);
-  color: var(--primary-color);
-}
-
-.apiBadge[data-online="false"] {
-  background: var(--extra-light-red);
-  color: var(--primary-color);
-}
-
-.apiDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 /* Surface: card branco (design system) */
 .surface {
   background: var(--white);

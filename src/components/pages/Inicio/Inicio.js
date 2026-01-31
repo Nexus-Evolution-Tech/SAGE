@@ -15,6 +15,7 @@ import {
   faList,
 } from "@fortawesome/free-solid-svg-icons";
 import { api } from "../../../services/api";
+import SystemStatusBadge from "../../common/SystemStatusBadge/SystemStatusBadge";
 import styles from "./Inicio.module.css";
 
 function getCount(res) {
@@ -152,14 +153,11 @@ export default function Inicio() {
       <header className={styles.header}>
         <div className={styles.titleContainer}>
           <h1 className={styles.title}>Início</h1>
-          <span
-            className={styles.apiBadge}
-            data-online={apiOnline}
+          <SystemStatusBadge
+            status={healthLoading ? "loading" : apiError ? "offline" : "online"}
+            label={apiOnline ? "Sistema online" : "Sistema offline"}
             title={apiOnline ? "API respondendo" : "API indisponível"}
-          >
-            <span className={styles.apiDot} />
-            {apiOnline ? "Sistema online" : "Sistema offline"}
-          </span>
+          />
         </div>
       </header>
 

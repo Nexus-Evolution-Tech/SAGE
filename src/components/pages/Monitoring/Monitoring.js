@@ -72,15 +72,11 @@ const Monitoring = () => {
       <div className={styles.monitoring}>
         <div className={styles.header}>
           <h1>Monitoramento em Tempo Real</h1>
-          <div className={styles.connectionStatus}>
-            <span className={`${styles.statusDot} ${isConnected ? styles.connected : styles.disconnected}`} />
-            <span>{isConnected ? 'Conectado' : 'Desconectado'}</span>
-            {lastUpdate && (
-              <span className={styles.lastUpdate}>
-                Última atualização: {formatDate(lastUpdate)}
-              </span>
-            )}
-          </div>
+          {lastUpdate && (
+            <span className={styles.lastUpdate}>
+              Última atualização: {formatDate(lastUpdate)}
+            </span>
+          )}
         </div>
 
         {/* Stats Cards */}

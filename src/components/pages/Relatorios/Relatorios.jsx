@@ -16,7 +16,7 @@ import styles from "./Relatorios.module.css";
 
 const filtrosIniciais = {
   grupo: "ALUNOS",
-  tipo_funcionario: "TODOS",
+  funcionario_tipo: "TODOS",
   turma_id: "TODOS",
   periodo: "TODAY",
   data_inicio: "",

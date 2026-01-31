@@ -80,6 +80,49 @@
   }
 }
 
+.emptyBanner {
+  padding: 16px 20px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  color: #0c4a6e;
+}
+
+.emptyBanner p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.emptyBanner p:last-child {
+  margin-bottom: 0;
+}
+
+.emptyHint {
+  font-size: 13px !important;
+  opacity: 0.9;
+}
+
+.backfillBtn {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.backfillBtn:hover:not(:disabled) {
+  background: #0369a1;
+}
+
+.backfillBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .helper {
   margin: 0;
   font-size: 14px;

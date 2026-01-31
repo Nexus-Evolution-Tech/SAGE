@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getRelatorioAcessoResumo,
   getRelatorioAcessoDetalhes,
   getRelatorioTurmas,
+  postRelatorioBackfillPresenca,
 } from "../../../services/api";
 import FiltrosAcesso from "../../Relatorios/FiltrosAcesso.jsx";
 import GraficosPizza from "../../Relatorios/GraficosPizza.jsx";
@@ -121,6 +122,13 @@ export default function RelatoriosAcesso() {
     queryClient.invalidateQueries({ queryKey: ["relatorios"] });
   };
 
+  const backfillMutation = useMutation({
+    mutationFn: () => postRelatorioBackfillPresenca(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["relatorios"] });
+    },
+  });
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -139,6 +147,27 @@ export default function RelatoriosAcesso() {
           turmas={turmasQuery.data || []}
           onRefresh={handleRefresh}
         />
+
+        {!resumoQuery.isLoading && metricas.total === 0 && (
+          <div className={styles.emptyBanner}>
+            <p>
+              <strong>Nenhuma métrica encontrada</strong> para o período e filtros selecionados.
+            </p>
+            <p className={styles.emptyHint}>
+              Verifique se: há <strong>horários de aula</strong> cadastrados para o dia da semana,
+              existem <strong>alunos/funcionários</strong> com turma, e os <strong>acessos da catraca</strong> estão
+              sincronizados.
+            </p>
+            <button
+              type="button"
+              className={styles.backfillBtn}
+              onClick={() => backfillMutation.mutate()}
+              disabled={backfillMutation.isPending}
+            >
+              {backfillMutation.isPending ? "Sincronizando..." : "Popular presenças a partir de acessos (últimos 7 dias)"}
+            </button>
+          </div>
+        )}
 
         <div className={styles.metricsGrid}>
           <MetricasCard label="Total" value={metricas.total} color="#0ea5e9" />

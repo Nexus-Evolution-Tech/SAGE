@@ -1,12 +1,16 @@
 .container {
-  padding: 30px 20px 40px 180px;
-  width: 100%;
+  /* Espaço igual à esquerda e à direita, logo após a navbar */
+  font-family: "Roboto Slab", sans-serif;
   min-height: 100vh;
+  box-sizing: border-box;
+  width: calc(100vw - 298px);
+  min-width: calc(100vw - 298px);
+  margin-left: calc(274px - (100vw - 1200px) / 2);
+  padding: 12px 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  box-sizing: border-box;
-  font-family: "Roboto Slab", sans-serif;
+  overflow-y: auto;
 }
 
 .pageTitle {
@@ -41,9 +45,10 @@
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #e0e0e0;
-  width: 1000px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .cardHeader {
@@ -72,21 +77,29 @@
 
 .tableResponsive {
   overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
 }
 
 .scheduleTable {
   width: 100%;
+  min-width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
+  table-layout: fixed;
 }
 
 .scheduleTable th,
 .scheduleTable td {
-  padding: 12px 10px;
+  padding: 10px 8px;
   text-align: center;
   border-right: 1px solid #eee;
   border-bottom: 1px solid #eee;
   font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.scheduleTable tbody tr {
+  min-height: 64px;
 }
 
 .scheduleTable th {
@@ -98,7 +111,7 @@
 
 .firstCol {
   background-color: #f4f4f4;
-  width: 120px;
+  width: 100px;
 }
 
 .dayCol {
@@ -109,7 +122,7 @@
 }
 
 .slotCell {
-  min-width: 100px;
+  min-height: 64px;
   position: relative;
 }
 
@@ -134,6 +147,10 @@
   border-radius: 4px;
   display: block;
   width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-size: 0.8rem;
+  line-height: 1.2;
 }
 
 .divisaoTag {
@@ -308,10 +325,11 @@
 
 .slotButton {
   width: 100%;
-  min-height: 60px;
+  min-height: 56px;
+  height: 100%;
   border: 1px solid #d0d0d0;
   background: #f9f9f9;
-  padding: 8px;
+  padding: 6px 8px;
   cursor: pointer;
   border-radius: 4px;
   font-size: 0.85rem;
@@ -320,6 +338,7 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  overflow: visible;
 }
 
 .slotButton:hover {

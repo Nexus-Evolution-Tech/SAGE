@@ -220,6 +220,38 @@ export async function validarHorario(data) {
   );
 }
 
+// Áreas (CRUD)
+export async function listarAreas(params = {}) {
+  const query = new URLSearchParams();
+  if (params.page) query.append('page', params.page);
+  if (params.limit) query.append('limit', params.limit);
+  const qs = query.toString();
+  return get(`/areas${qs ? `?${qs}` : ''}`);
+}
+
+export async function criarArea(data) {
+  return post('/areas', data);
+}
+
+export async function atualizarArea(id, data) {
+  return patch(`/areas/${id}`, data);
+}
+
+export async function deletarArea(id) {
+  return del(`/areas/${id}`);
+}
+
+export async function uploadFotoArea(id, formData) {
+  return postFormData(`/areas/upload/${id}`, formData);
+}
+
+/** Retorna a URL completa da foto da área (para exibir no frontend). */
+export function getAreaPhotoUrl(fotoPath) {
+  if (!fotoPath) return null;
+  const base = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+  return `${base.replace(/\/$/, '')}/uploads/${fotoPath.replace(/^\/+/, '')}`;
+}
+
 // Objeto centralizador para facilitar o uso em componentes antigos
 export const api = {
   get,
@@ -236,7 +268,13 @@ export const api = {
   criarHorario,
   atualizarHorario,
   deletarHorario,
-  validarHorario
+  validarHorario,
+  listarAreas,
+  criarArea,
+  atualizarArea,
+  deletarArea,
+  uploadFotoArea,
+  getAreaPhotoUrl
 };
 
 // ==========================================================
@@ -273,4 +311,15 @@ export const getRelatorioAcessoDetalhes = async (filtros) => {
 
 export const getRelatorioTurmas = async () => {
   return get('/relatorios/turmas');
+};
+
+/**
+ * Sincroniza Presenca a partir de Acesso (backfill).
+ * Útil quando há acessos históricos mas Presenca estava vazio.
+ */
+export const postRelatorioBackfillPresenca = async (dataInicio, dataFim) => {
+  const body = {};
+  if (dataInicio) body.data_inicio = dataInicio;
+  if (dataFim) body.data_fim = dataFim;
+  return post('/relatorios/acesso/backfill-presenca', body);
 };

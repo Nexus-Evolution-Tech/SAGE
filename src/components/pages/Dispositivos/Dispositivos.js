@@ -13,6 +13,7 @@ import SkeletonLoader from "../../common/SkeletonLoader";
 
 function Dispositivos() {
   const [dispositivos, setDispositivos] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [statusDispositivos, setStatusDispositivos] = useState({});
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -27,8 +28,10 @@ function Dispositivos() {
     senha: "",
   });
 
+  const areaPorId = areas.reduce((acc, a) => ({ ...acc, [a.id]: a.nome }), {});
+
   // ===============================
-  // BUSCAR DISPOSITIVOS + STATUS
+  // BUSCAR DISPOSITIVOS + STATUS + ÁREAS
   // ===============================
   const fetchDispositivos = async () => {
     try {
@@ -50,8 +53,19 @@ function Dispositivos() {
     }
   };
 
+  const fetchAreas = async () => {
+    try {
+      const res = await api.get("/areas?limit=100");
+      const list = res?.data ?? res ?? [];
+      setAreas(Array.isArray(list) ? list : []);
+    } catch (err) {
+      setAreas([]);
+    }
+  };
+
   useEffect(() => {
     fetchDispositivos();
+    fetchAreas();
   }, []);
 
   const totalCount = dispositivos.length;
@@ -184,6 +198,11 @@ function Dispositivos() {
                 <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
                 <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
                 <p className={styles.cardArea}>ID: {dispositivo.id}</p>
+                <p className={styles.cardArea}>
+                  Área: {dispositivo.area_id != null && dispositivo.area_id !== ""
+                    ? (areaPorId[dispositivo.area_id] || `ID ${dispositivo.area_id}`)
+                    : "Sem área"}
+                </p>
 
                 {dispositivo.foto ? (
                   <img src={dispositivo.foto} alt={dispositivo.nome} />
@@ -241,6 +260,15 @@ function Dispositivos() {
                 <strong>Nome</strong>
                 <div className={styles.infoContainer}>
                   <p>{selectedDevice.nome}</p>
+                </div>
+
+                <strong>Área vinculada</strong>
+                <div className={styles.infoContainer}>
+                  <p>
+                    {selectedDevice.area_id != null && selectedDevice.area_id !== ""
+                      ? (areaPorId[selectedDevice.area_id] || `Área ID ${selectedDevice.area_id}`)
+                      : "Sem área"}
+                  </p>
                 </div>
 
                 <div className={styles.cardsRow}>

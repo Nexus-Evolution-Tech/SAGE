@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import styles from "./EsqueciSenha.module.css";
 import logo from "../../../img/logo.png";
+import { useNotifications } from "../../../contexts/NotificationContext";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -10,7 +11,7 @@ function EsqueciSenha() {
   const [enviando, setEnviando] = useState(false);
   const [mensagem, setMensagem] = useState(null);
   const [erro, setErro] = useState(null);
-  const navigate = useNavigate();
+  const { addNotification } = useNotifications();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,8 +31,14 @@ function EsqueciSenha() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setMensagem(data.message || "Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha. Verifique sua caixa de entrada e o spam.");
+        const msg = data.message || "Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha. Verifique sua caixa de entrada e o spam.";
+        setMensagem(msg);
         setEmail("");
+        addNotification({
+          title: "Link de redefinição enviado",
+          message: msg,
+          type: "info",
+        });
       } else {
         setErro(data.message || "Não foi possível processar. Tente novamente.");
       }

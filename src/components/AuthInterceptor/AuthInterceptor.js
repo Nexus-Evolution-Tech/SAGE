@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SessionExpiredModal from '../SessionExpiredModal/SessionExpiredModal';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 const AuthInterceptor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     const handleAuthExpired = (event) => {
-      setMessage(event.detail.message || 'Sua sessão expirou.');
+      const msg = event.detail?.message || 'Sua sessão expirou. Faça login novamente.';
+      setMessage(msg);
+      addNotification({
+        title: 'Sessão expirada',
+        message: msg,
+        type: 'warning',
+      });
       setIsModalOpen(true);
     };
 
@@ -18,7 +26,7 @@ const AuthInterceptor = () => {
     return () => {
       window.removeEventListener('auth-expired', handleAuthExpired);
     };
-  }, []); 
+  }, [addNotification]); 
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

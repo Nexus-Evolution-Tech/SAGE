@@ -9,9 +9,22 @@ import {
   faKey,
   faTimes,
   faCheck,
+  faWrench,
+  faSync,
+  faDownload,
+  faServer,
+  faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import { api } from "../../../services/api";
 import styles from "./Settings.module.css";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+
+function getLogoUrl(logo) {
+  if (!logo) return null;
+  if (logo.startsWith("http://") || logo.startsWith("https://")) return logo;
+  return `${API_URL.replace(/\/$/, "")}/uploads/${logo.replace(/^\/+/, "")}`;
+}
 
 const STORAGE_SOUND = "sage_notifications_sound";
 const STORAGE_UNIDADE = "sage_unidade";
@@ -58,6 +71,8 @@ function Settings() {
   const [editandoUnidade, setEditandoUnidade] = useState(false);
   const [salvandoUnidade, setSalvandoUnidade] = useState(false);
   const [erroUnidade, setErroUnidade] = useState(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [erroLogo, setErroLogo] = useState(null);
 
   const [mostrarTrocarSenha, setMostrarTrocarSenha] = useState(false);
   const [senhaAtual, setSenhaAtual] = useState("");
@@ -65,6 +80,16 @@ function Settings() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [erroSenha, setErroSenha] = useState(null);
+
+  // Ferramentas – Catraca
+  const [dispositivos, setDispositivos] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [config, setConfig] = useState({ monitorUsePush: false, monitorPollingIntervalMs: 20000, monitorPollingEnabled: true });
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncAllLoading, setSyncAllLoading] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [monitorConfigLoading, setMonitorConfigLoading] = useState(false);
+  const [ferramentasMsg, setFerramentasMsg] = useState(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_SOUND, String(soundEnabled));
@@ -95,9 +120,50 @@ function Settings() {
     carregar();
   }, []);
 
+  useEffect(() => {
+    async function carregarFerramentas() {
+      try {
+        const [list, cfg] = await Promise.all([api.get("/dispositivos"), api.get("/config").catch(() => ({}))]);
+        const arr = Array.isArray(list) ? list : list?.data ?? [];
+        setDispositivos(arr);
+        if (cfg && (cfg.monitorUsePush !== undefined || cfg.monitorPollingIntervalMs !== undefined)) {
+          setConfig({
+            monitorUsePush: !!cfg.monitorUsePush,
+            monitorPollingIntervalMs: cfg.monitorPollingIntervalMs ?? 20000,
+            monitorPollingEnabled: (cfg.monitorPollingIntervalMs ?? 20000) > 0,
+          });
+        }
+        if (arr.length > 0) {
+          setSelectedDeviceId((prev) => (prev ? prev : String(arr[0].id)));
+        }
+      } catch {
+        // Ignora; ferramentas opcionais
+      }
+    }
+    carregarFerramentas();
+  }, []);
+
   const handleChangeUnidade = (campo, valor) => {
     setUnidade((prev) => ({ ...prev, [campo]: valor ?? "" }));
     setErroUnidade(null);
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    setErroLogo(null);
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("logo", file);
+      const data = await api.postFormData("/unidade/upload-logo", formData);
+      setUnidade((prev) => ({ ...prev, logo: data?.logo ?? prev.logo }));
+    } catch (err) {
+      setErroLogo(err?.message || "Erro ao enviar a logo. Tente novamente.");
+    } finally {
+      setLogoUploading(false);
+      e.target.value = "";
+    }
   };
 
   const handleSalvarUnidade = async () => {
@@ -144,6 +210,90 @@ function Settings() {
       setErroSenha(err?.message || "Erro ao alterar senha. Tente novamente.");
     } finally {
       setSalvandoSenha(false);
+    }
+  };
+
+  // Ferramentas – Catraca: ações manuais
+  const handleSincronizarDispositivo = async () => {
+    if (!selectedDeviceId) {
+      setFerramentasMsg("Selecione um dispositivo.");
+      return;
+    }
+    setFerramentasMsg(null);
+    setSyncLoading(true);
+    try {
+      const r = await api.post(`/acessos/sincronizar/${selectedDeviceId}`);
+      setFerramentasMsg(r?.message || `Sincronizado. ${r?.inseridos ?? 0} inseridos, ${r?.ignorados ?? 0} ignorados.`);
+    } catch (err) {
+      setFerramentasMsg("Erro: " + (err?.message || "ao sincronizar"));
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const handleSincronizarTodos = async () => {
+    setFerramentasMsg(null);
+    setSyncAllLoading(true);
+    try {
+      const r = await api.post("/acessos/sincronizar-todos");
+      setFerramentasMsg(r?.message || "Sincronização concluída.");
+    } catch (err) {
+      setFerramentasMsg("Erro: " + (err?.message || "ao sincronizar todos"));
+    } finally {
+      setSyncAllLoading(false);
+    }
+  };
+
+  const handleBackupLogs = async () => {
+    if (!selectedDeviceId) {
+      setFerramentasMsg("Selecione um dispositivo.");
+      return;
+    }
+    setFerramentasMsg(null);
+    setBackupLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/dispositivos/${selectedDeviceId}/backup-logs`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.message || "Falha ao gerar backup");
+      }
+      const blob = await res.blob();
+      const disp = res.headers.get("Content-Disposition") || "";
+      const match = disp.match(/filename="?([^";]+)"?/);
+      const filename = match ? match[1].trim() : `backup-dispositivo-${selectedDeviceId}.jsonl`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setFerramentasMsg("Backup exportado e baixado.");
+    } catch (err) {
+      setFerramentasMsg("Erro: " + (err?.message || "ao gerar backup"));
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleConfigurarMonitor = async () => {
+    if (!selectedDeviceId) {
+      setFerramentasMsg("Selecione um dispositivo.");
+      return;
+    }
+    setFerramentasMsg(null);
+    setMonitorConfigLoading(true);
+    try {
+      const r = await api.post(`/dispositivos/${selectedDeviceId}/configurar-monitor`);
+      setFerramentasMsg(r?.message || "Monitor configurado na catraca.");
+    } catch (err) {
+      const msg = err?.data?.message || err?.message || "ao configurar Monitor";
+      setFerramentasMsg("Erro: " + msg);
+    } finally {
+      setMonitorConfigLoading(false);
     }
   };
 
@@ -359,6 +509,36 @@ function Settings() {
           )}
         </div>
 
+        <div className={styles.card}>
+          <h3 className={styles.logoSectionTitle}>
+            <FontAwesomeIcon icon={faImage} className={styles.sectionIcon} />
+            Logo da escola
+          </h3>
+          <p className={styles.settingDesc}>
+            A logo aparece na tela de início (Início), ao lado do nome da escola. A barra superior continua com a logo do SAGE.
+          </p>
+          <div className={styles.logoRow}>
+            {unidade.logo && (
+              <div className={styles.logoPreview}>
+                <img src={getLogoUrl(unidade.logo)} alt="Logo da escola" onError={(e) => { e.target.style.display = "none"; }} />
+              </div>
+            )}
+            <div className={styles.logoActions}>
+              <label className={styles.logoUploadLabel}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  disabled={logoUploading}
+                  className={styles.logoInput}
+                />
+                {logoUploading ? "Enviando…" : (unidade.logo ? "Trocar logo" : "Enviar logo")}
+              </label>
+            </div>
+          </div>
+          {erroLogo && <p className={styles.errorText}>{erroLogo}</p>}
+        </div>
+
         {mostrarTrocarSenha && (
           <div className={`${styles.card} ${styles.trocarSenhaCard}`}>
             <h3 className={styles.trocarSenhaTitle}>Trocar senha</h3>
@@ -444,6 +624,81 @@ function Settings() {
               <span className={styles.toggleThumb} />
             </button>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>
+          <FontAwesomeIcon icon={faWrench} className={styles.sectionIcon} />
+          Ferramentas – Catraca
+        </h2>
+        <div className={styles.card}>
+          <p className={styles.settingDesc}>
+            Ações manuais para sincronizar acessos, exportar backup dos logs da catraca e configurar o Monitor (push).
+            Modo atual: <strong>{config.monitorUsePush ? "Monitor (push)" : "Polling"}</strong>
+            {config.monitorPollingEnabled && !config.monitorUsePush && (
+              <> (servidor consulta a catraca a cada {config.monitorPollingIntervalMs / 1000}s)</>
+            )}
+            .
+          </p>
+          <div className={styles.ferramentasRow}>
+            <label className={styles.formLabel}>Dispositivo</label>
+            <select
+              className={styles.ferramentasSelect}
+              value={selectedDeviceId}
+              onChange={(e) => setSelectedDeviceId(e.target.value)}
+            >
+              <option value="">Selecione</option>
+              {dispositivos.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.nome || `Dispositivo ${d.id}`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.ferramentasButtons}>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              onClick={handleSincronizarDispositivo}
+              disabled={syncLoading || !selectedDeviceId}
+              title="Sincronizar acessos deste dispositivo com o sistema"
+            >
+              <FontAwesomeIcon icon={faSync} /> {syncLoading ? "Sincronizando…" : "Sincronizar este dispositivo"}
+            </button>
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={handleSincronizarTodos}
+              disabled={syncAllLoading}
+              title="Sincronizar todos os dispositivos"
+            >
+              <FontAwesomeIcon icon={faSync} /> {syncAllLoading ? "Sincronizando…" : "Sincronizar todos"}
+            </button>
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={handleBackupLogs}
+              disabled={backupLoading || !selectedDeviceId}
+              title="Exportar logs da catraca em JSONL (backup)"
+            >
+              <FontAwesomeIcon icon={faDownload} /> {backupLoading ? "Gerando…" : "Backup logs da catraca"}
+            </button>
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={handleConfigurarMonitor}
+              disabled={monitorConfigLoading || !selectedDeviceId}
+              title="Configurar a catraca para enviar eventos (push). Só funciona se MONITOR_USE_PUSH=true no servidor."
+            >
+              <FontAwesomeIcon icon={faServer} /> {monitorConfigLoading ? "Configurando…" : "Configurar Monitor (push)"}
+            </button>
+          </div>
+          {ferramentasMsg && (
+            <p className={ferramentasMsg.startsWith("Erro") ? styles.errorText : styles.settingDesc} style={{ marginTop: "0.75rem" }}>
+              {ferramentasMsg}
+            </p>
+          )}
         </div>
       </section>
 

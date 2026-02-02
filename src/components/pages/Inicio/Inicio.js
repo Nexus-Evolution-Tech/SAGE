@@ -1,10 +1,9 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUsers,
-  faWifi,
   faDoorOpen,
   faChartSimple,
   faArrowRight,
@@ -13,10 +12,22 @@ import {
   faCircleCheck,
   faCircleXmark,
   faList,
+  faClock,
+  faUserClock,
+  faUserTie,
+  faMapMarkerAlt,
+  faCalendarAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { api } from "../../../services/api";
 import SystemStatusBadge from "../../common/SystemStatusBadge/SystemStatusBadge";
 import styles from "./Inicio.module.css";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+function getLogoUrl(logo) {
+  if (!logo) return null;
+  if (logo.startsWith("http://") || logo.startsWith("https://")) return logo;
+  return `${API_URL.replace(/\/$/, "")}/uploads/${logo.replace(/^\/+/, "")}`;
+}
 
 function getCount(res) {
   if (Array.isArray(res)) return res.length;
@@ -38,6 +49,20 @@ function useCountQuery(key, queryFn, options = {}) {
 
 export default function Inicio() {
   const hoje = new Date().toDateString();
+  const [dataHora, setDataHora] = useState(() => ({
+    date: new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }),
+    time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+  }));
+  useEffect(() => {
+    const t = setInterval(() => {
+      const d = new Date();
+      setDataHora({
+        date: d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }),
+        time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      });
+    }, 60000);
+    return () => clearInterval(t);
+  }, []);
 
   const { count: totalPessoas, isLoading: loadingPessoas } = useCountQuery(
     "pessoas",
@@ -141,10 +166,32 @@ export default function Inicio() {
 
   const apiOnline = !healthLoading && !apiError;
 
+  const { data: unidade } = useQuery({
+    queryKey: ["inicio", "unidade"],
+    queryFn: () => api.get("/unidade"),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: resumoAlunos } = useQuery({
+    queryKey: ["inicio", "resumo-alunos"],
+    queryFn: () => api.get("/relatorios/acesso/resumo?periodo=TODAY&grupo=ALUNOS"),
+    staleTime: 1000 * 60,
+  });
+  const { data: resumoFuncionarios } = useQuery({
+    queryKey: ["inicio", "resumo-funcionarios"],
+    queryFn: () => api.get("/relatorios/acesso/resumo?periodo=TODAY&grupo=FUNCIONARIOS"),
+    staleTime: 1000 * 60,
+  });
+  const metricasAlunos = resumoAlunos?.metricas ?? {};
+  const metricasFunc = resumoFuncionarios?.metricas ?? {};
+  const alunosAtrasados = metricasAlunos.atrasados ?? 0;
+  const funcionariosPresentes = (metricasFunc.no_horario ?? 0) + (metricasFunc.atrasados ?? 0);
+
   const atalhos = [
-    { to: "/monitoramento", label: "Monitoramento", desc: "Acessos em tempo real", icon: faWifi },
-    { to: "/departamentos", label: "Pessoas", desc: "Alunos, professores e mais", icon: faUsers },
+    { to: "/pessoas", label: "Pessoas", desc: "Alunos, professores e mais", icon: faUsers },
     { to: "/dispositivos", label: "Dispositivos", desc: "Catracas e equipamentos", icon: faMicrochip },
+    { to: "/areas", label: "Áreas", desc: "Locais e controle de acesso", icon: faMapMarkerAlt },
+    { to: "/horarios", label: "Horários", desc: "Grade de aulas e horários", icon: faCalendarAlt },
     { to: "/relatorios", label: "Relatórios", desc: "Presença e acessos", icon: faChartSimple },
   ];
 
@@ -155,13 +202,29 @@ export default function Inicio() {
           <h1 className={styles.title}>Início</h1>
           <SystemStatusBadge
             status={healthLoading ? "loading" : apiError ? "offline" : "online"}
-            label={apiOnline ? "Sistema online" : "Sistema offline"}
+            label={healthLoading ? "Verificando..." : apiOnline ? "API online" : "API offline"}
             title={apiOnline ? "API respondendo" : "API indisponível"}
           />
+          <span className={styles.dataHora} title={dataHora.date}>
+            <FontAwesomeIcon icon={faClock} className={styles.dataHoraIcon} />
+            {dataHora.date} — {dataHora.time}
+          </span>
         </div>
       </header>
 
       <div className={styles.surface}>
+        {/* Logo e nome da escola (só na tela Início) */}
+        {(unidade?.nome || unidade?.logo) && (
+          <div className={styles.escolaBrand}>
+            {unidade.logo && (
+              <div className={styles.escolaLogo}>
+                <img src={getLogoUrl(unidade.logo)} alt="" onError={(e) => { e.target.style.display = "none"; }} />
+              </div>
+            )}
+            {unidade.nome && <h2 className={styles.escolaNome}>{unidade.nome}</h2>}
+          </div>
+        )}
+
         {/* Métricas principais */}
         <div className={styles.metricsGrid}>
           <div className={styles.card}>
@@ -187,19 +250,9 @@ export default function Inicio() {
               {loadingDispositivos ? (
                 <span className={styles.cardValue} aria-busy="true">—</span>
               ) : (
-                <>
-                  <span className={styles.cardValue}>
-                    {dispositivosData?.total ?? 0}
-                  </span>
-                  <span className={styles.cardSub}>
-                    <span className={styles.online}>
-                      {dispositivosData?.online ?? 0} online
-                    </span>
-                    <span className={styles.offline}>
-                      {dispositivosData?.offline ?? 0} offline
-                    </span>
-                  </span>
-                </>
+                <span className={styles.cardValue}>
+                  {dispositivosData?.online ?? 0} de {dispositivosData?.total ?? 0} online
+                </span>
               )}
             </div>
           </div>
@@ -215,6 +268,23 @@ export default function Inicio() {
               ) : (
                 <span className={styles.cardValue}>{acessosHoje}</span>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Card resumidor — insights do dia */}
+        <div className={styles.insightsCard}>
+          <h2 className={styles.insightsTitle}>Resumo do dia</h2>
+          <div className={styles.insightsGrid}>
+            <div className={styles.insightItem}>
+              <FontAwesomeIcon icon={faUserClock} className={styles.insightIcon} />
+              <span className={styles.insightLabel}>Alunos atrasados hoje</span>
+              <span className={styles.insightValue}>{alunosAtrasados}</span>
+            </div>
+            <div className={styles.insightItem}>
+              <FontAwesomeIcon icon={faUserTie} className={styles.insightIcon} />
+              <span className={styles.insightLabel}>Funcionários presentes hoje</span>
+              <span className={styles.insightValue}>{funcionariosPresentes}</span>
             </div>
           </div>
         </div>
@@ -276,13 +346,6 @@ export default function Inicio() {
               </Link>
             ))}
           </div>
-        </div>
-
-        <div className={styles.cta}>
-          <Link to="/monitoramento" className={styles.ctaButton}>
-            <FontAwesomeIcon icon={faWifi} />
-            Ver monitoramento em tempo real
-          </Link>
         </div>
       </div>
     </div>

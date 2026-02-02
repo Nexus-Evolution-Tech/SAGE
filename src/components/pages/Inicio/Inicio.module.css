@@ -22,6 +22,101 @@
   flex-wrap: wrap;
 }
 
+.dataHora {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dataHoraIcon {
+  font-size: 0.85rem;
+  color: var(--blue);
+}
+
+/* Logo e nome da escola (só na tela Início) */
+.escolaBrand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.escolaLogo {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8f9fa;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.escolaLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.escolaNome {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+/* Card resumidor — insights do dia */
+.insightsCard {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  border: 1px solid #eee;
+}
+
+.insightsTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 0.75rem 0;
+}
+
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.insightItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.insightIcon {
+  font-size: 1.25rem;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+.insightLabel {
+  font-size: 0.9rem;
+  color: var(--gray);
+  flex: 1;
+  min-width: 0;
+}
+
+.insightValue {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
 .title {
   text-align: left;
   color: var(--primary-color);
@@ -288,33 +383,6 @@
 
 .atalhoCard:hover .atalhoArrow {
   color: var(--blue);
-}
-
-/* CTA */
-.cta {
-  margin-top: auto;
-  padding-top: 16px;
-  text-align: center;
-  border-top: 1px solid #eee;
-}
-
-.ctaButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1.25rem;
-  background: var(--primary-color);
-  color: var(--white);
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 8px;
-  text-decoration: none;
-  box-shadow: 0 2px 6px rgba(2, 25, 50, 0.2);
-  transition: background 0.2s ease;
-}
-
-.ctaButton:hover {
-  background: var(--blue);
 }
 
 /* Responsivo */

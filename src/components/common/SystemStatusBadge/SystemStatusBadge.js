@@ -15,20 +15,21 @@ import styles from "./SystemStatusBadge.module.css";
 function SystemStatusBadge({
   status,
   label,
-  countOnline = 0,
-  countOffline = 0,
+  countOnline,
+  countOffline,
   title,
 }) {
-  const hasCount = typeof countOnline === "number" && typeof countOffline === "number";
+  /* Só mostra "X online / Y offline" quando countOnline e countOffline forem passados (ex: tela Dispositivos) */
+  const hasCount = countOnline !== undefined && countOffline !== undefined;
 
   const resolvedStatus = hasCount
-    ? countOnline > 0
+    ? Number(countOnline) > 0
       ? "online"
       : "offline"
     : status || "offline";
 
   const resolvedLabel = hasCount
-    ? `${countOnline} online / ${countOffline} offline`
+    ? `${Number(countOnline)} online / ${Number(countOffline)} offline`
     : label ||
       (resolvedStatus === "online" && "Sistema online") ||
       (resolvedStatus === "offline" && "Sistema offline") ||

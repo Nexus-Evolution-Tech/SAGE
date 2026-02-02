@@ -1,0 +1,34 @@
+# Dependências (instaladas no build)
+node_modules
+.pnp
+.pnp.js
+
+# Build de desenvolvimento (gerado no stage builder)
+build
+
+# Testes e cobertura
+coverage
+*.test.js
+*.spec.js
+
+# Ambiente e secrets
+.env
+.env.*
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git e IDE
+.git
+.gitignore
+.vscode
+.idea
+*.md
+!README.md
+
+# Logs e misc
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store

@@ -19,6 +19,9 @@ function Dispositivos() {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
+  const [logsInfo, setLogsInfo] = useState(null);
+  const [zerarLoading, setZerarLoading] = useState(false);
+  const [zerarApagarNoSistema, setZerarApagarNoSistema] = useState(false);
 
   const [newDeviceData, setNewDeviceData] = useState({
     nome: "",
@@ -68,6 +71,23 @@ function Dispositivos() {
     fetchDispositivos();
     fetchAreas();
   }, []);
+
+  // Ao abrir o modal de detalhes, verificar se a catraca tem muitos logs antigos
+  useEffect(() => {
+    if (!selectedDevice?.id) {
+      setLogsInfo(null);
+      return;
+    }
+    let cancelled = false;
+    api.get(`/dispositivos/${selectedDevice.id}/logs-info`)
+      .then((data) => {
+        if (!cancelled && data) setLogsInfo(data);
+      })
+      .catch(() => {
+        if (!cancelled) setLogsInfo(null);
+      });
+    return () => { cancelled = true; };
+  }, [selectedDevice?.id]);
 
   const totalCount = dispositivos.length;
   const onlineCount = dispositivos.filter((d) => {
@@ -156,6 +176,24 @@ function Dispositivos() {
       setSelectedDevice(null);
     } catch (err) {
       alert("Erro ao remover: " + err.message);
+    }
+  };
+
+  const handleZerarLogs = async () => {
+    if (!selectedDevice?.id) return;
+    setZerarLoading(true);
+    try {
+      await api.post(`/dispositivos/${selectedDevice.id}/zerar-logs`, {
+        apagarAcessosNoSistema: zerarApagarNoSistema,
+      });
+      setLogsInfo(null);
+      setSelectedDevice(null);
+      fetchDispositivos();
+      alert("Logs da catraca zerados com sucesso. Um backup foi gerado no servidor antes da operação.");
+    } catch (err) {
+      alert("Erro ao zerar logs: " + (err.message || err.data?.message || "Erro desconhecido"));
+    } finally {
+      setZerarLoading(false);
     }
   };
 
@@ -299,6 +337,42 @@ function Dispositivos() {
                     </button>
                   </div>
                 </div>
+
+                {logsInfo?.hasManyOldLogs && (
+                  <div className={styles.logsInfoBox}>
+                    <h4>Dados antigos na catraca</h4>
+                    <p>
+                      Esta catraca possui muitos registros de acesso antigos
+                      {logsInfo.estimatedCount != null ? ` (cerca de ${logsInfo.estimatedCount.toLocaleString("pt-BR")})` : ""}.
+                      Você pode zerar para começar do zero (um backup será gerado antes) ou continuar sincronizando a partir daqui.
+                    </p>
+                    <label className={styles.checkboxRow}>
+                      <input
+                        type="checkbox"
+                        checked={zerarApagarNoSistema}
+                        onChange={(e) => setZerarApagarNoSistema(e.target.checked)}
+                      />
+                      <span>Apagar também os acessos deste dispositivo no sistema</span>
+                    </label>
+                    <div className={styles.logsInfoActions}>
+                      <button
+                        type="button"
+                        className={styles.reloadButton}
+                        onClick={handleZerarLogs}
+                        disabled={zerarLoading}
+                      >
+                        {zerarLoading ? "Processando..." : "Fazer backup e zerar"}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.logsInfoSecondary}
+                        onClick={() => setLogsInfo(null)}
+                      >
+                        Continuar a partir daqui
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

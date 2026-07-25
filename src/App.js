@@ -32,6 +32,7 @@ import Settings from "./components/pages/Settings/Settings";
 import EsqueciSenha from "./components/pages/EsqueciSenha/EsqueciSenha";
 import RedefinirSenha from "./components/pages/RedefinirSenha/RedefinirSenha";
 import Dados from "./components/pages/Dados/DadosEscolares";
+import Monitoring from "./components/pages/Monitoring/Monitoring";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
 import { ReactQueryProvider } from './contexts/ReactQueryProvider';

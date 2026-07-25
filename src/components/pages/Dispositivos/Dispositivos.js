@@ -7,7 +7,7 @@ import {
   faTrash,
   faRefresh,
   faArrowsRotate,
-  faArrowsRotateSlash,
+  faBan,
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { api } from "../../../services/api";
@@ -204,17 +204,17 @@ function Dispositivos() {
   const handleToggleSync = async (e, dispositivo) => {
     e.stopPropagation();
     if (!dispositivo?.id) return;
-    const novoValor = !(dispositivo.sync_ativo === true || dispositivo.sync_ativo === 1);
+    const novoValor = !(dispositivo.sync_enabled === true || dispositivo.sync_enabled === 1);
     setToggleSyncLoading(dispositivo.id);
     try {
-      await api.post(`/dispositivos/${dispositivo.id}/toggle-sync`, { sync_ativo: novoValor });
+      await api.post(`/dispositivos/${dispositivo.id}/toggle-sync`, { sync_enabled: novoValor });
       setDispositivos((prev) =>
         prev.map((d) =>
-          d.id === dispositivo.id ? { ...d, sync_ativo: novoValor } : d
+          d.id === dispositivo.id ? { ...d, sync_enabled: novoValor } : d
         )
       );
       if (selectedDevice?.id === dispositivo.id) {
-        setSelectedDevice((prev) => (prev ? { ...prev, sync_ativo: novoValor } : null));
+        setSelectedDevice((prev) => (prev ? { ...prev, sync_enabled: novoValor } : null));
       }
     } catch (err) {
       alert("Erro ao alterar sincronização: " + (err.message || err.response?.data?.message || "Erro desconhecido"));
@@ -223,7 +223,7 @@ function Dispositivos() {
     }
   };
 
-  const isSyncAtivo = (d) => d.sync_ativo === true || d.sync_ativo === 1;
+  const isSyncAtivo = (d) => d.sync_enabled === true || d.sync_enabled === 1;
 
   return (
     <div className={styles.container}>
@@ -279,7 +279,7 @@ function Dispositivos() {
                         </>
                       ) : (
                         <>
-                          <FontAwesomeIcon icon={faArrowsRotateSlash} className={styles.syncIcon} />
+                          <FontAwesomeIcon icon={faBan} className={styles.syncIcon} />
                           Desativado
                         </>
                       )}
@@ -389,7 +389,7 @@ function Dispositivos() {
                         </>
                       ) : (
                         <>
-                          <FontAwesomeIcon icon={faArrowsRotateSlash} className={styles.syncIcon} />
+                          <FontAwesomeIcon icon={faBan} className={styles.syncIcon} />
                           Desativado
                         </>
                       )}

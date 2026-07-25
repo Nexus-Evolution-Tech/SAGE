@@ -20,13 +20,15 @@ function Monitoramento() {
 
   // Enriquecer dados de acesso com foto/nome
   const enrichAccess = useCallback(async (acesso) => {
+    const statusMovimento = (acesso.status && String(acesso.status).toUpperCase()) === "SAIDA" ? "SAIDA" : "ENTRADA";
     const baseAccess = {
       ...acesso,
       area: "Portaria Principal",
       dispositivo: "Catraca Esquerda (IDBlock)",
       autorizacao: acesso.permitido ? "Acesso autorizado" : "Acesso negado",
       status: acesso.permitido ? "authorized" : "denied",
-      dataHora: new Date(acesso.data_hora).toLocaleString("pt-BR"),
+      movimento: statusMovimento,
+      dataHora: acesso.data_hora ? new Date(acesso.data_hora).toLocaleString("pt-BR") : "—",
     };
 
     if (!acesso.pessoa_id) {
@@ -213,6 +215,11 @@ function Monitoramento() {
               <p>Área: {latestAccess.area}</p>
               {/* O nome do dispositivo aparecerá aqui automaticamente agora */}
               <p>Dispositivo: {latestAccess.dispositivo}</p>
+              <p>
+                <span className={`${styles.movimentoBadge} ${styles[(latestAccess.movimento || "entrada").toLowerCase()]}`}>
+                  {(latestAccess.movimento || "ENTRADA") === "SAIDA" ? "Saída" : "Entrada"}
+                </span>
+              </p>
               <br />
               <p>{latestAccess.autorizacao}</p>
               {latestAccess.status === "denied" && showLiberarAcesso && (
@@ -309,6 +316,7 @@ function Monitoramento() {
                 <th>Perfil</th>
                 <th>Área</th>
                 <th>Dispositivo</th>
+                <th>Entrada/Saída</th>
                 <th>Autorização</th>
               </tr>
             </thead>
@@ -330,6 +338,11 @@ function Monitoramento() {
                   </td>
                   <td>{log.area}</td>
                   <td>{log.dispositivo}</td>
+                  <td>
+                    <span className={`${styles.movimentoBadge} ${styles[(log.movimento || "entrada").toLowerCase()]}`}>
+                      {(log.movimento || "ENTRADA") === "SAIDA" ? "Saída" : "Entrada"}
+                    </span>
+                  </td>
                   <td>
                     <span
                       className={`${styles.statusBadge} ${styles[log.status]}`}

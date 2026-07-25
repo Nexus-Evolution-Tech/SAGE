@@ -425,3 +425,67 @@
 .logsInfoSecondary:hover {
   background-color: #f5f5f5;
 }
+
+/* Toggle de sincronização no card */
+.syncToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+}
+
+.syncLabel {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.syncToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.syncToggleBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.syncAtivo {
+  background-color: rgba(0, 128, 0, 0.12);
+  color: #0a6b0a;
+  border-color: rgba(0, 128, 0, 0.3);
+}
+
+.syncAtivo:hover:not(:disabled) {
+  background-color: rgba(0, 128, 0, 0.2);
+}
+
+.syncInativo {
+  background-color: rgba(128, 128, 128, 0.15);
+  color: #555;
+  border-color: rgba(128, 128, 128, 0.3);
+}
+
+.syncInativo:hover:not(:disabled) {
+  background-color: rgba(128, 128, 128, 0.25);
+}
+
+.syncIcon {
+  font-size: 0.85em;
+}
+
+.syncHint {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.35rem;
+  margin-bottom: 0;
+}

@@ -6,6 +6,8 @@ import {
   faXmark,
   faTrash,
   faRefresh,
+  faArrowsRotate,
+  faArrowsRotateSlash,
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { api } from "../../../services/api";
@@ -22,6 +24,7 @@ function Dispositivos() {
   const [logsInfo, setLogsInfo] = useState(null);
   const [zerarLoading, setZerarLoading] = useState(false);
   const [zerarApagarNoSistema, setZerarApagarNoSistema] = useState(false);
+  const [toggleSyncLoading, setToggleSyncLoading] = useState(null); // id do dispositivo em loading
 
   const [newDeviceData, setNewDeviceData] = useState({
     nome: "",
@@ -197,6 +200,31 @@ function Dispositivos() {
     }
   };
 
+  // Ativar/desativar sincronização automática do dispositivo
+  const handleToggleSync = async (e, dispositivo) => {
+    e.stopPropagation();
+    if (!dispositivo?.id) return;
+    const novoValor = !(dispositivo.sync_ativo === true || dispositivo.sync_ativo === 1);
+    setToggleSyncLoading(dispositivo.id);
+    try {
+      await api.post(`/dispositivos/${dispositivo.id}/toggle-sync`, { sync_ativo: novoValor });
+      setDispositivos((prev) =>
+        prev.map((d) =>
+          d.id === dispositivo.id ? { ...d, sync_ativo: novoValor } : d
+        )
+      );
+      if (selectedDevice?.id === dispositivo.id) {
+        setSelectedDevice((prev) => (prev ? { ...prev, sync_ativo: novoValor } : null));
+      }
+    } catch (err) {
+      alert("Erro ao alterar sincronização: " + (err.message || err.response?.data?.message || "Erro desconhecido"));
+    } finally {
+      setToggleSyncLoading(null);
+    }
+  };
+
+  const isSyncAtivo = (d) => d.sync_ativo === true || d.sync_ativo === 1;
+
   return (
     <div className={styles.container}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
@@ -213,28 +241,59 @@ function Dispositivos() {
           <SkeletonLoader type="card" count={1} />
         ) : (
           <>
-            {dispositivos.map((dispositivo) => (
-              <div
-                key={dispositivo.id}
-                className={styles.cardContainer}
-                onClick={() => setSelectedDevice(dispositivo)}
-              >
-                <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
-                <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
-                <p className={styles.cardArea}>ID: {dispositivo.id}</p>
-                <p className={styles.cardArea}>
-                  Área: {dispositivo.area_id != null && dispositivo.area_id !== ""
-                    ? (areaPorId[dispositivo.area_id] || `ID ${dispositivo.area_id}`)
-                    : "Sem área"}
-                </p>
+            {dispositivos.map((dispositivo) => {
+              const syncAtivo = isSyncAtivo(dispositivo);
+              const syncLoading = toggleSyncLoading === dispositivo.id;
+              return (
+                <div
+                  key={dispositivo.id}
+                  className={styles.cardContainer}
+                  onClick={() => setSelectedDevice(dispositivo)}
+                >
+                  <h3 className={styles.cardTitle}>{dispositivo.nome}</h3>
+                  <h4 className={styles.cardModel}>Modelo: {dispositivo.modelo}</h4>
+                  <p className={styles.cardArea}>ID: {dispositivo.id}</p>
+                  <p className={styles.cardArea}>
+                    Área: {dispositivo.area_id != null && dispositivo.area_id !== ""
+                      ? (areaPorId[dispositivo.area_id] || `ID ${dispositivo.area_id}`)
+                      : "Sem área"}
+                  </p>
 
-                {dispositivo.foto ? (
-                  <img src={dispositivo.foto} alt={dispositivo.nome} />
-                ) : (
-                  <img src={catracaPlaceholder} alt="catraca placeholder" />
-                )}
-              </div>
-            ))}
+                  <div
+                    className={styles.syncToggleRow}
+                    onClick={(e) => handleToggleSync(e, dispositivo)}
+                    title={syncAtivo ? "Clique para desativar a sincronização automática" : "Clique para ativar a sincronização automática"}
+                  >
+                    <span className={styles.syncLabel}>Sincronização:</span>
+                    <button
+                      type="button"
+                      className={`${styles.syncToggleBtn} ${syncAtivo ? styles.syncAtivo : styles.syncInativo}`}
+                      disabled={syncLoading}
+                    >
+                      {syncLoading ? (
+                        "..."
+                      ) : syncAtivo ? (
+                        <>
+                          <FontAwesomeIcon icon={faArrowsRotate} className={styles.syncIcon} />
+                          Ativo
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faArrowsRotateSlash} className={styles.syncIcon} />
+                          Desativado
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {dispositivo.foto ? (
+                    <img src={dispositivo.foto} alt={dispositivo.nome} />
+                  ) : (
+                    <img src={catracaPlaceholder} alt="catraca placeholder" />
+                  )}
+                </div>
+              );
+            })}
           </>
         )}
 
@@ -309,6 +368,38 @@ function Dispositivos() {
                       <p>{selectedDevice.usuario}</p>
                     </div>
                   </div>
+                </div>
+
+                <div className={styles.testContainer}>
+                  <h4>Sincronização automática</h4>
+                  <div className={styles.testContainerRow}>
+                    <span className={styles.syncLabel}>Status:</span>
+                    <button
+                      type="button"
+                      className={`${styles.syncToggleBtn} ${isSyncAtivo(selectedDevice) ? styles.syncAtivo : styles.syncInativo}`}
+                      disabled={toggleSyncLoading === selectedDevice.id}
+                      onClick={() => handleToggleSync({ stopPropagation: () => {} }, selectedDevice)}
+                    >
+                      {toggleSyncLoading === selectedDevice.id ? (
+                        "..."
+                      ) : isSyncAtivo(selectedDevice) ? (
+                        <>
+                          <FontAwesomeIcon icon={faArrowsRotate} className={styles.syncIcon} />
+                          Ativo
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faArrowsRotateSlash} className={styles.syncIcon} />
+                          Desativado
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <p className={styles.syncHint}>
+                    {isSyncAtivo(selectedDevice)
+                      ? "O sistema sincroniza pessoas e acessos com esta catraca automaticamente."
+                      : "A sincronização está desativada. Ative para sincronizar pessoas e acessos."}
+                  </p>
                 </div>
 
                 <div className={styles.testContainer}>

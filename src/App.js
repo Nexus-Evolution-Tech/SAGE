@@ -31,6 +31,7 @@ import PessoaHistorico from "./components/pages/Relatorios/PessoaHistorico";
 import Settings from "./components/pages/Settings/Settings";
 import EsqueciSenha from "./components/pages/EsqueciSenha/EsqueciSenha";
 import RedefinirSenha from "./components/pages/RedefinirSenha/RedefinirSenha";
+import Dados from "./components/pages/Dados/DadosEscolares";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
 import { ReactQueryProvider } from './contexts/ReactQueryProvider';
@@ -82,6 +83,8 @@ function AppContent() {
               <Route path="/configuracoes" element={<Settings />} />
               <Route path="/aulas" element={<Aulas />} />
               <Route path="/areas" element={<Areas />} />
+              <Route path="/dados" element={<Dados />} />
+              <Route path="/monitoring" element={<Monitoring />} />
             </Route>
             
 

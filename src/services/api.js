@@ -168,53 +168,25 @@ function buildQuery(params = {}) {
   return qs ? `?${qs}` : '';
 }
 
-async function withFallback(primary, fallback) {
-  try {
-    return await primary();
-  } catch (err) {
-    if (!fallback) throw err;
-    try {
-      return await fallback();
-    } catch {
-      throw err;
-    }
-  }
-}
-
 export async function listarHorarios(params) {
   const query = buildQuery(params);
-  return withFallback(
-    () => get(`${HORARIOS_AULAS_PATH}${query}`),
-    () => get(`/horarios${query}`)
-  );
+  return get(`${HORARIOS_AULAS_PATH}${query}`);
 }
 
 export async function criarHorario(data) {
-  return withFallback(
-    () => post(`${HORARIOS_AULAS_PATH}`, data),
-    () => post(`/horarios`, data)
-  );
+  return post(HORARIOS_AULAS_PATH, data);
 }
 
 export async function atualizarHorario(id, data) {
-  return withFallback(
-    () => put(`${HORARIOS_AULAS_PATH}/${id}`, data),
-    () => put(`/horarios/${id}`, data)
-  );
+  return put(`${HORARIOS_AULAS_PATH}/${id}`, data);
 }
 
 export async function deletarHorario(id) {
-  return withFallback(
-    () => del(`${HORARIOS_AULAS_PATH}/${id}`),
-    () => del(`/horarios/${id}`)
-  );
+  return del(`${HORARIOS_AULAS_PATH}/${id}`);
 }
 
 export async function validarHorario(data) {
-  return withFallback(
-    () => post(`${HORARIOS_AULAS_PATH}/validar`, data),
-    () => post(`/horarios/validar`, data)
-  );
+  return post(`${HORARIOS_AULAS_PATH}/validar`, data);
 }
 
 // Áreas (CRUD)

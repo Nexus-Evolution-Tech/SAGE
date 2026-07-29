@@ -9,6 +9,7 @@ import {
   listarHorarios,
   criarHorario,
   atualizarHorario,
+  deletarHorario,
   validarHorario,
 } from "../../../services/api";
 const TIME_SLOTS = [
@@ -245,17 +246,7 @@ function Horarios() {
         if (aulaExistente?.id) {
           // Deletar a aula existente
           try {
-            const deleteRes = await fetch(`/horarios-aulas/${aulaExistente.id}`, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-
-            if (!deleteRes.ok) {
-              throw new Error('Erro ao deletar horário');
-            }
-
+            await deletarHorario(aulaExistente.id);
           } catch (deleteErr) {
             console.error("❌ Erro ao deletar:", deleteErr);
             throw deleteErr;

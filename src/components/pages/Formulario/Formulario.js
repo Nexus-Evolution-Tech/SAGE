@@ -5,6 +5,7 @@ import { api } from "../../../services/api";
 import BackButton from "../../layout/BackButton/BackButton";
 import HorarioFixoForm from "../../Relatorios/HorarioFixoForm";
 import defaultUserImg from "../../../img/user.png";
+import { createQRCodeDataUrl } from "../../../utils/qrCode";
 
 function Formulario() {
   const { id } = useParams();
@@ -19,6 +20,7 @@ function Formulario() {
   const [empresaNome, setEmpresaNome] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [qrCode, setQrCode] = useState("");
+  const [qrCodeImageUrl, setQrCodeImageUrl] = useState("");
 
   const [showCamera, setShowCamera] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -176,6 +178,33 @@ function Formulario() {
     [cameraStream],
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    const qrValue = pessoa?.qr_code || qrCode;
+
+    setQrCodeImageUrl("");
+    if (!qrValue) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    createQRCodeDataUrl(qrValue)
+      .then((imageUrl) => {
+        if (!cancelled) setQrCodeImageUrl(imageUrl);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("Erro ao gerar imagem do QR Code:", error);
+          setQrCodeImageUrl("");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pessoa?.qr_code, qrCode]);
+
   const handleInputChange = (campo, valor) => {
     let proximoValor = valor;
     if (campo.toLowerCase().includes("telefone")) {
@@ -232,21 +261,14 @@ function Formulario() {
   };
 
   const handleDownloadQRCode = () => {
-    const qrValue = pessoa?.qr_code || qrCode;
-    if (!qrValue) return;
+    if (!qrCodeImageUrl) return;
 
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrValue)}`;
-    fetch(qrImageUrl)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `carteirinha-${pessoa?.id || "aluno"}.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch((err) => console.error("Erro ao baixar QR Code:", err));
+    const link = document.createElement("a");
+    link.href = qrCodeImageUrl;
+    link.download = `carteirinha-${pessoa?.id || "aluno"}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   const tirarFoto = () => {
@@ -290,7 +312,6 @@ function Formulario() {
         setNovaFoto(null);
       }
 
-      console.log("Pessoa atualizada com sucesso!");
       setEditMode(false);
       setPessoa(dadosParaSalvar); // Atualiza o objeto pessoa principal com os novos dados salvos
     } catch (error) {
@@ -681,11 +702,15 @@ function Formulario() {
           </div>
         )}
         <h3 className={styles.subtitle}>QR Code</h3>
-        <img
-          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${pessoa?.qr_code}`}
-          alt="QR Code"
-          className={styles.fotoPreview}
-        />
+        {qrCodeImageUrl ? (
+          <img
+            src={qrCodeImageUrl}
+            alt="QR Code"
+            className={styles.fotoPreview}
+          />
+        ) : (
+          <p className={styles.loading}>QR Code indisponível.</p>
+        )}
 
         {(editMode || fotoUrl === defaultUserImg) && (
           <div className={styles.qrButtonContainer}>
@@ -696,7 +721,7 @@ function Formulario() {
           </div>
         )}
 
-        {pessoa?.qr_code && (
+        {qrCodeImageUrl && (
           <button className={styles.qrButton} onClick={handleDownloadQRCode}>
             Baixar QR Code
           </button>

@@ -911,7 +911,7 @@
       "porta": 80,
       "usuario": "admin",
       "senha": "senha123",
-      "foto": "https://e7.pngegg.com/pngimages/106/238/png-clipart-turnstile-access-control-technology-business-technology-electronics-pedestrian.png"
+      "foto": "/logo192.png"
     },
     {
       "id": 2,
@@ -921,7 +921,7 @@
       "porta": 80,
       "usuario": "operador",
       "senha": "abc456",
-      "foto": "https://e7.pngegg.com/pngimages/106/238/png-clipart-turnstile-access-control-technology-business-technology-electronics-pedestrian.png"
+      "foto": "/logo192.png"
     },
     {
       "id": 3,
@@ -931,7 +931,7 @@
       "porta": 8080,
       "usuario": "monitor",
       "senha": "789xyz",
-      "foto": "https://e7.pngegg.com/pngimages/106/238/png-clipart-turnstile-access-control-technology-business-technology-electronics-pedestrian.png"
+      "foto": "/logo192.png"
     },
     {
       "id": 4,
@@ -941,7 +941,7 @@
       "porta": 80,
       "usuario": "supervisor",
       "senha": "securepass",
-      "foto": "https://e7.pngegg.com/pngimages/106/238/png-clipart-turnstile-access-control-technology-business-technology-electronics-pedestrian.png"
+      "foto": "/logo192.png"
     },
     {
       "id": 5,
@@ -951,7 +951,7 @@
       "porta": 8080,
       "usuario": "visitante",
       "senha": "guest123",
-      "foto": "https://e7.pngegg.com/pngimages/106/238/png-clipart-turnstile-access-control-technology-business-technology-electronics-pedestrian.png"
+      "foto": "/logo192.png"
     }
   ],
 

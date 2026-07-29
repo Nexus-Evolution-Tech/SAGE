@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import styles from "./RedefinirSenha.module.css";
 import logo from "../../../img/logo.png";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
 function RedefinirSenha() {
   const [searchParams] = useSearchParams();

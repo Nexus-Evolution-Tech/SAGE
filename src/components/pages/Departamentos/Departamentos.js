@@ -270,7 +270,7 @@ function Departamentos() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Não autenticado.");
       
-      const response = await fetch("http://localhost:3000/dados/planilha-modelo", {
+      const response = await fetch("/dados/planilha-modelo", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -300,7 +300,7 @@ function Departamentos() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Não autenticado.");
 
-      const response = await fetch("http://localhost:3000/dados/exportar", {
+      const response = await fetch("/dados/exportar", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });

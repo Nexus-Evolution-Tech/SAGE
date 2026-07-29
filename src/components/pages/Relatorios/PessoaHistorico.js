@@ -54,19 +54,18 @@ export default function PessoaHistorico() {
 
   const pessoa = data?.pessoa;
   const historico = data?.historico ?? [];
-  const dadosLinha = data?.dados_linha ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
 
   const chartData = useMemo(
     () =>
-      dadosLinha.map((d) => ({
+      (data?.dados_linha ?? []).map((d) => ({
         data: d.data,
         "No horário": Number(d.no_horario) || 0,
         Atrasados: Number(d.atrasados) || 0,
         Faltantes: Number(d.faltantes) || 0,
       })),
-    [dadosLinha]
+    [data?.dados_linha]
   );
 
   return (

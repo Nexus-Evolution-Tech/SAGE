@@ -22,7 +22,7 @@ import { api } from "../../../services/api";
 import SystemStatusBadge from "../../common/SystemStatusBadge/SystemStatusBadge";
 import styles from "./Inicio.module.css";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 function getLogoUrl(logo) {
   if (!logo) return null;
   if (logo.startsWith("http://") || logo.startsWith("https://")) return logo;

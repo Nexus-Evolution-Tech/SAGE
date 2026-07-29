@@ -41,8 +41,6 @@ const DIVISOES = [
 ];
 
 function Horarios() {
-  console.log("🔄 COMPONENTE RENDERIZANDO - Horarios()");
-  
   const [horarios, setHorarios] = useState([]);
   const [turmas, setTurmas] = useState([]);
   const [catalogoAulas, setCatalogoAulas] = useState([]);
@@ -60,9 +58,7 @@ function Horarios() {
 
   useEffect(() => {
     const normalizeHorariosList = (res) => {
-      console.log("🔍 normalizeHorariosList recebido:", res);
       const list = res?.data?.data || res?.data || res || [];
-      console.log("🔍 normalizeHorariosList após processar:", list);
       return Array.isArray(list) ? list : [];
     };
 
@@ -76,12 +72,8 @@ function Horarios() {
         const turmasRes = await api.get("/turmas");
         const dataTurmas = turmasRes?.data?.data || turmasRes?.data || turmasRes || [];
 
-        console.log("📚 Turmas carregadas:", dataTurmas);
-        console.log("📚 É array?", Array.isArray(dataTurmas), "Tamanho:", Array.isArray(dataTurmas) ? dataTurmas.length : 0);
-
         setHorarios(dataHorarios);
         setTurmas(Array.isArray(dataTurmas) ? dataTurmas : []);
-        console.log("✅ setTurmas chamado com:", Array.isArray(dataTurmas) ? dataTurmas.length : 0, "itens");
       } catch (err) {
         setError("Erro ao carregar dados.");
         console.error("❌ Erro no fetch:", err);
@@ -114,15 +106,6 @@ function Horarios() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [editor]);
-
-  // Monitor de horários para debugging
-  useEffect(() => {
-    console.log("📊 Horários state atualizado:", horarios);
-    console.log("📊 Quantidade total:", horarios.length);
-    if (horarios.length > 0) {
-      console.log("📊 Primeiro horário:", horarios[0]);
-    }
-  }, [horarios]);
 
   const groupAulasByTurma = (horariosData) => {
     return horariosData.reduce((acc, aula) => {
@@ -166,15 +149,13 @@ function Horarios() {
     };
 
     const slotStartNorm = normalizeTime(slotStart);
-    const slotEndNorm = normalizeTime(slotEnd);
 
     const foundAulas = turmaAulas.filter((aula) => {
       // Formato range: "07:30-08:20"
       if (!aula.horario || !aula.horario.includes('-')) return false;
       
-      const [inicio, fim] = aula.horario.split('-');
+      const [inicio] = aula.horario.split('-');
       const aulaInicio = normalizeTime(inicio);
-      const aulaFim = normalizeTime(fim);
       
       const sameDay = isSameDay(aula.dia_semana || aula.diaSemana);
       
@@ -204,7 +185,6 @@ function Horarios() {
 
   const aulasPorTurma = useMemo(() => {
     const grouped = groupAulasByTurma(horarios);
-    console.log("🔄 aulasPorTurma recalculado:", grouped);
     return grouped;
   }, [horarios]);
 
@@ -213,10 +193,6 @@ function Horarios() {
     const idsFromHorarios = Object.keys(aulasPorTurma);
     const idsFromTurmas = turmas.map((t) => String(t.id));
     const result = Array.from(new Set([...idsFromTurmas, ...idsFromHorarios])).sort((a, b) => Number(a) - Number(b));
-    console.log("🎯 turmaIds calculado:", result);
-    console.log("  idsFromHorarios:", idsFromHorarios);
-    console.log("  idsFromTurmas:", idsFromTurmas);
-    console.log("  turmas array:", turmas);
     return result;
   }, [aulasPorTurma, turmas]);
 
@@ -264,18 +240,12 @@ function Horarios() {
       const novaDiv = selectedDivisao || 'INT';
       const aulaExistente = aulasNoSlot.find(a => (getAulaDivisao(a) || 'INT') === divisaoOriginal);
 
-      console.log("Divisão original:", divisaoOriginal);
-      console.log("Nova divisão:", novaDiv);
-      console.log("Aulas no slot:", aulasNoSlot.length);
-      console.log("Aula existente com divisão original:", aulaExistente ? JSON.stringify(aulaExistente, null, 2) : "NENHUMA");
-
       // Se nenhuma aula foi selecionada (clicou em "Nenhum")
       if (!selectedAulaId) {
         if (aulaExistente?.id) {
           // Deletar a aula existente
-          console.log(`Deletando horário existente ID ${aulaExistente.id}`);
           try {
-            const deleteRes = await fetch(`http://localhost:3000/horarios-aulas/${aulaExistente.id}`, {
+            const deleteRes = await fetch(`/horarios-aulas/${aulaExistente.id}`, {
               method: 'DELETE',
               headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -286,14 +256,10 @@ function Horarios() {
               throw new Error('Erro ao deletar horário');
             }
 
-            console.log("✅ Horário deletado com sucesso, ID:", aulaExistente.id);
           } catch (deleteErr) {
             console.error("❌ Erro ao deletar:", deleteErr);
             throw deleteErr;
           }
-        } else {
-          // Não existe aula para deletar, então apenas fecha o editor
-          console.log("Nenhuma aula para remover neste slot");
         }
       } else {
         // Usuário selecionou uma aula - criar ou atualizar
@@ -306,9 +272,6 @@ function Horarios() {
           salaId: null,
           ...(aulaExistente?.id && { horarioIdExcluir: aulaExistente.id }),
         };
-
-        console.log("=== HORÁRIOS DEBUG ===");
-        console.log("Payload a ser enviado:", JSON.stringify(payload, null, 2));
 
         // Validação prévia (detecta conflito de professor e duplicatas)
         try {
@@ -334,19 +297,15 @@ function Horarios() {
         }
 
         if (aulaExistente?.id) {
-          console.log(`Atualizando horário existente ID ${aulaExistente.id} (${divisaoOriginal} → ${novaDiv})`);
           try {
             await atualizarHorario(aulaExistente.id, payload);
-            console.log("✅ Atualização bem-sucedida");
           } catch (updateErr) {
             console.error("❌ Erro ao atualizar:", updateErr);
             throw updateErr;
           }
         } else {
-          console.log(`Criando novo horário (divisão: ${novaDiv})`);
           try {
-            const createRes = await criarHorario(payload);
-            console.log("✅ Criação bem-sucedida, response:", createRes);
+            await criarHorario(payload);
           } catch (createErr) {
             console.error("❌ Erro ao criar:", createErr);
             throw createErr;
@@ -355,16 +314,9 @@ function Horarios() {
       }
 
       // Recarregar TODOS os horários (sem filtro de turma)
-      console.log("🔄 Recarregando todos os horários...");
       const horariosRes = await listarHorarios();
-      console.log("📥 listarHorarios() response recebida:", horariosRes);
-      console.log("📥 response.data:", horariosRes?.data);
       const dataHorarios = horariosRes?.data?.data || horariosRes?.data || horariosRes || [];
-      console.log("📥 dataHorarios após processar:", dataHorarios);
-      console.log("📥 É array?", Array.isArray(dataHorarios), "Tamanho:", Array.isArray(dataHorarios) ? dataHorarios.length : 0);
-      console.log("📥 Primeiro item:", dataHorarios[0]);
       setHorarios(Array.isArray(dataHorarios) ? dataHorarios : []);
-      console.log("✅ setHorarios chamado com:", Array.isArray(dataHorarios) ? dataHorarios.length : 0, "itens");
       closeEditor();
     } catch (err) {
       console.error("=== ERRO AO SALVAR HORÁRIO ===");
@@ -397,10 +349,6 @@ function Horarios() {
   if (loading) return <div className={styles.loading}>Carregando horários...</div>;
   if (error) return <div className={styles.error}>{error}</div>;
 
-  console.log("🔼 RENDERIZAÇÃO: turmaIds =", turmaIds);
-  console.log("🔼 RENDERIZAÇÃO: horarios =", horarios);
-  console.log("🔼 RENDERIZAÇÃO: aulasPorTurma =", aulasPorTurma);
-
   return (
     <div className={styles.container}>
       <div className={styles.headerRow}>
@@ -417,9 +365,6 @@ function Horarios() {
         <div className={styles.emptyState}>Nenhuma turma encontrada.</div>
       )}
 
-      {turmaIds.length > 0 && console.log("✅ Renderizando", turmaIds.length, "turmas")}
-
-      {console.log("🔍 Antes do map, turmaIds:", turmaIds)}
       {turmaIds.map((turmaId) => (
         <div key={turmaId} className={styles.turmaSection}>
           <h2 className={styles.turmaTitle}>{getNomeTurma(turmaId)}</h2>

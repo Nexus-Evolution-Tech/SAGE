@@ -1,13 +1,11 @@
 import styles from "./Cadastro.module.css";
 import { Link } from "react-router-dom";
-import LinkButton from "../../layout/LinkButton/LinkButton";
-import { width } from "@fortawesome/free-solid-svg-icons/fa0";
 import logo from "../../../img/logo.png";
 
 function Login() {
   return (
     <div className={styles.container}>
-      <img src={logo} className={styles.logo} />
+      <img src={logo} className={styles.logo} alt="Logo" />
       <div className={styles.cardTitle}>Cadastro</div>
       <div className={styles.cardContainer}>
         <div className={styles.cardItems}>

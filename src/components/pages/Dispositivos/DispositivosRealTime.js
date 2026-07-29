@@ -32,8 +32,7 @@ function Dispositivos() {
   // Conectar ao WebSocket e auto-inscrever em eventos de dispositivos
   const { isConnected } = useWebSocket({
     autoSubscribeDevices: true,
-    onDeviceStatus: (data) => {
-      console.log('📱 Status de dispositivo atualizado:', data);
+    onDeviceStatus: () => {
       // React Query invalidará automaticamente via hook
     }
   });

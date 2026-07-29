@@ -18,7 +18,6 @@ function Dispositivos() {
   const [dispositivos, setDispositivos] = useState([]);
   const [areas, setAreas] = useState([]);
   const [statusDispositivos, setStatusDispositivos] = useState({});
-  const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [logsInfo, setLogsInfo] = useState(null);
@@ -56,7 +55,6 @@ function Dispositivos() {
 
       setStatusDispositivos(statusMap);
     } catch (err) {
-      setError(err.message);
     }
   };
 
@@ -160,7 +158,6 @@ function Dispositivos() {
 
       setShowForm(false);
     } catch (err) {
-      setError(err.message);
     }
   };
 

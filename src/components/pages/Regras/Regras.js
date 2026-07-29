@@ -1,5 +1,4 @@
 import React from "react";
-import styles from './Regras.module.css';
 
 function Regras () {
     return(

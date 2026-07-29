@@ -11,7 +11,6 @@ const Monitoring = () => {
     deviceStatuses,
     syncQueue,
     recentAccesses,
-    isConnected,
     lastUpdate
   } = useMonitoringStore();
 

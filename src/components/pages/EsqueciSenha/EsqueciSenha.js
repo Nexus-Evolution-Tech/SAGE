@@ -4,7 +4,7 @@ import styles from "./EsqueciSenha.module.css";
 import logo from "../../../img/logo.png";
 import { useNotifications } from "../../../contexts/NotificationContext";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
 function EsqueciSenha() {
   const [email, setEmail] = useState("");

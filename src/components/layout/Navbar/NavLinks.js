@@ -1,4 +1,4 @@
-import { faHome, faWifi, faBuilding, faUser, faClock, faGlobe, faFileLines, faChartSimple } from "@fortawesome/free-solid-svg-icons";
+import { faHome, faWifi, faBuilding, faUser, faGlobe, faFileLines, faChartSimple } from "@fortawesome/free-solid-svg-icons";
 
 const navLinks = [
   { to: "/inicio", label: "Home", icon: faHome },

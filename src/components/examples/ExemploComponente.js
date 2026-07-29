@@ -22,15 +22,12 @@ function ExemploComponente() {
     autoSubscribeSync: false,
     
     // Callbacks opcionais para reagir a eventos
-    onAccess: (data) => {
-      console.log('🚪 Novo acesso!', data);
+    onAccess: () => {
       // Fazer algo quando acesso acontece
       // Ex: mostrar notificação, tocar som, etc
     },
     
-    onStats: (data) => {
-      console.log('📊 Stats atualizadas!', data);
-    }
+    onStats: () => {}
   });
 
   // ============================================

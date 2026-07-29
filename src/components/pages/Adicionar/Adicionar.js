@@ -10,7 +10,6 @@ function Adicionar() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [modalType, setModalType] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState(null);
   const [todasTurmas, setTodasTurmas] = useState([]);
   const [todosCursos, setTodosCursos] = useState([]);
   const [todasEscolas, setTodasEscolas] = useState([]);
@@ -127,7 +126,6 @@ function Adicionar() {
       setMessage(`${tipo} adicionado com sucesso!`);
       setModalType("success");
       setFormData({ tipo });
-      setFotoPreview(null);
 
     } catch (err) {
       console.error("Erro ao salvar:", err);

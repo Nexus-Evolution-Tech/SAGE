@@ -31,7 +31,7 @@ function Login() {
     const fetchSchools = async () => {
       try {
         // Usando fetch normal aqui, pois é um GET simples
-        const response = await fetch("http://localhost:3000/escolas"); 
+        const response = await fetch("/escolas");
         if (!response.ok) {
           throw new Error('Erro ao buscar as escolas.');
         }
@@ -72,12 +72,8 @@ function Login() {
     
     const id = selectedSchool.id;
 
-    console.log("--- DADOS QUE SERÃO ENVIADOS ---");
-    console.log("URL:", `http://localhost:3000/escolas/login/${id}`);
-    console.log("BODY (Payload):", JSON.stringify({ usuario: usuario, senha: password }));
-
     try {
-      const response = await fetch(`http://localhost:3000/escolas/login/${id}`, {
+      const response = await fetch(`/escolas/login/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -85,22 +81,11 @@ function Login() {
         body: JSON.stringify({ usuario: usuario, senha: password }),
       });
 
-      // ==================================
-      //      NOVA DEPURAÇÃO
-      // ==================================
-      console.log("Resposta da API (bruta):", response);
-      if (!response.ok) {
-        console.error("A resposta da API não foi 'OK'. Status:", response.status);
-      }
-      // ==================================
-
       // Esta linha pode falhar se a resposta não for JSON (ex: erro 500)
       const data = await response.json(); 
-      console.log("Resposta da API (JSON):", data);
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
-        console.log("Login OK! Redirecionando...");
         navigate("/inicio"); // Redireciona para a Home (ou '/monitoramento')
       } else {
         setModalMessage(data.message || "Credenciais inválidas.");

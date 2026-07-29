@@ -4,6 +4,14 @@ import styles from "./Tabelas.module.css";
 import { api } from "../../../services/api";
 import BackButton from "../../layout/BackButton/BackButton";
 
+const TIPO_MAP = {
+  turmas: "ALUNO",
+  responsaveis: "RESPONSAVEL",
+  administracao: "ADMINISTRADOR",
+  terceirizados: "TERCEIRIZADO",
+  professores: "PROFESSOR",
+};
+
 function Tabelas() {
   const { tipo, turmaId } = useParams();
   const navigate = useNavigate();
@@ -34,14 +42,6 @@ function Tabelas() {
       6: "3° Ano B",
     };
     return turmas[id] || `Turma ${id}`;
-  };
-
-  const tipoMap = {
-    turmas: "ALUNO",
-    responsaveis: "RESPONSAVEL",
-    administracao: "ADMINISTRADOR",
-    terceirizados: "TERCEIRIZADO",
-    professores: "PROFESSOR",
   };
 
   useEffect(() => {
@@ -95,7 +95,7 @@ function Tabelas() {
           return;
         }
 
-        const sigla = tipoMap[tipo]?.toUpperCase();
+        const sigla = TIPO_MAP[tipo]?.toUpperCase();
         if (!sigla) throw new Error("Tipo de rota inválido.");
 
         let data = [];
@@ -172,7 +172,7 @@ function Tabelas() {
   );
 
   const handleVerMais = (id) => {
-    navigate(`/formulario/${tipoMap[tipo].toLowerCase()}/${id}`);
+    navigate(`/formulario/${TIPO_MAP[tipo].toLowerCase()}/${id}`);
   };
 
   const commonHeader = (

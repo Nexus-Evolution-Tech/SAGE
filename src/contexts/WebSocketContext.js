@@ -20,8 +20,8 @@ export const WebSocketProvider = ({ children }) => {
     // Obter token do localStorage
     const token = localStorage.getItem('token');
     
-    // URL do backend - ajustar conforme necessário
-    const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:3000';
+    // Sem URL explícita, Socket.IO usa a mesma origem da página no pacote de produção.
+    const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || undefined;
 
     // Criar conexão Socket.io
     const socketInstance = io(SOCKET_URL, {
@@ -37,19 +37,11 @@ export const WebSocketProvider = ({ children }) => {
 
     // Event listeners
     socketInstance.on('connect', () => {
-      console.log('✅ WebSocket conectado:', socketInstance.id);
       setIsConnected(true);
       setConnectionError(null);
-
-      if (process.env.NODE_ENV === 'development') {
-        socketInstance.onAny((event, ...args) => {
-          console.log('[WS onAny]', event, args);
-        });
-      }
     });
 
-    socketInstance.on('disconnect', (reason) => {
-      console.log('❌ WebSocket desconectado:', reason);
+    socketInstance.on('disconnect', () => {
       setIsConnected(false);
     });
 
@@ -59,8 +51,7 @@ export const WebSocketProvider = ({ children }) => {
       setIsConnected(false);
     });
 
-    socketInstance.on('reconnect', (attemptNumber) => {
-      console.log(`🔄 Reconectado após ${attemptNumber} tentativas`);
+    socketInstance.on('reconnect', () => {
       setIsConnected(true);
       setConnectionError(null);
     });
@@ -79,7 +70,6 @@ export const WebSocketProvider = ({ children }) => {
 
     // Cleanup
     return () => {
-      console.log('🧹 Limpando conexão WebSocket');
       socketInstance.disconnect();
     };
   }, []);

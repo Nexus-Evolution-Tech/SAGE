@@ -1,6 +1,6 @@
 // src/services/api.js
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+export const API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
 if (process.env.NODE_ENV === 'development') {
   // Log base URL to help diagnose port routing
   // eslint-disable-next-line no-console
@@ -87,14 +87,11 @@ function getAuthHeaders(isFormData = false) {
 }
 
 async function get(endpoint) {
-  console.log(`📤 GET ${endpoint}`);
   const response = await fetch(`${API_URL}${endpoint}`, {
   method: 'GET',
   headers: getAuthHeaders(),
   });
-  const result = await handleResponse(response);
-  console.log(`📥 GET ${endpoint} response:`, result);
-  return result;
+  return handleResponse(response);
 }
 
 async function post(endpoint, body) {
@@ -248,8 +245,7 @@ export async function uploadFotoArea(id, formData) {
 /** Retorna a URL completa da foto da área (para exibir no frontend). */
 export function getAreaPhotoUrl(fotoPath) {
   if (!fotoPath) return null;
-  const base = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-  return `${base.replace(/\/$/, '')}/uploads/${fotoPath.replace(/^\/+/, '')}`;
+  return `${API_URL}/uploads/${fotoPath.replace(/^\/+/, '')}`;
 }
 
 // Objeto centralizador para facilitar o uso em componentes antigos

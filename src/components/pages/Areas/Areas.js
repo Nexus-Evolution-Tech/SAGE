@@ -32,7 +32,7 @@ function Areas() {
   const [newDeviceData, setNewDeviceData] = useState(initialDeviceForm);
   const [submittingDevice, setSubmittingDevice] = useState(false);
   const [associatingId, setAssociatingId] = useState(null);
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+  const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
   const fetchAreas = useCallback(async () => {
     setLoading(true);

@@ -12,7 +12,6 @@ import Departamentos from "./components/pages/Departamentos/Departamentos";
 import Dispositivos from "./components/pages/Dispositivos/Dispositivos";
 import Container from "./components/layout/Container/Container";
 import Navbar from "./components/layout/Navbar/Navbar";
-import Footer from "./components/layout/Footer/Footer";
 import Monitoramento from "./components/pages/Home/Home";
 import Login from "./components/pages/Login/Login";
 import Cadastro from "./components/pages/Cadastro/Cadastro";

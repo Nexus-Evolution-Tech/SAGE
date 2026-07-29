@@ -96,7 +96,6 @@ function Monitoramento() {
   // WebSocket para receber novos acessos em tempo real
   const onAccess = useCallback(
     async (data) => {
-      console.log("[Home] acesso:novo recebido", data);
       const enriched = await enrichAccess(data);
       useMonitoringStore.getState().addRecentAccess(enriched);
     },

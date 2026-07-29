@@ -36,7 +36,6 @@ export const useWebSocket = (options = {}) => {
 
   const handleNewAccess = useCallback((event) => {
     const payload = getPayload(event);
-    console.log('🚪 Novo acesso:', payload);
     if (onAccess) {
       onAccess(payload);
     } else {
@@ -48,7 +47,6 @@ export const useWebSocket = (options = {}) => {
 
   const handleDeviceStatus = useCallback((event) => {
     const payload = getPayload(event);
-    console.log('📱 Status de dispositivo:', payload);
     useMonitoringStore.getState().updateDeviceStatus(payload.dispositivo_id, payload);
     if (onDeviceStatus) {
       onDeviceStatus(payload);
@@ -57,7 +55,6 @@ export const useWebSocket = (options = {}) => {
 
   const handleSyncQueue = useCallback((event) => {
     const payload = getPayload(event);
-    console.log('🔄 Fila de sincronização:', payload);
     useMonitoringStore.getState().setSyncQueue(payload.queue || []);
     if (onSyncQueue) {
       onSyncQueue(payload);
@@ -66,7 +63,6 @@ export const useWebSocket = (options = {}) => {
 
   const handleStats = useCallback((event) => {
     const payload = getPayload(event);
-    console.log('📊 Stats atualizadas:', payload);
     useMonitoringStore.getState().setStats(payload);
     if (onStats) {
       onStats(payload);
@@ -77,7 +73,6 @@ export const useWebSocket = (options = {}) => {
     const unsubscribers = [];
 
     if (autoSubscribeAccess && isConnected && !joinedAccessRoom.current) {
-      console.log('[WS] solicitando entrada na sala acessos');
       emit('join', 'acessos');
       emit('join', { room: 'acessos' });
       joinedAccessRoom.current = true;

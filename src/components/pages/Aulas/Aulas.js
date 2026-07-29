@@ -128,14 +128,10 @@ function Aulas() {
         observacao: form.observacao || "",
       };
 
-      console.log("[Aulas] Salvando aula:", JSON.stringify(payload, null, 2));
-
       if (editing?.id) {
-        const resultado = await atualizarAula(editing.id, payload);
-        console.log("[Aulas] Aula atualizada:", resultado);
+        await atualizarAula(editing.id, payload);
       } else {
-        const resultado = await criarAula(payload);
-        console.log("[Aulas] Aula criada:", resultado);
+        await criarAula(payload);
       }
 
       await loadAulas();
@@ -199,14 +195,11 @@ function Aulas() {
     setError(null);
     setDeletingId(id);
     try {
-      console.log("[Aulas] Tentando detach aula:", id);
       try {
-        const res = await deletarAula(id, "detach");
-        console.log("[Aulas] Detach OK:", res);
+        await deletarAula(id, "detach");
       } catch (err) {
         console.warn("[Aulas] Detach falhou, tentando deleção total:", err);
-        const res2 = await deletarAula(id);
-        console.log("[Aulas] Delete total OK:", res2);
+        await deletarAula(id);
       }
       await loadAulas();
     } catch (err) {
@@ -335,9 +328,7 @@ function Aulas() {
                       const novaMateria = prompt("Digite o nome da nova matéria:");
                       if (novaMateria?.trim()) {
                         try {
-                          console.log("[Aulas] Criando matéria:", novaMateria);
                           const resultado = await api.post("/materias", { nome: novaMateria.trim() });
-                          console.log("[Aulas] Matéria criada:", resultado);
                           
                           await loadMaterias();
                           
@@ -421,9 +412,7 @@ function Aulas() {
                       const novaSala = prompt("Digite o nome da nova sala:");
                       if (novaSala?.trim()) {
                         try {
-                          console.log("[Aulas] Criando sala:", novaSala);
                           const resultado = await api.post("/salas", { nome: novaSala.trim() });
-                          console.log("[Aulas] Sala criada:", resultado);
                           
                           await loadSalas();
                           

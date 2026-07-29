@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { api } from "../../../services/api"; // Verifique se este caminho está correto
 import styles from "./DadosEscolares.module.css";
 import { FaPlus, FaTrash, FaPen } from "react-icons/fa";
@@ -23,23 +23,14 @@ const DadosEscolares = () => {
   const [formData, setFormData] = useState({});
 
   // --- Carregamento Inicial ---
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      console.log("Iniciando busca de dados...");
-      
       const [resEscolas, resCursos, resTurmas, resSalas] = await Promise.all([
         api.get("/escolas?limit=1000"),
         api.get("/cursos?limit=1000"),
         api.get("/turmas?limit=1000"),
         api.get("/sala?limit=1000"),
       ]);
-
-      // DEBUG: Verifique no console o que está chegando aqui
-      console.log("Salas retornadas da API:", resSalas.data);
 
       const listaEscolas = resEscolas.data.data || resEscolas.data || [];
       const listaCursos = resCursos.data.data || resCursos.data || [];
@@ -52,14 +43,20 @@ const DadosEscolares = () => {
       setSalas(listaSalas);
 
       // Selecionar a primeira escola por padrão se houver e nenhuma estiver selecionada
-      if (listaEscolas.length > 0 && !selectedEscolaId) {
-        setSelectedEscolaId(listaEscolas[0].id);
-      }
+      setSelectedEscolaId((currentEscolaId) =>
+        listaEscolas.length > 0 && !currentEscolaId
+          ? listaEscolas[0].id
+          : currentEscolaId
+      );
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       alert("Erro ao carregar dados. Verifique o console.");
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // --- Lógica de Filtros em Cascata ---
 

@@ -18,7 +18,7 @@ import {
 import { api } from "../../../services/api";
 import styles from "./Settings.module.css";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
 function getLogoUrl(logo) {
   if (!logo) return null;

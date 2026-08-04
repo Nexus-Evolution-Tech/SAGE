@@ -17,8 +17,8 @@ test('configura a unidade na tela inicial antes de mostrar o login', async () =>
   expect(await screen.findByText('Configurar SAGE')).toBeTruthy();
   await userEvent.type(screen.getByPlaceholderText('Nome da unidade'), 'Escola');
   await userEvent.type(screen.getByPlaceholderText('Crie seu login'), 'admin');
-  await userEvent.type(screen.getByPlaceholderText('Crie sua senha'), 'senha-segura-com-16');
-  await userEvent.type(screen.getByPlaceholderText('Confirme sua senha'), 'senha-segura-com-16');
+  await userEvent.type(screen.getByPlaceholderText('Crie sua senha'), 'senha123');
+  await userEvent.type(screen.getByPlaceholderText('Confirme sua senha'), 'senha123');
   await userEvent.click(screen.getByRole('button', { name: 'CRIAR ACESSO' }));
 
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/setup/initialize', expect.objectContaining({ method: 'POST' })));

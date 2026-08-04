@@ -60,8 +60,8 @@ function Login() {
 
   const handleSetup = async (event) => {
     event.preventDefault();
-    if (setup.senha.length < 16 || setup.senha !== setup.confirmar) {
-      showError('A senha deve ter ao menos 16 caracteres e a confirmação deve ser igual.');
+    if (setup.senha.length < 8 || setup.senha !== setup.confirmar) {
+      showError('A senha deve ter ao menos 8 caracteres e a confirmação deve ser igual.');
       return;
     }
     try {
@@ -127,9 +127,9 @@ function Login() {
             <input className={styles.input} placeholder="Crie seu login" value={setup.login}
               onChange={(e) => setSetup({ ...setup, login: e.target.value })} minLength={3} required />
             <input type="password" className={styles.input} placeholder="Crie sua senha" value={setup.senha}
-              onChange={(e) => setSetup({ ...setup, senha: e.target.value })} minLength={16} required />
+              onChange={(e) => setSetup({ ...setup, senha: e.target.value })} minLength={8} required />
             <input type="password" className={styles.input} placeholder="Confirme sua senha" value={setup.confirmar}
-              onChange={(e) => setSetup({ ...setup, confirmar: e.target.value })} minLength={16} required />
+              onChange={(e) => setSetup({ ...setup, confirmar: e.target.value })} minLength={8} required />
             <button type="submit" className={styles.btn}>CRIAR ACESSO</button>
           </form>
         </div>

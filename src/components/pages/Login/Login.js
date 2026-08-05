@@ -60,8 +60,20 @@ function Login() {
 
   const handleSetup = async (event) => {
     event.preventDefault();
-    if (setup.senha.length < 8 || setup.senha !== setup.confirmar) {
-      showError('A senha deve ter ao menos 8 caracteres e a confirmação deve ser igual.');
+    if (setup.nome.trim().length < 3) {
+      showError('O nome da unidade deve ter ao menos 3 caracteres.');
+      return;
+    }
+    if (!/^[A-Za-z0-9._-]{3,100}$/.test(setup.login.trim())) {
+      showError('O login deve ter entre 3 e 100 caracteres e usar apenas letras, números, ponto, hífen ou sublinhado.');
+      return;
+    }
+    if (setup.senha.length < 8) {
+      showError('A senha deve ter ao menos 8 caracteres.');
+      return;
+    }
+    if (setup.senha !== setup.confirmar) {
+      showError('A confirmação da senha não é igual à senha digitada.');
       return;
     }
     try {
@@ -70,8 +82,11 @@ function Login() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome: setup.nome, login: setup.login, senha: setup.senha })
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Configuração inicial recusada');
+      const contentType = response.headers?.get?.('content-type') || '';
+      const data = contentType.includes('application/json') ? await response.json() : {};
+      if (!response.ok) {
+        throw new Error(data.message || `Não foi possível concluir a configuração (erro ${response.status}).`);
+      }
       setSetup({ nome: '', login: '', senha: '', confirmar: '' });
       setOnboardingRequired(false);
       await fetchSchools();

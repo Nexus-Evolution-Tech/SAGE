@@ -32,6 +32,13 @@
   flex-shrink: 0;
 }
 
+.headerActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
 .title {
   font-size: 1rem;
   font-weight: 600;
@@ -56,6 +63,18 @@
 .markAllBtn:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+.clearBtn {
+  composes: markAllBtn;
+  color: #b42318;
+}
+
+.markAllBtn:disabled,
+.clearBtn:disabled {
+  cursor: default;
+  opacity: 0.4;
+  text-decoration: none;
 }
 
 .list {

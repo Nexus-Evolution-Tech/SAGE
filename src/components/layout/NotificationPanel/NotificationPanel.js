@@ -82,22 +82,37 @@ export default function NotificationPanel({ onClose, panelRef }) {
     notifications,
     unreadCount,
     markAllAsRead,
+    clearNotifications,
   } = useNotifications();
 
   return (
     <div ref={panelRef} className={styles.panel}>
       <div className={styles.header}>
         <h3 className={styles.title}>Notificações</h3>
-        {unreadCount > 0 && (
+        <div className={styles.headerActions}>
           <button
             type="button"
             className={styles.markAllBtn}
             onClick={markAllAsRead}
+            disabled={unreadCount === 0}
+            title="Marcar todas as notificações como lidas"
           >
             <FontAwesomeIcon icon={faCheckDouble} />
-            Marcar todas como lidas
+            Ler todas
           </button>
-        )}
+          <button
+            type="button"
+            className={styles.clearBtn}
+            disabled={notifications.length === 0}
+            onClick={() => {
+              if (window.confirm('Limpar todas as notificações?')) clearNotifications();
+            }}
+            title="Limpar todas as notificações"
+          >
+            <FontAwesomeIcon icon={faTrash} />
+            Limpar
+          </button>
+        </div>
       </div>
       <div className={styles.list}>
         {notifications.length === 0 ? (

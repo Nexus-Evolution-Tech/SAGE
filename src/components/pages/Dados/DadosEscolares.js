@@ -4,6 +4,7 @@ import styles from "./DadosEscolares.module.css";
 import { FaPlus, FaTrash, FaPen } from "react-icons/fa";
 
 const DadosEscolares = () => {
+  const endpoints = { escola: '/escolas', curso: '/cursos', turma: '/turmas', sala: '/sala' };
   // --- Estados de Dados ---
   const [escolas, setEscolas] = useState([]);
   const [cursos, setCursos] = useState([]);
@@ -74,13 +75,7 @@ const DadosEscolares = () => {
   );
 
   // 3. Cursos: Exibir apenas cursos que possuem turmas nesta escola
-  const cursosDaEscolaIds = [
-    ...new Set(turmasDaEscola.map((t) => t.curso_id).filter((id) => id !== null)),
-  ];
-  
-  const filteredCursos = cursos.filter((c) =>
-    cursosDaEscolaIds.includes(c.id)
-  );
+  const filteredCursos = cursos;
 
   // 4. Turmas (Refinado): Filtra pelo Curso selecionado E Escola Selecionada
   const filteredTurmas = turmasDaEscola.filter(
@@ -92,14 +87,14 @@ const DadosEscolares = () => {
   const handleOpenModal = (type, item = null) => {
     setModalType(type);
     setEditingItem(item);
-    setFormData(item || {});
+    setFormData(item ? { ...item } : {});
     setModalOpen(true);
   };
 
   const handleDelete = async (type, id) => {
     if (!window.confirm("Tem certeza que deseja excluir este registro?")) return;
     try {
-      await api.delete(`/${type}s/${id}`);
+      await api.delete(`${endpoints[type]}/${id}`);
       fetchData();
       
       // Limpa seleções se o item deletado estava selecionado
@@ -110,14 +105,14 @@ const DadosEscolares = () => {
       
     } catch (error) {
       console.error(error);
-      alert("Erro ao excluir.");
+      alert(error.message || "Erro ao excluir.");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = `/${modalType}s`;
+      const endpoint = endpoints[modalType];
       const payload = { ...formData };
       
       // Injeta ID da escola automaticamente para Turma e Sala se não existir
@@ -130,7 +125,7 @@ const DadosEscolares = () => {
       if (payload.duracao) payload.duracao = Number(payload.duracao);
 
       if (editingItem) {
-        await api.put(`${endpoint}/${editingItem.id}`, payload);
+        await api.patch(`${endpoint}/${editingItem.id}`, payload);
       } else {
         await api.post(endpoint, payload);
       }
@@ -139,7 +134,7 @@ const DadosEscolares = () => {
       fetchData();
     } catch (error) {
       console.error("Erro ao salvar:", error);
-      alert("Erro ao salvar dados.");
+      alert(error.message || "Erro ao salvar dados.");
     }
   };
 
@@ -192,9 +187,9 @@ const DadosEscolares = () => {
               <label>Turno</label>
               <select name="turno" value={formData.turno || ""} onChange={handleInputChange}>
                 <option value="">Selecione</option>
-                <option value="MANHA">Manhã</option>
-                <option value="TARDE">Tarde</option>
-                <option value="NOITE">Noite</option>
+                <option value="MATUTINO">Manhã</option>
+                <option value="VESPERTINO">Tarde</option>
+                <option value="NOTURNO">Noite</option>
                 <option value="INTEGRAL">Integral</option>
               </select>
             </div>
@@ -274,20 +269,8 @@ const DadosEscolares = () => {
                 >
                   <FaPen />
                 </button>
-                <button
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  onClick={() => handleDelete("escola", selectedEscolaId)}
-                >
-                  <FaTrash />
-                </button>
               </>
             )}
-            <button
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={() => handleOpenModal("escola")}
-            >
-              <FaPlus />
-            </button>
           </div>
         </div>
 
@@ -303,7 +286,7 @@ const DadosEscolares = () => {
                 onChange={(e) => setSelectedCursoId(e.target.value)}
                 disabled={!selectedEscolaId}
               >
-                <option value="">Selecione um curso (Filtrado por turmas existentes)</option>
+                <option value="">Selecione um curso...</option>
                 {filteredCursos.map((curso) => (
                   <option key={curso.id} value={curso.id}>
                     {curso.nome}

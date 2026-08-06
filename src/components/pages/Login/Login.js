@@ -22,6 +22,8 @@ function Login() {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [onboardingRequired, setOnboardingRequired] = useState(null);
+  const [recoveryKey, setRecoveryKey] = useState('');
+  const [recoverySaved, setRecoverySaved] = useState(false);
   const [setup, setSetup] = useState({ nome: '', login: '', senha: '', confirmar: '' });
   const navigate = useNavigate();
 
@@ -88,8 +90,7 @@ function Login() {
         throw new Error(data.message || `Não foi possível concluir a configuração (erro ${response.status}).`);
       }
       setSetup({ nome: '', login: '', senha: '', confirmar: '' });
-      setOnboardingRequired(false);
-      await fetchSchools();
+      setRecoveryKey(data.recoveryKey || '');
     } catch (error) {
       showError(error.message);
     }
@@ -130,6 +131,26 @@ function Login() {
   }
 
   if (onboardingRequired === true) {
+    if (recoveryKey) {
+      const baixar = () => {
+        const blob = new Blob([`Chave de recuperação SAGE\n\n${recoveryKey}\n`], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob); const a = document.createElement('a');
+        a.href = url; a.download = 'sage-chave-recuperacao.txt'; a.click(); URL.revokeObjectURL(url);
+      };
+      return (
+        <div className={styles.container}><div className={styles.cardContainer}>
+          <img src={logo} alt="logo" className={styles.logo} />
+          <div className={styles.cardTitle}>Salve sua chave de recuperação</div>
+          <p>Ela será exibida uma única vez. Guarde-a em local seguro.</p>
+          <textarea className={styles.input} readOnly value={recoveryKey} rows={3} />
+          <button type="button" className={styles.btn} onClick={() => navigator.clipboard?.writeText(recoveryKey)}>COPIAR</button>
+          <button type="button" className={styles.btn} onClick={baixar}>BAIXAR</button>
+          <button type="button" className={styles.btn} onClick={() => window.print()}>IMPRIMIR</button>
+          <label><input type="checkbox" checked={recoverySaved} onChange={(e) => setRecoverySaved(e.target.checked)} /> Confirme que salvou a chave</label>
+          <button type="button" className={styles.btn} disabled={!recoverySaved} onClick={() => { setRecoveryKey(''); setOnboardingRequired(false); fetchSchools(); }}>CONCLUIR</button>
+        </div></div>
+      );
+    }
     return (
       <div className={styles.container}>
         {showModal && <Modal message={modalMessage} onClose={() => setShowModal(false)} />}

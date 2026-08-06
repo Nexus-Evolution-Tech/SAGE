@@ -29,7 +29,6 @@ import RelatoriosAcesso from "./components/pages/Relatorios/RelatoriosAcesso";
 import PessoaHistorico from "./components/pages/Relatorios/PessoaHistorico";
 import Settings from "./components/pages/Settings/Settings";
 import EsqueciSenha from "./components/pages/EsqueciSenha/EsqueciSenha";
-import RedefinirSenha from "./components/pages/RedefinirSenha/RedefinirSenha";
 import Dados from "./components/pages/Dados/DadosEscolares";
 import Monitoring from "./components/pages/Monitoring/Monitoring";
 
@@ -44,8 +43,7 @@ function AppContent() {
   const isPublicPage = location.pathname === "/" ||
                        location.pathname === "/login" ||
                        location.pathname === "/cadastro" ||
-                       location.pathname === "/esqueci-senha" ||
-                       location.pathname === "/redefinir-senha";
+                       location.pathname === "/esqueci-senha";
 
   return (
     <div className="App">
@@ -63,7 +61,6 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/pessoas" element={<Pessoas />} />

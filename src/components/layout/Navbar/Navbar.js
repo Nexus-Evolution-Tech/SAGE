@@ -117,7 +117,7 @@ function Navbar() {
               {/* <button
                 className={styles.modalButton}
                 onClick={() => {
-                  navigate("/redefinir-senha");
+                  navigate("/esqueci-senha");
                   setShowUserModal(false);
                 }}
               >

@@ -169,8 +169,13 @@ function Settings() {
   const handleSalvarUnidade = async () => {
     setErroUnidade(null);
     setSalvandoUnidade(true);
-    const payload = { ...unidade };
-    delete payload.senha;
+    const payload = {
+      nome: unidade.nome, numero_unidade: unidade.numero_unidade, cnpj: unidade.cnpj,
+      login: unidade.login, email: unidade.email, logradouro: unidade.logradouro,
+      numero: unidade.numero, complemento: unidade.complemento, bairro: unidade.bairro,
+      cidade: unidade.cidade, estado: unidade.estado, cep: unidade.cep,
+      telefone_contato: unidade.telefone_contato, logo: unidade.logo
+    };
     try {
       await api.patch("/unidade", payload);
       setEditandoUnidade(false);

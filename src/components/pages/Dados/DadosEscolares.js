@@ -113,7 +113,13 @@ const DadosEscolares = () => {
     e.preventDefault();
     try {
       const endpoint = endpoints[modalType];
-      const payload = { ...formData };
+      const payload = modalType === 'escola'
+        ? { nome: formData.nome, cnpj: formData.cnpj, cidade: formData.cidade }
+        : modalType === 'curso'
+          ? { nome: formData.nome, duracao: formData.duracao }
+          : modalType === 'turma'
+            ? { nome: formData.nome, turno: formData.turno, curso_id: formData.curso_id, unidade_id: formData.unidade_id }
+            : { nome: formData.nome, numero: formData.numero, capacidade: formData.capacidade, tipo: formData.tipo, unidade_id: formData.unidade_id };
       
       // Injeta ID da escola automaticamente para Turma e Sala se não existir
       if ((modalType === 'turma' || modalType === 'sala') && !payload.unidade_id) {

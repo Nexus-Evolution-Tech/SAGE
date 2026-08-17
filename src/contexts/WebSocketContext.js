@@ -16,17 +16,51 @@ export const WebSocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
 
+  const [sessionToken, setSessionToken] = useState(() => {
+    const token = localStorage.getItem('token');
+    return token && token.trim() ? token : null;
+  });
+
+  useEffect(() => {
+    const updateSessionToken = () => {
+      const token = localStorage.getItem('token');
+      setSessionToken(token && token.trim() ? token : null);
+    };
+
+    const handleStorageChange = (event) => {
+      if (!event.key || event.key === 'token') {
+        updateSessionToken();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-changed', updateSessionToken);
+    window.addEventListener('auth-expired', updateSessionToken);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-changed', updateSessionToken);
+      window.removeEventListener('auth-expired', updateSessionToken);
+    };
+  }, []);
+
   useEffect(() => {
     // Obter token do localStorage
-    const token = localStorage.getItem('token');
     
     // Sem URL explícita, Socket.IO usa a mesma origem da página no pacote de produção.
     const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || undefined;
 
+    if (!sessionToken) {
+      setSocket(null);
+      setIsConnected(false);
+      setConnectionError(null);
+      return undefined;
+    }
+
     // Criar conexão Socket.io
     const socketInstance = io(SOCKET_URL, {
       auth: {
-        token: token || ''
+        token: sessionToken
       },
       reconnection: true,
       reconnectionDelay: 1000,
@@ -71,8 +105,10 @@ export const WebSocketProvider = ({ children }) => {
     // Cleanup
     return () => {
       socketInstance.disconnect();
+      setSocket((currentSocket) => currentSocket === socketInstance ? null : currentSocket);
+      setIsConnected(false);
     };
-  }, []);
+  }, [sessionToken]);
 
   // Função para emitir eventos
   const emit = useCallback((event, data) => {

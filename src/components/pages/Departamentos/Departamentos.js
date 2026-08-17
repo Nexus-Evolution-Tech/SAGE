@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import styles from "./Departamentos.module.css";
@@ -154,6 +154,34 @@ function Departamentos() {
     gcTime: 1000 * 60 * 15,
   });
 
+  const photoUrlsRef = useRef(new Set());
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    const retainedPhotoUrls = new Set();
+    Object.values(dados).forEach((pessoas) => {
+      if (!Array.isArray(pessoas)) return;
+      pessoas.forEach((pessoa) => {
+        if (typeof pessoa.foto === "string" && pessoa.foto.startsWith("blob:")) {
+          retainedPhotoUrls.add(pessoa.foto);
+        }
+      });
+    });
+
+    photoUrlsRef.current.forEach((url) => {
+      if (!retainedPhotoUrls.has(url)) {
+        api.revokePessoaFotoUrl(url);
+        photoUrlsRef.current.delete(url);
+      }
+    });
+  }, [dados, error]);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    photoUrlsRef.current.forEach((url) => api.revokePessoaFotoUrl(url));
+    photoUrlsRef.current.clear();
+  }, []);
+
   // Funções Auxiliares
   const formatarData = (dataISO) => {
     if (!dataISO) return "";
@@ -174,7 +202,15 @@ function Departamentos() {
 
   const buscarFoto = async (id) => {
     try {
-      return (await api.getPessoaFotoUrl(id)) || "";
+      const foto = await api.getPessoaFotoUrl(id);
+      if (!mountedRef.current) {
+        api.revokePessoaFotoUrl(foto);
+        return "";
+      }
+      if (typeof foto === "string" && foto.startsWith("blob:")) {
+        photoUrlsRef.current.add(foto);
+      }
+      return foto || "";
     } catch (err) {
       return "";
     }

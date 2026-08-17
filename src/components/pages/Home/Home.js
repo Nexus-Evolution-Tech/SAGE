@@ -2,7 +2,7 @@ import styles from "./Home.module.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faUnlock } from "@fortawesome/free-solid-svg-icons";
 import userPlaceholder from "../../../img/user.png";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api";
 import { useWebSocket } from "../../../hooks/useWebSocket";
@@ -12,9 +12,15 @@ import { shallow } from "zustand/shallow";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
+function isBlobPhotoUrl(value) {
+  return typeof value === "string" && value.startsWith("blob:");
+}
+
 function Monitoramento() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const photoUrlsRef = useRef(new Set());
+  const mountedRef = useRef(true);
 
   const recentAccesses = useMonitoringStore((state) => state.recentAccesses, shallow);
 
@@ -45,6 +51,14 @@ function Monitoramento() {
         api.get(`/pessoas/${acesso.pessoa_id}`),
         api.getPessoaFotoUrl(acesso.pessoa_id),
       ]);
+
+      if (isBlobPhotoUrl(fotoData)) {
+        if (mountedRef.current) {
+          photoUrlsRef.current.add(fotoData);
+        } else {
+          api.revokePessoaFotoUrl(fotoData);
+        }
+      }
 
       return {
         ...baseAccess,
@@ -115,11 +129,34 @@ function Monitoramento() {
   useWebSocket(wsOptions);
 
   // Lista paginada da API; store só como fallback quando não há dados da API
-  const list = paginatedData?.list ?? [];
+  const list = useMemo(() => paginatedData?.list ?? [], [paginatedData?.list]);
   const total = paginatedData?.total ?? 0;
   const totalPages = paginatedData?.totalPages ?? 1;
   const currentPage = paginatedData?.page ?? page;
   const effectiveAccesses = list.length > 0 ? list : recentAccesses;
+
+  const retainedPhotoUrls = useMemo(() => {
+    const urls = new Set();
+    [...list, ...recentAccesses].forEach((access) => {
+      if (isBlobPhotoUrl(access?.foto)) urls.add(access.foto);
+    });
+    return urls;
+  }, [list, recentAccesses]);
+
+  useEffect(() => {
+    photoUrlsRef.current.forEach((url) => {
+      if (!retainedPhotoUrls.has(url)) {
+        api.revokePessoaFotoUrl(url);
+        photoUrlsRef.current.delete(url);
+      }
+    });
+  }, [retainedPhotoUrls, error]);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    photoUrlsRef.current.forEach((url) => api.revokePessoaFotoUrl(url));
+    photoUrlsRef.current.clear();
+  }, []);
 
   // Na página 1: card = primeiro da lista, tabela = resto; nas outras páginas: só tabela
   const latestAccess = currentPage === 1 ? effectiveAccesses[0] : null;

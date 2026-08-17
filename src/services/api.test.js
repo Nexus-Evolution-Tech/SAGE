@@ -60,6 +60,18 @@ describe("API no mesmo origin", () => {
     expect(global.URL.createObjectURL).not.toHaveBeenCalled();
   });
 
+  test("revoga somente blob URLs de fotos", () => {
+    global.URL.revokeObjectURL = jest.fn();
+    const { revokePessoaFotoUrl } = require("./api");
+
+    revokePessoaFotoUrl("blob:foto-pessoa");
+    revokePessoaFotoUrl("/img/user.png");
+    revokePessoaFotoUrl(null);
+
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:foto-pessoa");
+  });
+
   test("agenda usa somente o contrato canônico", async () => {
     process.env.REACT_APP_API_URL = "";
     global.fetch = jest.fn().mockResolvedValue({ status: 204 });

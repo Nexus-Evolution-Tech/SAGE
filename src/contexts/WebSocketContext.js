@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
+export const SOCKET_SUBSCRIPTION_EVENTS = Object.freeze({
+  access: 'subscribe:acessos',
+  devices: 'subscribe:dispositivos',
+  sync: 'subscribe:sync',
+  stats: 'subscribe:stats'
+});
+
+const ALLOWED_SOCKET_EMITS = new Set(Object.values(SOCKET_SUBSCRIPTION_EVENTS));
+const DEFAULT_SOCKET_PATH = '/socket.io';
+const DISCONNECTED_ERROR = 'WebSocket desconectado';
+
 const WebSocketContext = createContext(null);
 
 export const useWebSocketContext = () => {
@@ -48,7 +59,7 @@ export const WebSocketProvider = ({ children }) => {
     // Obter token do localStorage
     
     // Sem URL explícita, Socket.IO usa a mesma origem da página no pacote de produção.
-    const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || undefined;
+    const socketPath = process.env.REACT_APP_SOCKET_PATH || DEFAULT_SOCKET_PATH;
 
     if (!sessionToken) {
       setSocket(null);
@@ -57,15 +68,18 @@ export const WebSocketProvider = ({ children }) => {
       return undefined;
     }
 
+    setIsConnected(false);
+    setConnectionError(DISCONNECTED_ERROR);
+
     // Criar conexão Socket.io
-    const socketInstance = io(SOCKET_URL, {
+    const socketInstance = io({ path: socketPath }, {
       auth: {
         token: sessionToken
       },
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       transports: ['websocket', 'polling']
     });
 
@@ -77,6 +91,7 @@ export const WebSocketProvider = ({ children }) => {
 
     socketInstance.on('disconnect', () => {
       setIsConnected(false);
+      setConnectionError((currentError) => currentError || DISCONNECTED_ERROR);
     });
 
     socketInstance.on('connect_error', (error) => {
@@ -112,8 +127,16 @@ export const WebSocketProvider = ({ children }) => {
 
   // Função para emitir eventos
   const emit = useCallback((event, data) => {
+    if (!ALLOWED_SOCKET_EMITS.has(event)) {
+      console.warn('Evento WebSocket nÃ£o permitido:', event);
+      return;
+    }
     if (socket && isConnected) {
-      socket.emit(event, data);
+      if (data === undefined) {
+        socket.emit(event);
+      } else {
+        socket.emit(event, data);
+      }
     } else {
       console.warn('⚠️ Socket não conectado, não foi possível emitir:', event);
     }

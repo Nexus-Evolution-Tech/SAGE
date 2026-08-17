@@ -5,9 +5,9 @@ WORKDIR /app
 
 # Variáveis de build para API e Socket.io (prefixo /backend no nginx)
 ARG REACT_APP_API_URL=/backend
-ARG REACT_APP_SOCKET_URL=/backend
+ARG REACT_APP_SOCKET_PATH=/backend/socket.io
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
-ENV REACT_APP_SOCKET_URL=$REACT_APP_SOCKET_URL
+ENV REACT_APP_SOCKET_PATH=$REACT_APP_SOCKET_PATH
 
 COPY package.json package-lock.json ./
 RUN npm ci

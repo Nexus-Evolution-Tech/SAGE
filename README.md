@@ -105,8 +105,8 @@ cp .env.example .env
 
 Edite `.env` com suas configurações:
 ```env
-REACT_APP_API_URL=http://localhost:3000
-REACT_APP_SOCKET_URL=http://localhost:3000
+REACT_APP_API_URL=
+REACT_APP_SOCKET_PATH=
 NODE_ENV=development
 ```
 

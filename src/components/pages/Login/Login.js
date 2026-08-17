@@ -112,6 +112,7 @@ function Login() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Credenciais inválidas.');
       localStorage.setItem('token', data.token);
+      window.dispatchEvent(new Event('auth-changed'));
       navigate('/inicio');
     } catch (error) {
       showError(error.message);

@@ -22,6 +22,44 @@ describe("API no mesmo origin", () => {
     expect(getAreaPhotoUrl("/areas/foto.jpg")).toBe("/uploads/areas/foto.jpg");
   });
 
+  test("busca a foto da pessoa pelo endpoint autenticado e usa fallback neutro", async () => {
+    process.env.REACT_APP_API_URL = "https://sage.test";
+    localStorage.setItem("token", "token-de-teste");
+    const blob = new Blob(["foto"], { type: "image/png" });
+    global.fetch = jest.fn().mockResolvedValue({
+      status: 200,
+      ok: true,
+      blob: jest.fn().mockResolvedValue(blob),
+    });
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:foto-pessoa");
+    const { getPessoaFotoUrl } = require("./api");
+
+    await expect(getPessoaFotoUrl(42)).resolves.toBe("blob:foto-pessoa");
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://sage.test/pessoas/42/foto",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.any(Headers),
+      }),
+    );
+    expect(global.fetch.mock.calls[0][1].headers.get("Authorization")).toBe(
+      "Bearer token-de-teste",
+    );
+  });
+
+  test.each([401, 403, 404])("foto %i vira fallback sem URL pública", async (status) => {
+    process.env.REACT_APP_API_URL = "";
+    global.fetch = jest.fn().mockResolvedValue({
+      status,
+      ok: false,
+      json: jest.fn().mockResolvedValue({}),
+    });
+    const { getPessoaFotoUrl } = require("./api");
+
+    await expect(getPessoaFotoUrl(42)).resolves.toBeNull();
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
   test("agenda usa somente o contrato canônico", async () => {
     process.env.REACT_APP_API_URL = "";
     global.fetch = jest.fn().mockResolvedValue({ status: 204 });

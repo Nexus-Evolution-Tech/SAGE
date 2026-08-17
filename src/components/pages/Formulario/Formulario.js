@@ -89,8 +89,8 @@ function Formulario() {
         setPessoa(pessoaData);
         setFormData(pessoaData);
 
-        const fotoData = await api.get(`/pessoas/url/${id}`);
-        setFotoUrl(fotoData.url || defaultUserImg);
+        const fotoUrlData = await api.getPessoaFotoUrl(id);
+        setFotoUrl(fotoUrlData || defaultUserImg);
 
         if (pessoaData.tipo === "ALUNO") {
           const turmasData = await api.get(`/turmas`);
@@ -307,8 +307,8 @@ function Formulario() {
 
         await api.postFormData(`/pessoas/upload/${id}`, formDataUpload);
 
-        const data = await api.get(`/pessoas/url/${id}`);
-        setFotoUrl(data.url || defaultUserImg);
+        const fotoUrlData = await api.getPessoaFotoUrl(id);
+        setFotoUrl(fotoUrlData || defaultUserImg);
         setNovaFoto(null);
       }
 

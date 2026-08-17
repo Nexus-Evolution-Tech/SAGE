@@ -94,6 +94,40 @@ async function get(endpoint) {
   return handleResponse(response);
 }
 
+/** Busca a foto privada da pessoa e devolve uma URL local de curta duração. */
+export async function getPessoaFotoUrl(id) {
+  if (id === undefined || id === null || id === '') return null;
+
+  const response = await fetch(`${API_URL}/pessoas/${encodeURIComponent(id)}/foto`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  if (response.status === 404) return null;
+
+  if (response.status === 401 || response.status === 403) {
+    try {
+      await handleResponse(response);
+    } catch (error) {
+      return null;
+    }
+    return null;
+  }
+
+  if (!response.ok) {
+    return handleResponse(response);
+  }
+
+  const blob = await response.blob();
+  return blob.size > 0 ? URL.createObjectURL(blob) : null;
+}
+
+export function revokePessoaFotoUrl(url) {
+  if (typeof url === 'string' && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
+}
+
 async function post(endpoint, body) {
   const response = await fetch(`${API_URL}${endpoint}`, {
   method: 'POST',
@@ -242,7 +276,9 @@ export const api = {
   atualizarArea,
   deletarArea,
   uploadFotoArea,
-  getAreaPhotoUrl
+  getAreaPhotoUrl,
+  getPessoaFotoUrl,
+  revokePessoaFotoUrl
 };
 
 // ==========================================================

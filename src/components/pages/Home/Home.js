@@ -43,13 +43,13 @@ function Monitoramento() {
     try {
       const [pessoa, fotoData] = await Promise.all([
         api.get(`/pessoas/${acesso.pessoa_id}`),
-        api.get(`/pessoas/url/${acesso.pessoa_id}`),
+        api.getPessoaFotoUrl(acesso.pessoa_id),
       ]);
 
       return {
         ...baseAccess,
         nome: pessoa.nome || "Nome não encontrado",
-        foto: fotoData.url || userPlaceholder,
+        foto: fotoData || userPlaceholder,
         perfil: pessoa.perfil || "Perfil não informado",
       };
     } catch (error) {

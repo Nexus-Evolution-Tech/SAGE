@@ -174,9 +174,7 @@ function Departamentos() {
 
   const buscarFoto = async (id) => {
     try {
-      // Pequeno ajuste: silenciando erro 404 comum de fotos para não poluir console
-      const json = await api.get(`/pessoas/url/${id}`).catch(() => ({ url: "" }));
-      return json.url || "";
+      return (await api.getPessoaFotoUrl(id)) || "";
     } catch (err) {
       return "";
     }

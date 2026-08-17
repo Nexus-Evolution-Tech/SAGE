@@ -1,14 +1,18 @@
 import React from "react";
-import { act, render } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { io } from "socket.io-client";
-import { WebSocketProvider } from "./WebSocketContext";
+import { useWebSocketContext, WebSocketProvider } from "./WebSocketContext";
 
 jest.mock("socket.io-client", () => ({
   io: jest.fn(),
 }));
 
 const createMockSocket = () => ({
-  on: jest.fn(),
+  handlers: {},
+  on: jest.fn(function on(event, callback) {
+    this.handlers[event] = callback;
+    return this;
+  }),
   disconnect: jest.fn(),
 });
 
@@ -18,9 +22,25 @@ const renderProvider = () => render(
   </WebSocketProvider>
 );
 
+const renderConnectionState = () => render(
+  <WebSocketProvider>
+    <ConnectionState />
+  </WebSocketProvider>
+);
+
+const ConnectionState = () => {
+  const { connectionError, isConnected } = useWebSocketContext();
+  return (
+    <output data-testid="connection-state">
+      {isConnected ? 'connected' : 'disconnected'}:{connectionError || ''}
+    </output>
+  );
+};
+
 beforeEach(() => {
   localStorage.clear();
   io.mockReset();
+  delete process.env.REACT_APP_SOCKET_PATH;
 });
 
 test.each([undefined, ""])("nao chama Socket.IO sem token de sessao (%s)", (token) => {
@@ -33,9 +53,7 @@ test.each([undefined, ""])("nao chama Socket.IO sem token de sessao (%s)", (toke
   expect(io).not.toHaveBeenCalled();
 });
 
-test("conecta com token e preserva URL/configuracao e transportes", () => {
-  const originalSocketUrl = process.env.REACT_APP_SOCKET_URL;
-  process.env.REACT_APP_SOCKET_URL = "";
+test("usa a origem atual e o path default com os transportes configurados", () => {
   const mockSocket = createMockSocket();
   io.mockReturnValue(mockSocket);
   localStorage.setItem("token", "token-de-teste");
@@ -43,20 +61,72 @@ test("conecta com token e preserva URL/configuracao e transportes", () => {
   const { unmount } = renderProvider();
 
   expect(io).toHaveBeenCalledWith(
-    undefined,
+    { path: "/socket.io" },
     expect.objectContaining({
       auth: { token: "token-de-teste" },
       transports: ["websocket", "polling"],
+      reconnectionAttempts: Infinity,
+      reconnectionDelayMax: 5000,
     })
   );
 
   unmount();
   expect(mockSocket.disconnect).toHaveBeenCalledTimes(1);
-  if (originalSocketUrl === undefined) {
-    delete process.env.REACT_APP_SOCKET_URL;
-  } else {
-    process.env.REACT_APP_SOCKET_URL = originalSocketUrl;
-  }
+});
+
+test("usa o path configurado sem alterar a origem", () => {
+  const mockSocket = createMockSocket();
+  io.mockReturnValue(mockSocket);
+  process.env.REACT_APP_SOCKET_PATH = "/backend/socket.io";
+  localStorage.setItem("token", "token-de-teste");
+
+  renderProvider();
+
+  expect(io).toHaveBeenCalledWith(
+    { path: "/backend/socket.io" },
+    expect.objectContaining({ auth: { token: "token-de-teste" } })
+  );
+});
+
+test("mantem o erro visivel enquanto o socket nao esta conectado", () => {
+  const mockSocket = createMockSocket();
+  io.mockReturnValue(mockSocket);
+  localStorage.setItem("token", "token-de-teste");
+
+  renderConnectionState();
+
+  expect(screen.getByTestId("connection-state").textContent).toBe(
+    "disconnected:WebSocket desconectado"
+  );
+
+  act(() => {
+    mockSocket.handlers.disconnect();
+  });
+
+  expect(screen.getByTestId("connection-state").textContent).toBe(
+    "disconnected:WebSocket desconectado"
+  );
+});
+
+test("reconecta sem recarregar e limpa o erro ao conectar", () => {
+  const mockSocket = createMockSocket();
+  io.mockReturnValue(mockSocket);
+  localStorage.setItem("token", "token-de-teste");
+
+  renderConnectionState();
+
+  act(() => {
+    mockSocket.handlers.connect_error({ message: "servidor indisponivel" });
+  });
+  expect(screen.getByTestId("connection-state").textContent).toBe(
+    "disconnected:servidor indisponivel"
+  );
+
+  act(() => {
+    mockSocket.handlers.connect();
+  });
+  expect(screen.getByTestId("connection-state").textContent).toBe("connected:");
+  expect(io).toHaveBeenCalledTimes(1);
 });
 
 test("trocar o token desconecta o anterior e conecta a nova identidade", () => {
@@ -75,7 +145,7 @@ test("trocar o token desconecta o anterior e conecta a nova identidade", () => {
   expect(previousSocket.disconnect).toHaveBeenCalledTimes(1);
   expect(io).toHaveBeenCalledTimes(2);
   expect(io).toHaveBeenLastCalledWith(
-    undefined,
+    { path: "/socket.io" },
     expect.objectContaining({ auth: { token: "token-novo" } })
   );
 });

@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWebSocketContext } from '../contexts/WebSocketContext';
+import { SOCKET_SUBSCRIPTION_EVENTS, useWebSocketContext } from '../contexts/WebSocketContext';
 import useMonitoringStore from '../stores/monitoringStore';
 
 /**
@@ -29,7 +29,7 @@ export const useWebSocket = (options = {}) => {
   } = options;
 
   const { subscribe, emit, isConnected } = useWebSocketContext();
-  const joinedAccessRoom = useRef(false);
+  const subscribedEvents = useRef(new Set());
   const queryClient = useQueryClient();
 
   const getPayload = useCallback((event) => event?.data ?? event, []);
@@ -71,11 +71,22 @@ export const useWebSocket = (options = {}) => {
 
   useEffect(() => {
     const unsubscribers = [];
+    const eventsForEffect = subscribedEvents.current;
 
-    if (autoSubscribeAccess && isConnected && !joinedAccessRoom.current) {
-      emit('join', 'acessos');
-      emit('join', { room: 'acessos' });
-      joinedAccessRoom.current = true;
+    const subscriptions = [
+      [autoSubscribeAccess, SOCKET_SUBSCRIPTION_EVENTS.access],
+      [autoSubscribeDevices, SOCKET_SUBSCRIPTION_EVENTS.devices],
+      [autoSubscribeSync, SOCKET_SUBSCRIPTION_EVENTS.sync],
+      [autoSubscribeStats, SOCKET_SUBSCRIPTION_EVENTS.stats]
+    ];
+
+    if (isConnected) {
+      subscriptions.forEach(([enabled, event]) => {
+        if (enabled && !eventsForEffect.has(event)) {
+          emit(event);
+          eventsForEffect.add(event);
+        }
+      });
     }
 
     if (autoSubscribeAccess) {
@@ -100,7 +111,7 @@ export const useWebSocket = (options = {}) => {
 
     return () => {
       unsubscribers.forEach((unsub) => unsub());
-      joinedAccessRoom.current = false;
+      eventsForEffect.clear();
     };
   }, [
     isConnected,
@@ -119,7 +130,7 @@ export const useWebSocket = (options = {}) => {
   useEffect(() => {
     useMonitoringStore.getState().setIsConnected(isConnected);
     if (!isConnected) {
-      joinedAccessRoom.current = false;
+      subscribedEvents.current.clear();
     }
   }, [isConnected]);
 

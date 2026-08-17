@@ -12,6 +12,8 @@ function Formulario() {
   const [pessoa, setPessoa] = useState(null);
   const [formData, setFormData] = useState({});
   const [fotoUrl, setFotoUrl] = useState(defaultUserImg);
+  const fotoUrlRef = useRef(defaultUserImg);
+  const mountedRef = useRef(true);
 
   const [cursoNome, setCursoNome] = useState("");
   const [turmaNome, setTurmaNome] = useState("");
@@ -89,8 +91,12 @@ function Formulario() {
         setPessoa(pessoaData);
         setFormData(pessoaData);
 
-        const fotoData = await api.get(`/pessoas/url/${id}`);
-        setFotoUrl(fotoData.url || defaultUserImg);
+        const fotoUrlData = await api.getPessoaFotoUrl(id);
+        if (!mountedRef.current) {
+          api.revokePessoaFotoUrl(fotoUrlData);
+          return;
+        }
+        atualizarFotoUrl(fotoUrlData);
 
         if (pessoaData.tipo === "ALUNO") {
           const turmasData = await api.get(`/turmas`);
@@ -169,6 +175,11 @@ function Formulario() {
     fetchData();
   }, [id]);
 
+  useEffect(() => () => {
+    mountedRef.current = false;
+    api.revokePessoaFotoUrl(fotoUrlRef.current);
+  }, []);
+
   useEffect(
     () => () => {
       if (cameraStream) {
@@ -217,7 +228,7 @@ function Formulario() {
     const file = e.target.files[0];
     if (file) {
       setNovaFoto(file);
-      setFotoUrl(URL.createObjectURL(file));
+      atualizarFotoUrl(URL.createObjectURL(file));
     }
   };
 
@@ -285,7 +296,7 @@ function Formulario() {
     canvasRef.current.toBlob((blob) => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);
-      setFotoUrl(url);
+      atualizarFotoUrl(url);
       setNovaFoto(new File([blob], "foto.png", { type: blob.type }));
     }, "image/png");
 
@@ -307,8 +318,12 @@ function Formulario() {
 
         await api.postFormData(`/pessoas/upload/${id}`, formDataUpload);
 
-        const data = await api.get(`/pessoas/url/${id}`);
-        setFotoUrl(data.url || defaultUserImg);
+        const fotoUrlData = await api.getPessoaFotoUrl(id);
+        if (!mountedRef.current) {
+          api.revokePessoaFotoUrl(fotoUrlData);
+          return;
+        }
+        atualizarFotoUrl(fotoUrlData);
         setNovaFoto(null);
       }
 
@@ -317,6 +332,15 @@ function Formulario() {
     } catch (error) {
       console.error("Erro ao atualizar pessoa:", error);
     }
+  };
+
+  const atualizarFotoUrl = (nextUrl) => {
+    const normalizedUrl = nextUrl || defaultUserImg;
+    if (fotoUrlRef.current !== normalizedUrl) {
+      api.revokePessoaFotoUrl(fotoUrlRef.current);
+    }
+    fotoUrlRef.current = normalizedUrl;
+    setFotoUrl(normalizedUrl);
   };
 
   // Função wrapper para o botão "Salvar" normal
@@ -671,7 +695,7 @@ function Formulario() {
           src={fotoUrl}
           alt="Foto de perfil"
           className={styles.fotoPreview}
-          onError={(e) => { e.target.onerror = null; e.target.src = defaultUserImg; }}
+          onError={() => atualizarFotoUrl(defaultUserImg)}
         />
         {(editMode || fotoUrl === defaultUserImg) && (
           <div className={styles.btnGroup}>

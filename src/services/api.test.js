@@ -9,7 +9,75 @@ describe("API no mesmo origin", () => {
       process.env.REACT_APP_API_URL = originalApiUrl;
     }
     global.fetch = originalFetch;
+    localStorage.clear();
     jest.resetModules();
+  });
+
+  function errorResponse(status, message) {
+    return {
+      status,
+      statusText: 'Erro',
+      ok: false,
+      clone() { return this; },
+      json: jest.fn().mockResolvedValue({ message }),
+    };
+  }
+
+  test('403 preserva a sessão, não expira auth e chega ao chamador', async () => {
+    localStorage.setItem('token', 'token-ativo');
+    const expired = jest.fn();
+    window.addEventListener('auth-expired', expired, { once: true });
+    global.fetch = jest.fn().mockResolvedValue(errorResponse(403, 'sem permissão'));
+    const { listarAreas } = require('./api');
+
+    await expect(listarAreas()).rejects.toMatchObject({ status: 403, message: 'sem permissão' });
+    expect(localStorage.getItem('token')).toBe('token-ativo');
+    expect(expired).not.toHaveBeenCalled();
+  });
+
+  test('401 mantém expiração da sessão', async () => {
+    localStorage.setItem('token', 'token-expirado');
+    const expired = jest.fn();
+    window.addEventListener('auth-expired', expired, { once: true });
+    global.fetch = jest.fn().mockResolvedValue(errorResponse(401, 'expirou'));
+    const { listarAreas } = require('./api');
+
+    await expect(listarAreas()).rejects.toThrow('Não autorizado (401)');
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(expired).toHaveBeenCalledTimes(1);
+  });
+
+  test('428 preserva a sessão e solicita troca de senha', async () => {
+    localStorage.setItem('token', 'token-ativo');
+    const trocaSenha = jest.fn();
+    window.addEventListener('auth-troca-senha', trocaSenha, { once: true });
+    global.fetch = jest.fn().mockResolvedValue(errorResponse(428, 'troque a senha'));
+    const { listarAreas } = require('./api');
+
+    await expect(listarAreas()).rejects.toMatchObject({ status: 428, message: 'troque a senha' });
+    expect(localStorage.getItem('token')).toBe('token-ativo');
+    expect(trocaSenha).toHaveBeenCalledTimes(1);
+  });
+
+  test('foto propaga 403 sem encerrar a sessão', async () => {
+    localStorage.setItem('token', 'token-ativo');
+    global.fetch = jest.fn().mockResolvedValue(errorResponse(403, 'foto proibida'));
+    const { getPessoaFotoUrl } = require('./api');
+
+    await expect(getPessoaFotoUrl(42)).rejects.toMatchObject({ status: 403 });
+    expect(localStorage.getItem('token')).toBe('token-ativo');
+  });
+
+  test('foto em 428 emite troca de senha sem encerrar a sessão', async () => {
+    localStorage.setItem('token', 'token-ativo');
+    const trocaSenha = jest.fn();
+    window.addEventListener('auth-troca-senha', trocaSenha, { once: true });
+    global.fetch = jest.fn().mockResolvedValue(errorResponse(428, 'troque a senha'));
+    const { getPessoaFotoUrl } = require('./api');
+
+    await expect(getPessoaFotoUrl(42)).rejects.toMatchObject({ status: 428 });
+    expect(localStorage.getItem('token')).toBe('token-ativo');
+    expect(trocaSenha).toHaveBeenCalledTimes(1);
   });
 
   test("usa caminhos relativos quando a URL não é configurada", () => {
@@ -47,7 +115,7 @@ describe("API no mesmo origin", () => {
     );
   });
 
-  test.each([401, 403, 404])("foto %i vira fallback sem URL pública", async (status) => {
+  test.each([401, 404])("foto %i vira fallback sem URL pública", async (status) => {
     process.env.REACT_APP_API_URL = "";
     global.fetch = jest.fn().mockResolvedValue({
       status,

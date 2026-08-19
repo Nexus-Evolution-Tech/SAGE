@@ -11,35 +11,21 @@ function getToken() {
    return localStorage.getItem('token');
 }
 
-/**
- * Lida com TODAS as respostas da API e centraliza o erro 401
- */
+/** Lida com todas as respostas da API e centraliza eventos de autenticação. */
 async function handleResponse(response) {
-  // ==========================================================
-  // CORREÇÃO AQUI
-  // Agora ele captura tanto 401 (Unauthorized) quanto 403 (Forbidden)
-  // ==========================================================
- if (response.status === 401 || response.status === 403) {
-// 1. Limpa o token do storage
- localStorage.removeItem('token');
- 
- // 2. Dispara um evento global que o React pode ouvir
- let errorMessage = 'Sua sessão expirou ou você não tem permissão. Por favor, faça login novamente.';
-try {
-const errorData = await response.json();
- if (errorData.message) {
-errorMessage = errorData.message;
-}
-} catch (e) {
-// Ignora se não for JSON
- }
- window.dispatchEvent(new CustomEvent('auth-expired', { 
-detail: { message: errorMessage } 
-  }));
-  
-  // 3. Lança o erro para que a chamada original (no componente) pare
-    // Usamos o status real para o log de erro
-  throw new Error(`Não autorizado (${response.status})`);
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    let errorMessage = 'Sua sessão expirou ou você não tem permissão. Por favor, faça login novamente.';
+    try {
+      const errorData = await response.json();
+      if (errorData.message) errorMessage = errorData.message;
+    } catch (e) {
+      // Mantém a mensagem padrão quando o corpo não é JSON.
+    }
+    window.dispatchEvent(new CustomEvent('auth-expired', {
+      detail: { message: errorMessage }
+    }));
+    throw new Error(`Não autorizado (${response.status})`);
   }
   
   if (response.status === 204) {
@@ -65,6 +51,11 @@ detail: { message: errorMessage }
     err.status = response.status;
     // anexa corpo bruto quando não for JSON
     err.data = (data && typeof data === 'object') ? data : (data ? { raw: data } : null);
+    if (response.status === 428) {
+      window.dispatchEvent(new CustomEvent('auth-troca-senha', {
+        detail: { message: err.message }
+      }));
+    }
     throw err;
   }
   
@@ -105,7 +96,7 @@ export async function getPessoaFotoUrl(id) {
 
   if (response.status === 404) return null;
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     try {
       await handleResponse(response);
     } catch (error) {

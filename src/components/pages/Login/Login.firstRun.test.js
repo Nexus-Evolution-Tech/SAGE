@@ -10,7 +10,11 @@ jest.mock('react-router-dom', () => ({
 test('configura a unidade na tela inicial antes de mostrar o login', async () => {
   const fetchMock = jest.spyOn(global, 'fetch')
     .mockResolvedValueOnce({ ok: true, json: async () => ({ required: true }) })
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ initialized: true }) })
+    .mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ initialized: true, recoveryKey: 'recovery-key' })
+    })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ id: 1, nome: 'Escola', login: 'admin' }] }) });
 
   render(<Login />);
@@ -22,6 +26,9 @@ test('configura a unidade na tela inicial antes de mostrar o login', async () =>
   await userEvent.click(screen.getByRole('button', { name: 'CRIAR ACESSO' }));
 
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/setup/initialize', expect.objectContaining({ method: 'POST' })));
+  expect(await screen.findByText('Salve sua chave de recuperação')).toBeTruthy();
+  await userEvent.click(screen.getByRole('checkbox', { name: /confirme que salvou a chave/i }));
+  await userEvent.click(screen.getByRole('button', { name: 'CONCLUIR' }));
   expect(await screen.findByText('Login')).toBeTruthy();
   fetchMock.mockRestore();
 });

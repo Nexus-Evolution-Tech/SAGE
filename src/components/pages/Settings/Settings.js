@@ -18,6 +18,7 @@ import {
 import { api } from "../../../services/api";
 import { TrocarSenhaForm } from "../TrocarSenha/TrocarSenha";
 import styles from "./Settings.module.css";
+import { getSessionIdentity } from "../../../utils/sessionIdentity";
 
 const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 
@@ -63,6 +64,7 @@ function formatTelefone(value) {
 }
 
 function Settings() {
+  const isAdmin = getSessionIdentity().papel === "ADMINISTRADOR";
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const stored = localStorage.getItem(STORAGE_SOUND);
     return stored !== "false";
@@ -92,6 +94,7 @@ function Settings() {
   }, [soundEnabled]);
 
   useEffect(() => {
+    if (!isAdmin) return;
     async function carregar() {
       try {
         const data = await api.get("/unidade");
@@ -114,9 +117,10 @@ function Settings() {
       }
     }
     carregar();
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
+    if (!isAdmin) return;
     async function carregarFerramentas() {
       try {
         const [list, cfg] = await Promise.all([api.get("/dispositivos"), api.get("/config").catch(() => ({}))]);
@@ -137,7 +141,7 @@ function Settings() {
       }
     }
     carregarFerramentas();
-  }, []);
+  }, [isAdmin]);
 
   const handleChangeUnidade = (campo, valor) => {
     setUnidade((prev) => ({ ...prev, [campo]: valor ?? "" }));
@@ -275,7 +279,7 @@ function Settings() {
         </p>
       </header>
 
-      <section className={styles.section}>
+      {isAdmin && <section className={styles.section}>
         <h2 className={styles.sectionTitle}>
           <FontAwesomeIcon icon={faBuilding} className={styles.sectionIcon} />
           Dados da Unidade
@@ -518,7 +522,29 @@ function Settings() {
             />
           </div>
         )}
-      </section>
+      </section>}
+
+      {!isAdmin && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            <FontAwesomeIcon icon={faKey} className={styles.sectionIcon} />
+            Segurança
+          </h2>
+          <div className={styles.card}>
+            <p className={styles.settingDesc}>Mantenha sua senha atualizada para proteger o acesso ao SAGE.</p>
+            <button type="button" className={styles.linkButton} onClick={() => setMostrarTrocarSenha(true)}>
+              <FontAwesomeIcon icon={faKey} /> Trocar senha
+            </button>
+          </div>
+          {mostrarTrocarSenha && (
+            <div className={`${styles.card} ${styles.trocarSenhaCard}`}>
+              <h3 className={styles.trocarSenhaTitle}>Trocar senha</h3>
+              <p className={styles.trocarSenhaDesc}>Para sua segurança, informe a senha atual antes de definir a nova.</p>
+              <TrocarSenhaForm onCancel={() => setMostrarTrocarSenha(false)} onSuccess={() => setMostrarTrocarSenha(false)} />
+            </div>
+          )}
+        </section>
+      )}
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>
@@ -546,7 +572,7 @@ function Settings() {
         </div>
       </section>
 
-      <section className={styles.section}>
+      {isAdmin && <section className={styles.section}>
         <h2 className={styles.sectionTitle}>
           <FontAwesomeIcon icon={faWrench} className={styles.sectionIcon} />
           Ferramentas – Catraca
@@ -619,7 +645,7 @@ function Settings() {
             </p>
           )}
         </div>
-      </section>
+      </section>}
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>

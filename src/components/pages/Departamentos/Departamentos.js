@@ -12,8 +12,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "../../../services/api";
 import SkeletonLoader from "../../common/SkeletonLoader";
 import defaultUserImg from "../../../img/user.png";
+import { getSessionIdentity } from "../../../utils/sessionIdentity";
 
 function Departamentos() {
+  const isAdmin = getSessionIdentity().papel === "ADMINISTRADOR";
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarLista, setMostrarLista] = useState(false);
@@ -492,29 +494,29 @@ function Departamentos() {
         </div>
 
         <div style={{ position: "relative", gap: "1rem", display: "flex", marginLeft: "auto" }}>
-          <button
+          {isAdmin && <button
             className={styles.addPeople}
             onClick={() => setMostrarOpcoes(!mostrarOpcoes)}
             title="Adicionar pessoas"
           >
             <FontAwesomeIcon icon={faPlus} className={styles.iconSearch} />
-          </button>
+          </button>}
 
-          <button
+          {isAdmin && <button
             className={styles.addPeople}
             onClick={() => setMostrarModal(true)}
             title="Baixar planilha-modelo"
           >
             <FontAwesomeIcon icon={faDownload} className={styles.iconSearch} />
-          </button>
+          </button>}
 
-          <button
+          {isAdmin && <button
             className={styles.addPeople}
             onClick={() => setMostrarModalExportar(true)}
             title="Exportar dados"
           >
             <FontAwesomeIcon icon={faUpload} className={styles.iconSearch} />
-          </button>
+          </button>}
 
           {/* ... MODAIS ... */}
           {mostrarOpcoes && (

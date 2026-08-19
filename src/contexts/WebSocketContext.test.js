@@ -61,8 +61,8 @@ test("usa a origem atual e o path default com os transportes configurados", () =
   const { unmount } = renderProvider();
 
   expect(io).toHaveBeenCalledWith(
-    { path: "/socket.io" },
     expect.objectContaining({
+      path: "/socket.io",
       auth: { token: "token-de-teste" },
       transports: ["websocket", "polling"],
       reconnectionAttempts: Infinity,
@@ -83,8 +83,10 @@ test("usa o path configurado sem alterar a origem", () => {
   renderProvider();
 
   expect(io).toHaveBeenCalledWith(
-    { path: "/backend/socket.io" },
-    expect.objectContaining({ auth: { token: "token-de-teste" } })
+    expect.objectContaining({
+      path: "/backend/socket.io",
+      auth: { token: "token-de-teste" },
+    })
   );
 });
 
@@ -145,8 +147,10 @@ test("trocar o token desconecta o anterior e conecta a nova identidade", () => {
   expect(previousSocket.disconnect).toHaveBeenCalledTimes(1);
   expect(io).toHaveBeenCalledTimes(2);
   expect(io).toHaveBeenLastCalledWith(
-    { path: "/socket.io" },
-    expect.objectContaining({ auth: { token: "token-novo" } })
+    expect.objectContaining({
+      path: "/socket.io",
+      auth: { token: "token-novo" },
+    })
   );
 });
 

@@ -16,6 +16,7 @@ import {
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import { api } from "../../../services/api";
+import { TrocarSenhaForm } from "../TrocarSenha/TrocarSenha";
 import styles from "./Settings.module.css";
 
 const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
@@ -75,11 +76,6 @@ function Settings() {
   const [erroLogo, setErroLogo] = useState(null);
 
   const [mostrarTrocarSenha, setMostrarTrocarSenha] = useState(false);
-  const [senhaAtual, setSenhaAtual] = useState("");
-  const [novaSenha, setNovaSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
-  const [salvandoSenha, setSalvandoSenha] = useState(false);
-  const [erroSenha, setErroSenha] = useState(null);
 
   // Ferramentas – Catraca
   const [dispositivos, setDispositivos] = useState([]);
@@ -183,38 +179,6 @@ function Settings() {
       setErroUnidade(err?.message || "Erro ao salvar. Tente novamente.");
     } finally {
       setSalvandoUnidade(false);
-    }
-  };
-
-  const handleTrocarSenha = async (e) => {
-    e.preventDefault();
-    setErroSenha(null);
-    if (!senhaAtual.trim()) {
-      setErroSenha("Informe a senha atual.");
-      return;
-    }
-    if (novaSenha.length < 6) {
-      setErroSenha("A nova senha deve ter no mínimo 6 caracteres.");
-      return;
-    }
-    if (novaSenha !== confirmarSenha) {
-      setErroSenha("As senhas não coincidem.");
-      return;
-    }
-    setSalvandoSenha(true);
-    try {
-      await api.patch("/unidade/trocar-senha", {
-        senha_atual: senhaAtual,
-        nova_senha: novaSenha,
-      });
-      setSenhaAtual("");
-      setNovaSenha("");
-      setConfirmarSenha("");
-      setMostrarTrocarSenha(false);
-    } catch (err) {
-      setErroSenha(err?.message || "Erro ao alterar senha. Tente novamente.");
-    } finally {
-      setSalvandoSenha(false);
     }
   };
 
@@ -548,60 +512,10 @@ function Settings() {
           <div className={`${styles.card} ${styles.trocarSenhaCard}`}>
             <h3 className={styles.trocarSenhaTitle}>Trocar senha</h3>
             <p className={styles.trocarSenhaDesc}>Para sua segurança, informe a senha atual antes de definir a nova.</p>
-            <form onSubmit={handleTrocarSenha} className={styles.trocarSenhaForm}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Senha atual</label>
-                <input
-                  type="password"
-                  className={styles.formInput}
-                  value={senhaAtual}
-                  onChange={(e) => setSenhaAtual(e.target.value)}
-                  placeholder="Digite sua senha atual"
-                  autoComplete="current-password"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Nova senha</label>
-                <input
-                  type="password"
-                  className={styles.formInput}
-                  value={novaSenha}
-                  onChange={(e) => setNovaSenha(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  autoComplete="new-password"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Confirmar nova senha</label>
-                <input
-                  type="password"
-                  className={styles.formInput}
-                  value={confirmarSenha}
-                  onChange={(e) => setConfirmarSenha(e.target.value)}
-                  placeholder="Repita a nova senha"
-                  autoComplete="new-password"
-                />
-              </div>
-              {erroSenha && <p className={styles.errorText}>{erroSenha}</p>}
-              <div className={styles.cardActions}>
-                <button
-                  type="button"
-                  className={styles.btnSecondary}
-                  onClick={() => {
-                    setMostrarTrocarSenha(false);
-                    setSenhaAtual("");
-                    setNovaSenha("");
-                    setConfirmarSenha("");
-                    setErroSenha(null);
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className={styles.btnPrimary} disabled={salvandoSenha}>
-                  {salvandoSenha ? "Salvando…" : "Alterar senha"}
-                </button>
-              </div>
-            </form>
+            <TrocarSenhaForm
+              onCancel={() => setMostrarTrocarSenha(false)}
+              onSuccess={() => setMostrarTrocarSenha(false)}
+            />
           </div>
         )}
       </section>

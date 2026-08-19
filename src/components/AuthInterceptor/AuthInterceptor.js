@@ -22,11 +22,14 @@ const AuthInterceptor = () => {
     };
 
     window.addEventListener('auth-expired', handleAuthExpired);
+    const handlePasswordChangeRequired = () => navigate('/trocar-senha', { replace: true });
+    window.addEventListener('auth-troca-senha', handlePasswordChangeRequired);
 
     return () => {
       window.removeEventListener('auth-expired', handleAuthExpired);
+      window.removeEventListener('auth-troca-senha', handlePasswordChangeRequired);
     };
-  }, [addNotification]); 
+  }, [addNotification, navigate]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

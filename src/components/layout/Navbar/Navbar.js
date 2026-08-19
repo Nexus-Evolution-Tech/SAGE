@@ -48,6 +48,7 @@ function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("session");
     window.dispatchEvent(new Event("auth-changed"));
     navigate("/login", { replace: true });
   };

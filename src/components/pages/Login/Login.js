@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "./Login.module.css";
 import logo from '../../../img/logo.png';
+import { saveSession } from "../../../utils/session";
 
 const Modal = ({ message, onClose }) => (
   <div className={styles.modalOverlay}>
@@ -111,9 +112,9 @@ function Login() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Credenciais inválidas.');
-      localStorage.setItem('token', data.token);
+      saveSession(data);
       window.dispatchEvent(new Event('auth-changed'));
-      navigate('/inicio');
+      navigate(data.precisa_trocar_senha ? '/trocar-senha' : '/inicio');
     } catch (error) {
       showError(error.message);
     }

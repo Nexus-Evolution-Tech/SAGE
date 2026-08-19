@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Configuração do QueryClient
@@ -41,6 +41,18 @@ const queryClient = new QueryClient({
 });
 
 export const ReactQueryProvider = ({ children }) => {
+  useEffect(() => {
+    const clearOnAuthChange = () => queryClient.clear();
+
+    window.addEventListener('auth-changed', clearOnAuthChange);
+    window.addEventListener('auth-expired', clearOnAuthChange);
+
+    return () => {
+      window.removeEventListener('auth-changed', clearOnAuthChange);
+      window.removeEventListener('auth-expired', clearOnAuthChange);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}

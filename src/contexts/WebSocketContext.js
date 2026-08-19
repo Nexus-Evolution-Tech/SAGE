@@ -72,7 +72,8 @@ export const WebSocketProvider = ({ children }) => {
     setConnectionError(DISCONNECTED_ERROR);
 
     // Criar conexão Socket.io
-    const socketInstance = io({ path: socketPath }, {
+    const socketInstance = io({
+      path: socketPath,
       auth: {
         token: sessionToken
       },

@@ -29,25 +29,7 @@ function getLogoUrl(logo) {
 }
 
 const STORAGE_SOUND = "sage_notifications_sound";
-const STORAGE_UNIDADE = "sage_unidade";
 const APP_VERSION = "0.1.0";
-
-const DADOS_UNIDADE_INICIAL = {
-  nome: "ETEC Taboão da Serra",
-  numero_unidade: "206",
-  cnpj: "62823257000109",
-  login: "admin",
-  email: "",
-  logradouro: "Rua Pedro Bracale",
-  numero: "79",
-  complemento: "",
-  bairro: "Jardim Maria Rosa",
-  cidade: "Taboão da Serra",
-  estado: "SP",
-  cep: "06764230",
-  telefone_contato: "1147888150",
-  logo: null,
-};
 
 function formatCep(value) {
   if (!value) return "";
@@ -70,7 +52,7 @@ function Settings() {
     return stored !== "false";
   });
 
-  const [unidade, setUnidade] = useState(DADOS_UNIDADE_INICIAL);
+  const [unidade, setUnidade] = useState({});
   const [editandoUnidade, setEditandoUnidade] = useState(false);
   const [salvandoUnidade, setSalvandoUnidade] = useState(false);
   const [erroUnidade, setErroUnidade] = useState(null);
@@ -96,24 +78,15 @@ function Settings() {
   useEffect(() => {
     if (!isAdmin) return;
     async function carregar() {
+      setUnidade({});
       try {
         const data = await api.get("/unidade");
-        if (data && typeof data === "object") {
+        if (data && typeof data === "object" && !Array.isArray(data)) {
           const { senha: _, ...rest } = data;
-          setUnidade((prev) => ({ ...DADOS_UNIDADE_INICIAL, ...prev, ...rest }));
-          return;
+          setUnidade(rest);
         }
       } catch {
-        // Fallback: localStorage ou dados iniciais
-      }
-      try {
-        const stored = localStorage.getItem(STORAGE_UNIDADE);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setUnidade((prev) => ({ ...DADOS_UNIDADE_INICIAL, ...prev, ...parsed }));
-        }
-      } catch {
-        // Mantém DADOS_UNIDADE_INICIAL
+        // Mantém os campos neutros quando a unidade não está disponível.
       }
     }
     carregar();

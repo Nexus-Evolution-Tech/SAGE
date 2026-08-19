@@ -5,7 +5,8 @@ import styles from "./Navbar.module.css";
 import logo from "../../../img/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
-import navLinks, { userLink } from "./NavLinks.js";
+import { getVisibleNavLinks, userLink } from "./NavLinks.js";
+import { getSessionIdentity } from "../../../utils/sessionIdentity";
 
 function Navbar() {
   const navRef = useRef(null);
@@ -15,6 +16,7 @@ function Navbar() {
   const [showUserModal, setShowUserModal] = useState(false);
   const userIconRef = useRef(null); 
   const userModalRef = useRef(null); 
+  const { papel } = getSessionIdentity();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -74,7 +76,7 @@ function Navbar() {
         </div>
 
         <ul className={styles.list}>
-          {navLinks.map((link) => (
+          {getVisibleNavLinks(papel).map((link) => (
             <li key={link.to}>
               <NavLink
                 to={link.to}

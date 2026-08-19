@@ -21,6 +21,7 @@ import {
 import { api } from "../../../services/api";
 import SystemStatusBadge from "../../common/SystemStatusBadge/SystemStatusBadge";
 import styles from "./Inicio.module.css";
+import { getSessionIdentity } from "../../../utils/sessionIdentity";
 
 const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
 function getLogoUrl(logo) {
@@ -48,6 +49,7 @@ function useCountQuery(key, queryFn, options = {}) {
 }
 
 export default function Inicio() {
+  const isAdmin = getSessionIdentity().papel === "ADMINISTRADOR";
   const hoje = new Date().toDateString();
   const [dataHora, setDataHora] = useState(() => ({
     date: new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }),
@@ -90,6 +92,7 @@ export default function Inicio() {
       return { total: list.length, online, offline: list.length - online };
     },
     staleTime: 1000 * 60,
+    enabled: isAdmin,
   });
 
   const { count: acessosHoje, isLoading: loadingAcessos } = useCountQuery(
@@ -189,7 +192,7 @@ export default function Inicio() {
 
   const atalhos = [
     { to: "/pessoas", label: "Pessoas", desc: "Alunos, professores e mais", icon: faUsers },
-    { to: "/dispositivos", label: "Dispositivos", desc: "Catracas e equipamentos", icon: faMicrochip },
+    ...(isAdmin ? [{ to: "/dispositivos", label: "Dispositivos", desc: "Catracas e equipamentos", icon: faMicrochip }] : []),
     { to: "/areas", label: "Áreas", desc: "Locais e controle de acesso", icon: faMapMarkerAlt },
     { to: "/horarios", label: "Horários", desc: "Grade de aulas e horários", icon: faCalendarAlt },
     { to: "/relatorios", label: "Relatórios", desc: "Presença e acessos", icon: faChartSimple },
@@ -241,7 +244,7 @@ export default function Inicio() {
             </div>
           </div>
 
-          <div className={styles.card}>
+          {isAdmin && <div className={styles.card}>
             <div className={styles.cardIcon} data-color="blue">
               <FontAwesomeIcon icon={faMicrochip} />
             </div>
@@ -255,7 +258,7 @@ export default function Inicio() {
                 </span>
               )}
             </div>
-          </div>
+          </div>}
 
           <div className={styles.card}>
             <div className={styles.cardIcon} data-color="purple">
@@ -297,9 +300,7 @@ export default function Inicio() {
                 <FontAwesomeIcon icon={faList} className={styles.ultimosIcon} />
                 Últimos acessos
               </h2>
-              <Link to="/monitoramento" className={styles.verTodos}>
-                Ver todos
-              </Link>
+              {isAdmin && <Link to="/monitoramento" className={styles.verTodos}>Ver todos</Link>}
             </div>
             {loadingUltimos ? (
               <ul className={styles.ultimosList}>

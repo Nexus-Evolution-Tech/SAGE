@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { getSession } from '../../utils/session';
+import { getSessionIdentity } from '../../utils/sessionIdentity';
 
 // Função simples para verificar se o token existe
 const useAuth = () => {
@@ -28,6 +29,11 @@ const ProtectedRoute = () => {
     return <Navigate to="/trocar-senha" replace />;
   }
   return <Outlet />;
+};
+
+export const AdminOnlyRoute = () => {
+  const { papel } = getSessionIdentity();
+  return papel === 'ADMINISTRADOR' ? <Outlet /> : <Navigate to="/inicio" replace />;
 };
 
 export default ProtectedRoute;

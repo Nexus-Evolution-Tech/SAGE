@@ -5,7 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import ProtectedRoute, { AdminOnlyRoute } from "./components/ProtectedRoute/ProtectedRoute";
 
 import Pessoas from "./components/pages/Pessoas/Pessoas";
 import Departamentos from "./components/pages/Departamentos/Departamentos";
@@ -67,8 +67,11 @@ function AppContent() {
               <Route path="/pessoas" element={<Pessoas />} />
               <Route path="/inicio" element={<Inicio />} />
               <Route path="/departamentos" element={<Departamentos />} />
-              <Route path="/dispositivos" element={<Dispositivos />} />
-              <Route path="/monitoramento" element={<Monitoramento />} />
+              <Route element={<AdminOnlyRoute />}>
+                <Route path="/dispositivos" element={<Dispositivos />} />
+                <Route path="/monitoramento" element={<Monitoramento />} />
+                <Route path="/monitoring" element={<Monitoring />} />
+              </Route>
               <Route path="/tabelas/:tipo" element={<Tabelas />} />
               <Route path="/tabelas/:tipo/:turmaId" element={<Tabelas />} />
               <Route path="/formulario/:tipo/:id" element={<Formulario />} />
@@ -83,7 +86,6 @@ function AppContent() {
               <Route path="/aulas" element={<Aulas />} />
               <Route path="/areas" element={<Areas />} />
               <Route path="/dados" element={<Dados />} />
-              <Route path="/monitoring" element={<Monitoring />} />
             </Route>
             
 

@@ -104,10 +104,6 @@ function Adicionar() {
       ])
     );
 
-    if (!payload.foto) {
-      payload.foto = "foto_exemplo.png";
-    }
-
     payload.data_nascimento = formatDate(payload.data_nascimento);
     payload.data_admissao = formatDate(payload.data_admissao);
     payload.data_saida = formatDate(payload.data_saida);

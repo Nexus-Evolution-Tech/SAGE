@@ -16,11 +16,13 @@ Após `git fetch origin --prune`, a branch foi criada da base integrada:
 branch: wp/r2-02-e2e-onboarding-integrated-2026082
 base:   origin/wip/recuperacao-local-pre-auditoria
 frontend integrado/base funcional: bf33451cd3294ba369d20decc49c69f4110fb5bf
-HEAD do pacote no snapshot validado: 544df3553a2fa67a362ded4f0bf4e57759ba2206
 ```
 
 O frontend integrado está presente em `bf33451` e foi verificado como ancestral
 da base e da branch deste pacote.
+
+O HEAD vigente e os commits documentais desta evidência são verificáveis no
+histórico/PR #44; não há código de produção além da base funcional já integrada.
 
 A API é uma dependência cross-repo referenciada por `6a69f43` no repositório
 SAGE-API. Ela não foi tratada como objeto do banco de objetos do SAGE, e nenhum
@@ -89,7 +91,7 @@ Não há scripts de lint ou type-check no `package.json` integrado.
 ## Evidência complementar — Ubuntu
 
 O CI Ubuntu existente executou a branch deste pacote no commit
-`544df3553a2fa67a362ded4f0bf4e57759ba2206`, no run `33044930854` (job
+`148acb3f62152419384fe971d1c5228a20fe5323`, no run `33045244541` (job
 `test-and-build`, PR #44):
 
 - E2E de navegador: **não executado** — o workflow não possui runner ou

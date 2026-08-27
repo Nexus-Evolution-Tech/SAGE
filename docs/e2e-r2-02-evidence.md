@@ -87,10 +87,18 @@ Não há scripts de lint ou type-check no `package.json` integrado.
 
 ## Evidência complementar — Ubuntu
 
-- E2E de navegador: **não executado** — não há runtime Ubuntu disponível para
-  este operador Windows e o snapshot não possui runner/navegador real.
-- Jest/HTTP/contratos: não executados neste ambiente Ubuntu.
-- Build/lint/type-check: não executados neste ambiente Ubuntu.
+O CI Ubuntu existente executou a branch deste pacote no run
+`33044796671` (job `test-and-build`, PR #44):
+
+- E2E de navegador: **não executado** — o workflow não possui runner ou
+  navegador real e nenhuma dependência desse tipo está no `package.json`;
+- `npm ci`: passou;
+- `npm test -- --watchAll=false`: passou;
+- `npm run build`: passou;
+- job completo: passou em 1m05s.
+
+Os testes Jest/contrato do job são complementares e não E2E. Não há scripts de
+lint ou type-check no `package.json`.
 
 ## E2E não executado
 

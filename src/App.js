@@ -32,6 +32,7 @@ import TrocarSenha from "./components/pages/TrocarSenha/TrocarSenha";
 import EsqueciSenha from "./components/pages/EsqueciSenha/EsqueciSenha";
 import Dados from "./components/pages/Dados/DadosEscolares";
 import Monitoring from "./components/pages/Monitoring/Monitoring";
+import Onboarding from "./components/pages/Onboarding/Onboarding";
 
 import AuthInterceptor from './components/AuthInterceptor/AuthInterceptor';
 import { ReactQueryProvider } from './contexts/ReactQueryProvider';
@@ -71,6 +72,7 @@ function AppContent() {
                 <Route path="/dispositivos" element={<Dispositivos />} />
                 <Route path="/monitoramento" element={<Monitoramento />} />
                 <Route path="/monitoring" element={<Monitoring />} />
+                <Route path="/onboarding" element={<Onboarding />} />
               </Route>
               <Route path="/tabelas/:tipo" element={<Tabelas />} />
               <Route path="/tabelas/:tipo/:turmaId" element={<Tabelas />} />

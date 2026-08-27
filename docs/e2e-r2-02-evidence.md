@@ -1,6 +1,6 @@
 # Evidência sanitizada — E2E R2-02
 
-Data da verificação: 2026-08-27  
+Data da verificação: 2026-08-27
 Resultado: **E2E de navegador não executado**. A pré-condição do pacote está
 reprovada neste snapshot e neste ambiente; nenhum smoke de HTTP/Jest é
 apresentado como E2E verde.

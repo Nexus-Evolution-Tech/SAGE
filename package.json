@@ -30,6 +30,7 @@
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
+    "test:e2e": "playwright test",
     "eject": "react-scripts eject"
   },
   "browserslist": {
@@ -45,7 +46,8 @@
     ]
   },
   "devDependencies": {
-    "@craco/craco": "^7.1.0"
+    "@craco/craco": "^7.1.0",
+    "@playwright/test": "1.62.1"
   },
   "overrides": {
     "shell-quote": "1.10.0",

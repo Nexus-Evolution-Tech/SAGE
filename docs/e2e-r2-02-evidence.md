@@ -2,11 +2,10 @@
 
 Data da verificação: 2026-08-27
 
-Resultado: **E2E de navegador não executado**. A evidência documental e os
-testes complementares deste pacote não constituem execução E2E real. O único
-ambiente de aceite deste ciclo é Windows 11 x64, e a pré-condição está
-reprovada por faltar runner Chromium real e, separadamente, MySQL/schema local
-e documentado. Os testes Jest/contrato abaixo são complementares e não são E2E.
+Resultado: **INFRA_BLOCKED; E2E real Windows 11 x64 ainda não concluído**. O
+runner está implementado, mas a execução de aceite depende dos serviços reais e
+das sessões sintéticas do ambiente. Os testes Jest/contrato abaixo são
+complementares e não são E2E.
 
 ## Snapshot integrado
 
@@ -15,20 +14,20 @@ Repositório verificado: `C:\SAGE-WS\SAGE`.
 Após `git fetch origin --prune`, a branch foi criada da base integrada:
 
 ```text
-branch: wp/r2-02-e2e-windows11-docs-20260827
-base:   origin/wip/recuperacao-local-pre-auditoria @ 9296bea
+branch: wp/r2-02-e2e-infra-windows11-20260827
+base:   origin/wip/recuperacao-local-pre-auditoria @ 5d23c1714e14c695e35b2556e41321847e720b13
 frontend integrado/base funcional: bf33451cd3294ba369d20decc49c69f4110fb5bf
-API funcional fixa: 6a69f438cbd5b1cc17ec6083edb87c4d08a08e90
+API + fixture KeepAlive: 10371f0012d92f302a5c467fbc8245e69d2ffea3
 ```
 
 O frontend integrado está presente em `bf33451` e foi verificado como ancestral
 da base e da branch deste pacote.
 
-Não há código de produção além da base funcional já integrada. Esta branch
-altera somente documentação; os commits funcionais fixos são o frontend
-`bf33451` e a API `6a69f43`.
+Não há alteração em `src/` de produção. Esta branch adiciona somente runner,
+E2E, workflow Windows, dependência Playwright e documentação; a API é somente
+checkout cross-repo da referência fixa acima.
 
-A API é uma dependência cross-repo referenciada por `6a69f43` no repositório
+A API é uma dependência cross-repo referenciada pela fixture `10371f0` no repositório
 SAGE-API. Ela não foi tratada como objeto do banco de objetos do SAGE, e nenhum
 arquivo fora deste repositório foi alterado ou necessário para esta evidência.
 
@@ -38,23 +37,33 @@ O único ambiente de aceite é **Windows 11 x64**. O E2E exige Chromium real,
 frontend e API locais, MySQL/schema local e documentado, readiness verificável
 e cleanup estrito.
 
-O `package.json` integrado oferece os entrypoints `start`, `build`, `test` e
-`eject`, usando `craco`. Não há dependência ou script de Playwright, Cypress ou
-outro runner de navegador real.
+O `package.json` adiciona somente `test:e2e`; `@playwright/test`,
+`playwright` e `playwright-core` ficam fixados em `1.62.1` no lockfile.
 
 Runtime observado no Windows 11 x64:
 
 ```text
 node v24.10.0
 npm 11.6.1
-npm ls @playwright/test playwright cypress --depth=0: (empty)
-executável playwright/chrome/chromium/msedge/firefox: não detectado
+@playwright/test/playwright/playwright-core 1.62.1
+Chromium real: 151.0.7922.34
 ```
 
-Nenhuma dependência foi instalada, nenhum bootstrap foi criado e nenhum
-backend, simulador, catraca ou hardware foi iniciado. Assim, não há entrypoint
-executável para o requisito “Chromium real + frontend real + API real +
-MySQL/schema local”.
+A execução do runner usa Chromium real, `npm start` no frontend via
+`webServer`, `npm start` na API e a fixture API `KeepAlive`/`Cleanup`. Não há
+seed, bootstrap paralelo, simulador ou hardware neste pacote.
+
+## Runner E2E e fronteira
+
+`npm.cmd run test:e2e` descobre 8 casos no projeto Chromium e observa a rede
+real do navegador. A suite cobre `/onboarding`, GET com exatamente os cinco
+campos, POST sem corpo, `If-Match`, reload, retry, 401, 403 e 412. A fixture
+KeepAlive mantém MySQL/schema real durante API e frontend; `Cleanup` verifica
+processo, listener e diretórios ausentes.
+
+Nenhum caso escreve escola, conta, entidade, PII, credencial ou `/setup`.
+`PRONTO_LOGICO`/`CONCLUIDO` são verificados como estados lógicos e nunca como
+confirmação física.
 
 ## Testes complementares — Windows 11 x64 (não E2E)
 
@@ -115,9 +124,17 @@ Esse registro é CI complementar, não execução E2E nem evidência do ambiente
 aceite. Os testes Jest/contrato do job são complementares e não E2E. Não há
 scripts de lint ou type-check no `package.json`.
 
+## Execução real atual
+
+O comando oficial produziu `INFRA_BLOCKED`: `commit=5d23c17...`,
+`os=win32/10.0.26200`, `node=v24.10.0`, `playwright=1.62.1`,
+`chromium=151.0.7922.34`, etapa de credenciais e erro com as duas variáveis de
+sessão ausentes. Nenhum segredo foi impresso ou publicado.
+
 ## E2E não executado
 
-Sem runner e navegador reais, não foram simulados nem apresentados como E2E:
+A suíte acima não foi apresentada como executada: a execução real foi bloqueada
+antes dos casos por pré-condições ambientais.
 
 - abertura limpa de `/onboarding`, GET com exatamente os cinco campos e resume;
 - POST de `/onboarding/steps/{step}/resume` com fronteira de onboarding lógico;
@@ -136,13 +153,14 @@ entidades ou PII.
 
 ## Escopo e desbloqueio
 
-Este pacote altera somente os dois arquivos documentais listados. Nenhum código
-de produção ou runtime foi alterado; não houve alteração em API, migrations,
-installer, bootstrap ou workflows. O diff permanece restrito à documentação e
-abaixo do limite aproximado de 300 linhas.
+Este pacote altera somente os arquivos permitidos: dependência/comando Playwright,
+configuração, E2E/fixtures, workflow Windows e documentação. Não altera produção,
+API, migrations, installer, bootstrap de produto, `/setup` ou dados reais.
 
 Para executar o E2E posteriormente, é necessário disponibilizar no Windows 11
 x64 um runner Chromium real e mecanismo local/documentado para MySQL/schema,
 com frontend e API locais, readiness verificável e cleanup estrito. A execução
-deve usar o frontend `bf33451` e a referência cross-repo da API `6a69f43`, com
-evidência sanitizada e sem PII ou secrets.
+deve usar o frontend `bf33451` e a referência cross-repo completa da API
+`10371f0012d92f302a5c467fbc8245e69d2ffea3`, cuja fixture KeepAlive é consumida
+pelo workflow com Cleanup explícito. A evidência é sanitizada e sem PII ou
+secrets.

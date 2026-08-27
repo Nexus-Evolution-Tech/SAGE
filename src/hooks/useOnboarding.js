@@ -1,42 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
 
 const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
-
-export const ONBOARDING_STEPS = Object.freeze([
-  { id: "escola-conta-administrador", value: "ESCOLA_CONTA_ADMINISTRADOR", label: "Escola e conta ADMINISTRADOR" },
-  { id: "area", value: "AREA", label: "Área" },
-  { id: "catraca", value: "CATRACA", label: "Catraca" },
-  { id: "curso", value: "CURSO", label: "Curso" },
-  { id: "turma", value: "TURMA", label: "Turma" },
-  { id: "empresa", value: "EMPRESA", label: "Empresa" },
-  { id: "sala", value: "SALA", label: "Sala" },
-  { id: "pessoas", value: "PESSOAS", label: "Pessoas" },
-]);
+const stepData = [
+  ["escola-conta-administrador", "ESCOLA_CONTA_ADMINISTRADOR", "Escola e conta ADMINISTRADOR"],
+  ["area", "AREA", "Área"], ["catraca", "CATRACA", "Catraca"], ["curso", "CURSO", "Curso"],
+  ["turma", "TURMA", "Turma"], ["empresa", "EMPRESA", "Empresa"], ["sala", "SALA", "Sala"],
+  ["pessoas", "PESSOAS", "Pessoas"],
+];
+export const ONBOARDING_STEPS = Object.freeze(stepData.map(([id, value, label]) => ({ id, value, label })));
 
 export class OnboardingRequestError extends Error {
-  constructor(kind, status) {
-    super(kind);
-    this.name = "OnboardingRequestError";
-    this.kind = kind;
-    this.status = status;
-  }
+  constructor(kind, status) { super(kind); this.name = "OnboardingRequestError"; this.kind = kind; this.status = status; }
 }
 
-/** Seleciona somente a projeção pública; nenhum campo auxiliar vira estado da tela. */
+/** A projeção pública não permite que campos auxiliares virem estado da tela. */
 export function selectOnboardingProjection(payload) {
   if (!payload || typeof payload !== "object" || !Array.isArray(payload.completed_steps)
-    || !Number.isInteger(payload.version)) {
-    throw new OnboardingRequestError("invalid-response");
-  }
-
-  return {
-    status: payload.status,
-    current_step: payload.current_step,
-    completed_steps: payload.completed_steps,
-    next_step: payload.next_step,
-    version: payload.version,
-  };
+    || !Number.isInteger(payload.version)) throw new OnboardingRequestError("invalid-response");
+  const { status, current_step, completed_steps, next_step, version } = payload;
+  return { status, current_step, completed_steps, next_step, version };
 }
+
+const safeError = (error) => error instanceof OnboardingRequestError
+  ? error : new OnboardingRequestError("network");
 
 function authHeaders(extra = {}) {
   const headers = new Headers();
@@ -47,11 +33,7 @@ function authHeaders(extra = {}) {
 }
 
 async function requestOnboarding(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: authHeaders(options.headers),
-  });
-
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers: authHeaders(options.headers) });
   if (response.status === 401) {
     localStorage.removeItem("token");
     window.dispatchEvent(new CustomEvent("auth-expired", {
@@ -59,22 +41,16 @@ async function requestOnboarding(path, options = {}) {
     }));
     throw new OnboardingRequestError("unauthorized", 401);
   }
-
   if (!response.ok) {
-    throw new OnboardingRequestError(
-      response.status === 412 ? "conflict" : response.status === 403 ? "forbidden" : "request",
-      response.status,
-    );
+    throw new OnboardingRequestError(response.status === 412 ? "conflict" : response.status === 403 ? "forbidden" : "request", response.status);
   }
-
   return selectOnboardingProjection(await response.json());
 }
 
 export const getOnboarding = () => requestOnboarding("/onboarding", { method: "GET" });
-
 export const resumeOnboardingStep = (step, version) => requestOnboarding(
   `/onboarding/steps/${encodeURIComponent(step)}/resume`,
-  // O valor da versão é apenas serializado para o formato HTTP normativo: "version".
+  // Apenas a serialização HTTP normativa do valor de version: "version".
   { method: "POST", headers: { "If-Match": `"${version}"` } },
 );
 
@@ -86,44 +62,22 @@ export function useOnboarding() {
   const [conflict, setConflict] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const nextProjection = await getOnboarding();
-      setProjection(nextProjection);
-      return nextProjection;
-    } catch (requestError) {
-      setError(requestError instanceof OnboardingRequestError
-        ? requestError : new OnboardingRequestError("network"));
-      return null;
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError(null);
+    try { const data = await getOnboarding(); setProjection(data); return data; }
+    catch (requestError) { setError(safeError(requestError)); return null; }
+    finally { setLoading(false); }
   }, []);
-
   useEffect(() => { void load(); }, [load]);
 
   const resume = useCallback(async (step) => {
     if (!projection) return null;
-    setSubmitting(true);
-    setError(null);
-    setConflict(false);
-    try {
-      const nextProjection = await resumeOnboardingStep(step, projection.version);
-      setProjection(nextProjection);
-      return nextProjection;
-    } catch (requestError) {
-      if (requestError.status === 412) {
-        setConflict(true);
-        await load();
-      } else {
-        setError(requestError instanceof OnboardingRequestError
-          ? requestError : new OnboardingRequestError("network"));
-      }
+    setSubmitting(true); setError(null); setConflict(false);
+    try { const data = await resumeOnboardingStep(step, projection.version); setProjection(data); return data; }
+    catch (requestError) {
+      if (requestError.status === 412) { setConflict(true); await load(); }
+      else setError(safeError(requestError));
       return null;
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   }, [load, projection]);
 
   return { projection, loading, submitting, error, conflict, load, resume };

@@ -22,52 +22,23 @@ function errorMessage(error) {
 export default function Onboarding() {
   const { projection, loading, submitting, error, conflict, load, resume } = useOnboarding();
   const canRetry = error && error.status !== 401 && error.status !== 403;
-
   return (
     <main style={pageStyle} aria-labelledby="onboarding-title">
-      <header style={{ marginBottom: "1.5rem" }}>
-        <h1 id="onboarding-title">Configuração inicial</h1>
-        <p style={{ marginTop: "0.5rem", color: "#586174" }}>
-          Retome cada etapa na ordem indicada. Os estados exibidos são lógicos e não confirmam efeito físico.
-        </p>
-      </header>
-
+      <h1 id="onboarding-title">Configuração inicial</h1>
+      <p>Retome cada etapa na ordem indicada. Os estados exibidos são lógicos e não confirmam efeito físico.</p>
       {loading && <p role="status">Lendo o estado salvo…</p>}
       {projection && <p>Estado lógico: <strong>{projection.status}</strong></p>}
-      {conflict && (
-        <div role="alert" style={{ margin: "1rem 0", color: "#7a4b00" }}>
-          O estado mudou no servidor. A leitura foi atualizada; confirme a nova ação para retomar.
-        </div>
-      )}
-      {error && (
-        <div role="alert" style={{ margin: "1rem 0", color: "#a32121" }}>
-          <span>{errorMessage(error)}</span>
-          {canRetry && <button type="button" onClick={() => void load()} style={{ marginLeft: "0.75rem" }}>
-            Tentar novamente
-          </button>}
-        </div>
-      )}
-
+      {conflict && <div role="alert">O estado mudou no servidor. A leitura foi atualizada; confirme a nova ação para retomar.</div>}
+      {error && <div role="alert"><span>{errorMessage(error)}</span>{canRetry && <button type="button" onClick={() => void load()}>Tentar novamente</button>}</div>}
       <ol style={listStyle} aria-label="Etapas do onboarding">
         {ONBOARDING_STEPS.map((step, index) => {
           const status = stepStatus(step, projection);
-          const completed = status === "Concluído";
-          const actionable = projection && !completed
+          const actionable = projection && status !== "Concluído"
             && (projection.current_step === step.value || projection.next_step === step.value);
-          return (
-            <li key={step.id} style={cardStyle}>
-              <span aria-hidden="true" style={{ fontWeight: 700, minWidth: 24 }}>{index + 1}.</span>
-              <span style={{ flex: 1 }}>
-                <strong>{step.label}</strong>
-                <span style={{ display: "block", color: "#586174", marginTop: "0.25rem" }}>{status}</span>
-              </span>
-              {actionable && (
-                <button type="button" disabled={submitting} onClick={() => void resume(step.id)}>
-                  {submitting ? "Enviando…" : "Retomar"}
-                </button>
-              )}
-            </li>
-          );
+          return <li key={step.id} style={cardStyle}>
+            <span aria-hidden="true">{index + 1}.</span><span style={{ flex: 1 }}><strong>{step.label}</strong><span style={{ display: "block" }}>{status}</span></span>
+            {actionable && <button type="button" disabled={submitting} onClick={() => void resume(step.id)}>{submitting ? "Enviando…" : "Retomar"}</button>}
+          </li>;
         })}
       </ol>
     </main>

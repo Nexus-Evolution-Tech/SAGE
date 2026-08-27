@@ -24,11 +24,13 @@ jobs:
     name: E2E real Windows 11 x64
     runs-on: [self-hosted, Windows, X64, Windows-11]
     env:
-      E2E_API_URL: http://127.0.0.1:3000
+      E2E_API_URL: http://127.0.0.1:3100
+      E2E_FRONTEND_PORT: '3101'
       E2E_ADMIN_TOKEN: ${{ secrets.SAGE_E2E_ADMIN_TOKEN }}
       E2E_SECRETARIA_TOKEN: ${{ secrets.SAGE_E2E_SECRETARIA_TOKEN }}
       SAGE_E2E_JWT_SECRET: ${{ secrets.SAGE_E2E_JWT_SECRET }}
       SAGE_E2E_MONITOR_CALLBACK_TOKEN: ${{ secrets.SAGE_E2E_MONITOR_CALLBACK_TOKEN }}
+      NODE_OPTIONS: --max-old-space-size=1024
     steps:
       - uses: actions/checkout@v4
         with:
@@ -74,11 +76,11 @@ jobs:
               $stage = 'fixture-keepalive'; powershell.exe -ExecutionPolicy Bypass -File $fixture -Action KeepAlive -FixtureRoot $fixtureRoot -MysqlRoot $env:SAGE_E2E_MYSQL_ROOT -ApiRepository $apiRoot -NodeExecutable (Get-Command node.exe).Source -Commit (git -C $apiRoot rev-parse HEAD); if ($LASTEXITCODE -ne 0) { throw 'KeepAlive MySQL/schema falhou' }
               $state = Get-Content (Join-Path $fixtureRoot 'fixture-state.json') -Raw | ConvertFrom-Json; $credentials = @{}; Get-Content -LiteralPath $state.credentialFile | ForEach-Object { if ($_ -match '^(user|password)=(.*)$') { $credentials[$matches[1]] = $matches[2] } }
               $env:DB_HOST = '127.0.0.1'; $env:DB_PORT = "$($state.port)"; $env:DB_USER = $credentials.user; $env:DB_PASSWORD = $credentials.password; $env:DB_NAME = 'sage'
-              $env:PORT = '3000'; $env:JWT_SECRET = $env:SAGE_E2E_JWT_SECRET; $env:MONITOR_CALLBACK_TOKEN = $env:SAGE_E2E_MONITOR_CALLBACK_TOKEN; $env:CORS_ORIGINS = 'http://127.0.0.1:3001'
+              $env:PORT = '3100'; $env:JWT_SECRET = $env:SAGE_E2E_JWT_SECRET; $env:MONITOR_CALLBACK_TOKEN = $env:SAGE_E2E_MONITOR_CALLBACK_TOKEN; $env:CORS_ORIGINS = 'http://127.0.0.1:3101'; $env:NODE_ENV = 'test'; $env:SAGE_REQUIRE_WEB = 'false'; $env:JOBS_ENABLED = 'false'; $env:CATRACA_SYNC_ENABLED = 'false'; $env:BACKUP_CRON = 'false'; $env:PROMOCAO_NA_SUBIDA = 'false'; $env:REDIS_ENABLED = 'false'; $env:SAGE_DATA_DIR = Join-Path $env:RUNNER_TEMP 'sage-r2-02-api-data'
               foreach ($name in @('SAGE_INITIAL_ADMIN_LOGIN','SAGE_INITIAL_ADMIN_PASSWORD','SAGE_INITIAL_SCHOOL_NAME')) { Remove-Item "Env:$name" -ErrorAction SilentlyContinue }
               $stage = 'api-start'
-              $apiLog = Join-Path $env:RUNNER_TEMP 'sage-r2-02-api.log'; $apiProcess = Start-Process -FilePath 'npm.cmd' -ArgumentList @('start') -WorkingDirectory $apiRoot -RedirectStandardOutput $apiLog -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'sage-r2-02-api.err.log') -PassThru -WindowStyle Hidden; $ready = $false
-              for ($i = 0; $i -lt 60; $i++) { try { if ((Invoke-WebRequest 'http://127.0.0.1:3000/ready' -UseBasicParsing).StatusCode -eq 200) { $ready = $true; break } } catch {} ; if ($apiProcess.HasExited) { throw 'API encerrou antes da readiness' }; Start-Sleep -Seconds 1 }
+              $apiLog = Join-Path $env:RUNNER_TEMP 'sage-r2-02-api.log'; $apiProcess = Start-Process -FilePath 'node.exe' -ArgumentList @('index.js') -WorkingDirectory $apiRoot -RedirectStandardOutput $apiLog -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'sage-r2-02-api.err.log') -PassThru -WindowStyle Hidden; $ready = $false
+              for ($i = 0; $i -lt 60; $i++) { try { if ((Invoke-WebRequest 'http://127.0.0.1:3100/ready' -UseBasicParsing).StatusCode -eq 200) { $ready = $true; break } } catch {} ; if ($apiProcess.HasExited) { throw 'API encerrou antes da readiness' }; Start-Sleep -Seconds 1 }
               if (-not $ready) { throw 'API não ficou pronta' }
               $setupOk = $true
             } catch {

@@ -14,6 +14,7 @@ test("GET usa somente os cinco nomes normativos", async () => {
   expect(data).toEqual(initial);
   expect(Object.keys(data)).toEqual(["status", "current_step", "completed_steps", "next_step", "version"]);
   expect(global.fetch.mock.calls[0][1].method).toBe("GET");
+  expect(global.fetch.mock.calls[0][1].headers.get("Authorization")).toBe("Bearer token-sintetico");
 });
 
 test("resume usa passo/If-Match normativos e POST sem corpo", async () => {

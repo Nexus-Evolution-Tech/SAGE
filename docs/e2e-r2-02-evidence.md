@@ -2,9 +2,11 @@
 
 Data da verificação: 2026-08-27
 
-Resultado: **E2E de navegador não executado**. A pré-condição do pacote está
-reprovada porque este snapshot não dispõe de runner nem navegador real. Os
-testes Jest/contrato executados abaixo são complementares e não são E2E.
+Resultado: **E2E de navegador não executado**. A evidência documental e os
+testes complementares deste pacote não constituem execução E2E real. O único
+ambiente de aceite deste ciclo é Windows 11 x64, e a pré-condição está
+reprovada por faltar runner Chromium real e, separadamente, MySQL/schema local
+e documentado. Os testes Jest/contrato abaixo são complementares e não são E2E.
 
 ## Snapshot integrado
 
@@ -13,28 +15,34 @@ Repositório verificado: `C:\SAGE-WS\SAGE`.
 Após `git fetch origin --prune`, a branch foi criada da base integrada:
 
 ```text
-branch: wp/r2-02-e2e-onboarding-integrated-2026082
-base:   origin/wip/recuperacao-local-pre-auditoria
+branch: wp/r2-02-e2e-windows11-docs-20260827
+base:   origin/wip/recuperacao-local-pre-auditoria @ 9296bea
 frontend integrado/base funcional: bf33451cd3294ba369d20decc49c69f4110fb5bf
+API funcional fixa: 6a69f438cbd5b1cc17ec6083edb87c4d08a08e90
 ```
 
 O frontend integrado está presente em `bf33451` e foi verificado como ancestral
 da base e da branch deste pacote.
 
-O HEAD vigente e os commits documentais desta evidência são verificáveis no
-histórico/PR #44; não há código de produção além da base funcional já integrada.
+Não há código de produção além da base funcional já integrada. Esta branch
+altera somente documentação; os commits funcionais fixos são o frontend
+`bf33451` e a API `6a69f43`.
 
 A API é uma dependência cross-repo referenciada por `6a69f43` no repositório
 SAGE-API. Ela não foi tratada como objeto do banco de objetos do SAGE, e nenhum
 arquivo fora deste repositório foi alterado ou necessário para esta evidência.
 
-## Runner e runtime
+## Ambiente de aceite e runtime
+
+O único ambiente de aceite é **Windows 11 x64**. O E2E exige Chromium real,
+frontend e API locais, MySQL/schema local e documentado, readiness verificável
+e cleanup estrito.
 
 O `package.json` integrado oferece os entrypoints `start`, `build`, `test` e
 `eject`, usando `craco`. Não há dependência ou script de Playwright, Cypress ou
 outro runner de navegador real.
 
-Runtime observado no Windows:
+Runtime observado no Windows 11 x64:
 
 ```text
 node v24.10.0
@@ -45,9 +53,10 @@ executável playwright/chrome/chromium/msedge/firefox: não detectado
 
 Nenhuma dependência foi instalada, nenhum bootstrap foi criado e nenhum
 backend, simulador, catraca ou hardware foi iniciado. Assim, não há entrypoint
-executável para o requisito “navegador real + frontend real + API real”.
+executável para o requisito “Chromium real + frontend real + API real +
+MySQL/schema local”.
 
-## Testes complementares — Windows
+## Testes complementares — Windows 11 x64 (não E2E)
 
 O comando existente foi executado sem alterar a configuração:
 
@@ -88,45 +97,52 @@ o resultado é **build travado/não concluído**, não sucesso.
 
 Não há scripts de lint ou type-check no `package.json` integrado.
 
-## Evidência complementar — Ubuntu
+## Ubuntu — N/A neste ciclo
 
-O CI Ubuntu existente executou a branch deste pacote no commit
-`148acb3f62152419384fe971d1c5228a20fe5323`, no run `33045244541` (job
-`test-and-build`, PR #44):
+Ubuntu é **N/A neste ciclo**: não é executado, não é sucesso, falha, cobertura
+parcial nem evidência.
 
-- E2E de navegador: **não executado** — o workflow não possui runner ou
-  navegador real e nenhuma dependência desse tipo está no `package.json`;
+Para preservar o registro factual sem reclassificá-lo como aceite, o job de CI
+anteriormente registrado no commit `148acb3f62152419384fe971d1c5228a20fe5323`,
+run `33045244541` (job `test-and-build`, PR #44), apresentou:
+
 - `npm ci`: passou;
 - `npm test -- --watchAll=false`: passou;
 - `npm run build`: passou;
 - job completo: passou em 1m05s.
 
-Os testes Jest/contrato do job são complementares e não E2E. Não há scripts de
-lint ou type-check no `package.json`.
+Esse registro é CI complementar, não execução E2E nem evidência do ambiente de
+aceite. Os testes Jest/contrato do job são complementares e não E2E. Não há
+scripts de lint ou type-check no `package.json`.
 
 ## E2E não executado
 
 Sem runner e navegador reais, não foram simulados nem apresentados como E2E:
 
 - abertura limpa de `/onboarding`, GET com exatamente os cinco campos e resume;
+- POST de `/onboarding/steps/{step}/resume` com fronteira de onboarding lógico;
 - retomada após fechar o navegador e reiniciar processo ou máquina;
 - refresh/retry sem duplicação, falha/timeout, passo fora de ordem ou resultado
   desconhecido;
 - respostas 401, 403 e 412;
 - estados lógicos `PRONTO_LOGICO`/`CONCLUIDO`, sem confirmação física.
 
-Não foram usados HTTP direto, mocks, intercepts, jsdom ou `skip` para maquiar
-um E2E verde. Não houve consulta ou escrita de presença, catraca, hardware,
-`RegistroPresenca`, `log_catraca_id` ou entidade de domínio.
+Não foram usadas URLs externas, secrets reais, HTTP direto, mocks, intercepts,
+jsdom, Jest ou `skip` como substitutos para maquiar um E2E verde. A fronteira
+é o onboarding lógico (`GET /onboarding` e
+`POST /onboarding/steps/{step}/resume`); `/setup` permanece inalterado. O E2E
+não abrange RegistroPresenca, presença, catraca, hardware, escola, conta,
+entidades ou PII.
 
 ## Escopo e desbloqueio
 
-O único arquivo novo deste pacote é esta evidência documental. Nenhum código de
-produção ou runtime foi alterado; não houve alteração em API, migrations,
+Este pacote altera somente os dois arquivos documentais listados. Nenhum código
+de produção ou runtime foi alterado; não houve alteração em API, migrations,
 installer, bootstrap ou workflows. O diff permanece restrito à documentação e
 abaixo do limite aproximado de 300 linhas.
 
-Para executar o E2E posteriormente, é necessário disponibilizar um runner e um
-navegador real compatíveis com os entrypoints do projeto e repetir a execução
-em snapshots limpos de Ubuntu e Windows, usando o frontend `bf33451` e a
-referência cross-repo da API `6a69f43`, com evidência sanitizada.
+Para executar o E2E posteriormente, é necessário disponibilizar no Windows 11
+x64 um runner Chromium real e mecanismo local/documentado para MySQL/schema,
+com frontend e API locais, readiness verificável e cleanup estrito. A execução
+deve usar o frontend `bf33451` e a referência cross-repo da API `6a69f43`, com
+evidência sanitizada e sem PII ou secrets.

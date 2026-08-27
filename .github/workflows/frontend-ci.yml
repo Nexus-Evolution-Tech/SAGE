@@ -2,6 +2,7 @@ name: Frontend CI
 
 on:
   pull_request:
+  workflow_dispatch:
   push:
     branches:
       - wip/recuperacao-local-pre-auditoria
@@ -18,3 +19,98 @@ jobs:
       - run: npm ci
       - run: npm test -- --watchAll=false
       - run: npm run build
+
+  e2e-windows-11:
+    name: E2E real Windows 11 x64
+    runs-on: [self-hosted, Windows, X64, Windows-11]
+    env:
+      E2E_API_URL: http://127.0.0.1:3100
+      E2E_FRONTEND_PORT: '3101'
+      E2E_ADMIN_TOKEN: ${{ secrets.SAGE_E2E_ADMIN_TOKEN }}
+      E2E_SECRETARIA_TOKEN: ${{ secrets.SAGE_E2E_SECRETARIA_TOKEN }}
+      SAGE_E2E_JWT_SECRET: ${{ secrets.SAGE_E2E_JWT_SECRET }}
+      SAGE_E2E_MONITOR_CALLBACK_TOKEN: ${{ secrets.SAGE_E2E_MONITOR_CALLBACK_TOKEN }}
+      NODE_OPTIONS: --max-old-space-size=1024
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: Nexus-Evolution-Tech/SAGE-API
+          ref: 10371f0012d92f302a5c467fbc8245e69d2ffea3
+          path: .e2e-dependency/SAGE-API
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Verificar snapshots integrados
+        shell: powershell
+        run: |
+          $frontend = 'bf33451cd3294ba369d20decc49c69f4110fb5bf'; git merge-base --is-ancestor $frontend HEAD; if ($LASTEXITCODE -ne 0) { throw "Frontend integrado ausente: $frontend" }
+          $api = (git -C '.e2e-dependency/SAGE-API' rev-parse HEAD).Trim(); if ($api -ne '10371f0012d92f302a5c467fbc8245e69d2ffea3') { throw "API inesperada: $api" }
+
+      - name: KeepAlive, API real, Playwright e Cleanup
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = 'preflight'; $result = 1
+          $setupOk = $false
+          $fixtureRoot = Join-Path $env:RUNNER_TEMP "sage-r2-02-mysql-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $apiRoot = Join-Path $env:GITHUB_WORKSPACE '.e2e-dependency\SAGE-API'
+          $fixture = Join-Path $apiRoot 'test\support\windows-mysql-fixture.ps1'
+          $apiProcess = $null
+          function Write-Blocked([string]$where, [string]$detail) {
+            New-Item -ItemType Directory -Force -Path 'test-results' | Out-Null; $commit = (git rev-parse HEAD).Trim(); try { $pw = node -p "require('@playwright/test/package.json').version" } catch { $pw = 'nao-instalado' }
+            @('INFRA_BLOCKED', "commit=$commit", "os=$([Environment]::OSVersion.VersionString)", "node=$(& node --version)", "playwright=$pw", 'chromium=nao-inicializado', 'comando=npm.cmd run test:e2e', "etapa=$where", "erro=$detail", "artefatos=test-results/ (somente em falha; sem trace)") | Set-Content -LiteralPath 'test-results/INFRA_BLOCKED.txt' -Encoding utf8
+          }
+          try {
+            try {
+              $stage = 'install'; npm.cmd ci; if ($LASTEXITCODE -ne 0) { throw 'npm ci do frontend falhou' }
+              Push-Location '.e2e-dependency/SAGE-API'; try { npm.cmd ci --ignore-scripts; if ($LASTEXITCODE -ne 0) { throw 'npm ci da API falhou' } } finally { Pop-Location }
+              npx.cmd playwright install chromium; if ($LASTEXITCODE -ne 0) { throw 'Instalação do Chromium Playwright falhou' }
+              if (-not $env:SAGE_E2E_MYSQL_ROOT) { throw 'SAGE_E2E_MYSQL_ROOT ausente' }
+              foreach ($file in @('mysqld.exe', 'mysql.exe', 'mysqladmin.exe')) { if (-not (Test-Path (Join-Path $env:SAGE_E2E_MYSQL_ROOT "bin\$file"))) { throw "Runtime MySQL ausente: $file" } }
+              if (-not $env:SAGE_E2E_JWT_SECRET -or -not $env:SAGE_E2E_MONITOR_CALLBACK_TOKEN) { throw 'segredos sintéticos da API ausentes' }
+              $stage = 'fixture-keepalive'; powershell.exe -ExecutionPolicy Bypass -File $fixture -Action KeepAlive -FixtureRoot $fixtureRoot -MysqlRoot $env:SAGE_E2E_MYSQL_ROOT -ApiRepository $apiRoot -NodeExecutable (Get-Command node.exe).Source -Commit (git -C $apiRoot rev-parse HEAD); if ($LASTEXITCODE -ne 0) { throw 'KeepAlive MySQL/schema falhou' }
+              $state = Get-Content (Join-Path $fixtureRoot 'fixture-state.json') -Raw | ConvertFrom-Json; $credentials = @{}; Get-Content -LiteralPath $state.credentialFile | ForEach-Object { if ($_ -match '^(user|password)=(.*)$') { $credentials[$matches[1]] = $matches[2] } }
+              $env:DB_HOST = '127.0.0.1'; $env:DB_PORT = "$($state.port)"; $env:DB_USER = $credentials.user; $env:DB_PASSWORD = $credentials.password; $env:DB_NAME = 'sage'
+              $env:PORT = '3100'; $env:JWT_SECRET = $env:SAGE_E2E_JWT_SECRET; $env:MONITOR_CALLBACK_TOKEN = $env:SAGE_E2E_MONITOR_CALLBACK_TOKEN; $env:CORS_ORIGINS = 'http://127.0.0.1:3101'; $env:NODE_ENV = 'test'; $env:SAGE_REQUIRE_WEB = 'false'; $env:JOBS_ENABLED = 'false'; $env:CATRACA_SYNC_ENABLED = 'false'; $env:BACKUP_CRON = 'false'; $env:PROMOCAO_NA_SUBIDA = 'false'; $env:REDIS_ENABLED = 'false'; $env:SAGE_DATA_DIR = Join-Path $env:RUNNER_TEMP 'sage-r2-02-api-data'
+              foreach ($name in @('SAGE_INITIAL_ADMIN_LOGIN','SAGE_INITIAL_ADMIN_PASSWORD','SAGE_INITIAL_SCHOOL_NAME')) { Remove-Item "Env:$name" -ErrorAction SilentlyContinue }
+              $stage = 'api-start'
+              $apiLog = Join-Path $env:RUNNER_TEMP 'sage-r2-02-api.log'; $apiProcess = Start-Process -FilePath 'node.exe' -ArgumentList @('index.js') -WorkingDirectory $apiRoot -RedirectStandardOutput $apiLog -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'sage-r2-02-api.err.log') -PassThru -WindowStyle Hidden; $ready = $false
+              for ($i = 0; $i -lt 60; $i++) { try { if ((Invoke-WebRequest 'http://127.0.0.1:3100/ready' -UseBasicParsing).StatusCode -eq 200) { $ready = $true; break } } catch {} ; if ($apiProcess.HasExited) { throw 'API encerrou antes da readiness' }; Start-Sleep -Seconds 1 }
+              if (-not $ready) { throw 'API não ficou pronta' }
+              $setupOk = $true
+            } catch {
+              Write-Blocked $stage 'falha_na_precondicao_ou_servico_real'
+              $result = 1
+            }
+            if ($setupOk) {
+              $stage = 'playwright'
+              npm.cmd run test:e2e
+              $result = $LASTEXITCODE
+            }
+          } finally {
+            if ($apiProcess -and -not $apiProcess.HasExited) { taskkill.exe /PID $apiProcess.Id /T /F | Out-Null }
+            if (Test-Path (Join-Path $fixtureRoot 'fixture-state.json')) {
+              try {
+                powershell.exe -ExecutionPolicy Bypass -File $fixture -Action Cleanup -FixtureRoot $fixtureRoot
+                if ($LASTEXITCODE -ne 0) { throw 'cleanup_da_fixture_falhou' }
+              } catch {
+                Write-Blocked 'cleanup' 'cleanup_da_fixture_falhou'
+                $result = 1
+              }
+            }
+          }
+          exit $result
+
+      - name: Publicar artefatos sanitizados somente em falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-windows11-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 7

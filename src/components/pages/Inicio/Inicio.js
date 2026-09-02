@@ -230,6 +230,7 @@ export default function Inicio() {
 
         {/* Métricas principais */}
         <div className={styles.metricsGrid}>
+          <Link to="/pessoas" className={styles.cardLink} aria-label="Ver pessoas cadastradas">
           <div className={styles.card}>
             <div className={styles.cardIcon} data-color="green">
               <FontAwesomeIcon icon={faUserCheck} />
@@ -243,8 +244,10 @@ export default function Inicio() {
               )}
             </div>
           </div>
+          </Link>
 
-          {isAdmin && <div className={styles.card}>
+          {isAdmin && <Link to="/dispositivos" className={styles.cardLink} aria-label="Ver dispositivos">
+          <div className={styles.card}>
             <div className={styles.cardIcon} data-color="blue">
               <FontAwesomeIcon icon={faMicrochip} />
             </div>
@@ -258,8 +261,10 @@ export default function Inicio() {
                 </span>
               )}
             </div>
-          </div>}
+          </div>
+          </Link>}
 
+          <Link to="/relatorios?periodo=TODAY" className={styles.cardLink} aria-label="Ver acessos de hoje">
           <div className={styles.card}>
             <div className={styles.cardIcon} data-color="purple">
               <FontAwesomeIcon icon={faDoorOpen} />
@@ -273,22 +278,27 @@ export default function Inicio() {
               )}
             </div>
           </div>
+          </Link>
         </div>
 
         {/* Card resumidor — insights do dia */}
         <div className={styles.insightsCard}>
           <h2 className={styles.insightsTitle}>Resumo do dia</h2>
           <div className={styles.insightsGrid}>
+            <Link to="/relatorios?grupo=ALUNOS&periodo=TODAY&tipo_movimento=ENTRADA" className={styles.insightLink} aria-label="Ver alunos atrasados hoje">
             <div className={styles.insightItem}>
               <FontAwesomeIcon icon={faUserClock} className={styles.insightIcon} />
               <span className={styles.insightLabel}>Alunos atrasados hoje</span>
               <span className={styles.insightValue}>{alunosAtrasados}</span>
             </div>
+            </Link>
+            <Link to="/relatorios?grupo=FUNCIONARIOS&periodo=TODAY&tipo_movimento=ENTRADA" className={styles.insightLink} aria-label="Ver funcionários presentes hoje">
             <div className={styles.insightItem}>
               <FontAwesomeIcon icon={faUserTie} className={styles.insightIcon} />
               <span className={styles.insightLabel}>Funcionários presentes hoje</span>
               <span className={styles.insightValue}>{funcionariosPresentes}</span>
             </div>
+            </Link>
           </div>
         </div>
 

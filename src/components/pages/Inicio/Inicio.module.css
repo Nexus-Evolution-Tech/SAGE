@@ -161,8 +161,30 @@
   transition: box-shadow 0.2s ease;
 }
 
+.cardLink {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 10px;
+}
+
+.cardLink:focus-visible,
+.insightLink:focus-visible {
+  outline: 3px solid rgba(14, 165, 233, 0.45);
+  outline-offset: 3px;
+}
+
 .card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.insightLink {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.insightLink:hover .insightItem {
+  background: rgba(14, 165, 233, 0.06);
 }
 
 .cardIcon {

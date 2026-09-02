@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getRelatorioAcessoResumo,
@@ -74,7 +75,14 @@ function normalizarTabela(data) {
 const PAGE_SIZE = 25;
 
 export default function RelatoriosAcesso() {
-  const [filtros, setFiltros] = useState(filtrosIniciais);
+  const [searchParams] = useSearchParams();
+  const [filtros, setFiltros] = useState(() => ({
+    ...filtrosIniciais,
+    grupo: searchParams.get("grupo") || filtrosIniciais.grupo,
+    turma_id: searchParams.get("turma_id") || filtrosIniciais.turma_id,
+    periodo: searchParams.get("periodo") || filtrosIniciais.periodo,
+    tipo_movimento: searchParams.get("tipo_movimento") || filtrosIniciais.tipo_movimento,
+  }));
   const [busca, setBusca] = useState("");
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();

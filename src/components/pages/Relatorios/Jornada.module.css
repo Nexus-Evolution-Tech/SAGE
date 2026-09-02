@@ -12,6 +12,8 @@
 .summary span { color: #64748b; font-size: .85rem; }
 .warning strong, .badge { color: #b45309; }
 .ok strong { color: #15803d; }
+.okText { color: #15803d; font-weight: 600; }
+.warningText { color: #b45309; font-weight: 600; }
 .sectionTitle { margin: 1.5rem 0 .75rem; font-size: 1.1rem; color: #1e293b; }
 .tableWrap { overflow-x: auto; }
 .table { width: 100%; border-collapse: collapse; min-width: 650px; }

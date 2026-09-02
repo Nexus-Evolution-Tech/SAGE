@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getRelatorioJornada } from "../../../services/api";
+import { getRelatorioJornada, getFolhaPresenca, getFolhaPonto } from "../../../services/api";
 import BackButton from "../../layout/BackButton/BackButton";
 import styles from "./Jornada.module.css";
 
@@ -14,6 +14,16 @@ export default function Jornada() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["relatorios", "jornada", dataInicio, dataFim],
     queryFn: () => getRelatorioJornada({ data_inicio: dataInicio, data_fim: dataFim }),
+    enabled: Boolean(dataInicio && dataFim && dataInicio <= dataFim),
+  });
+  const folhaPresencaQuery = useQuery({
+    queryKey: ["relatorios", "folha-presenca", dataInicio, dataFim],
+    queryFn: () => getFolhaPresenca({ data_inicio: dataInicio, data_fim: dataFim }),
+    enabled: Boolean(dataInicio && dataFim && dataInicio <= dataFim),
+  });
+  const folhaPontoQuery = useQuery({
+    queryKey: ["relatorios", "folha-ponto", dataInicio, dataFim],
+    queryFn: () => getFolhaPonto({ data_inicio: dataInicio, data_fim: dataFim }),
     enabled: Boolean(dataInicio && dataFim && dataInicio <= dataFim),
   });
 
@@ -80,6 +90,31 @@ export default function Jornada() {
                 ))}</tbody>
               </table>
             </div>
+
+            <h2 className={styles.sectionTitle}>Folha de ponto — proposta</h2>
+            {folhaPontoQuery.isLoading ? <p className={styles.message}>Calculando totais...</p> : folhaPontoQuery.isError ? <p className={styles.error}>Não foi possível calcular a folha de ponto.</p> : (
+              <>
+                <p className={folhaPontoQuery.data?.pode_fechar ? styles.okText : styles.warningText}>
+                  {folhaPontoQuery.data?.pode_fechar ? "Período sem pendências: pronto para conferência humana." : "Fechamento bloqueado: resolva as pendências antes da confirmação."}
+                </p>
+                <div className={styles.tableWrap}><table className={styles.table}>
+                  <thead><tr><th>Data</th><th>Pessoa</th><th>Pares</th><th>Total bruto</th><th>Pendências</th></tr></thead>
+                  <tbody>{(folhaPontoQuery.data?.linhas ?? []).map((linha) => (
+                    <tr key={`${linha.pessoa_id}-${linha.data}`}><td>{linha.data}</td><td>{linha.nome || "—"}</td><td>{linha.pares.length}</td><td>{Math.round(linha.total_ms / 60000)} min</td><td>{linha.pendencias.length}</td></tr>
+                  ))}</tbody>
+                </table></div>
+              </>
+            )}
+
+            <h2 className={styles.sectionTitle}>Folha de presença por slot</h2>
+            {folhaPresencaQuery.isLoading ? <p className={styles.message}>Calculando slots...</p> : folhaPresencaQuery.isError ? <p className={styles.error}>Não foi possível calcular a folha de presença.</p> : (
+              <div className={styles.tableWrap}><table className={styles.table}>
+                <thead><tr><th>Data</th><th>Pessoa</th><th>Turma</th><th>Faixa</th><th>Status</th></tr></thead>
+                <tbody>{(folhaPresencaQuery.data?.linhas ?? []).map((linha, index) => (
+                  <tr key={`${linha.pessoa_id}-${linha.data}-${linha.faixa_inicio}-${index}`}><td>{linha.data}</td><td>{linha.nome || "—"}</td><td>{linha.turma || "—"}</td><td>{linha.faixa_inicio}–{linha.faixa_fim}</td><td>{linha.status}</td></tr>
+                ))}</tbody>
+              </table></div>
+            )}
           </>
         )}
       </section>

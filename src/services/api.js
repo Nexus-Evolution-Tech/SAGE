@@ -320,6 +320,16 @@ export const getRelatorioJornada = async (filtros = {}) => {
   return get(`/relatorios/jornada${qs ? `?${qs}` : ''}`);
 };
 
+export const getFolhaPresenca = async (filtros = {}) => {
+  const qs = new URLSearchParams({ data_inicio: filtros.data_inicio, data_fim: filtros.data_fim }).toString();
+  return get(`/relatorios/folha-presenca?${qs}`);
+};
+
+export const getFolhaPonto = async (filtros = {}) => {
+  const qs = new URLSearchParams({ data_inicio: filtros.data_inicio, data_fim: filtros.data_fim }).toString();
+  return get(`/relatorios/folha-ponto?${qs}`);
+};
+
 /**
  * Sincroniza Presenca a partir de Acesso (backfill).
  * Útil quando há acessos históricos mas Presenca estava vazio.

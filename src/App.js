@@ -27,6 +27,7 @@ import Areas from "./components/pages/Areas/Areas";
 import Aulas from "./components/pages/Aulas/Aulas";
 import RelatoriosAcesso from "./components/pages/Relatorios/RelatoriosAcesso";
 import PessoaHistorico from "./components/pages/Relatorios/PessoaHistorico";
+import Jornada from "./components/pages/Relatorios/Jornada";
 import Settings from "./components/pages/Settings/Settings";
 import TrocarSenha from "./components/pages/TrocarSenha/TrocarSenha";
 import EsqueciSenha from "./components/pages/EsqueciSenha/EsqueciSenha";
@@ -82,6 +83,7 @@ function AppContent() {
               <Route path="/regras" element={<Regras />} />
               <Route path="/horarios" element={<Horarios />} />
               <Route path="/relatorios" element={<RelatoriosAcesso />} />
+              <Route path="/relatorios/jornada" element={<Jornada />} />
               <Route path="/relatorios/pessoa/:id" element={<PessoaHistorico />} />
               <Route path="/configuracoes" element={<Settings />} />
               <Route path="/trocar-senha" element={<TrocarSenha />} />

@@ -18,7 +18,7 @@ import {
   faMapMarkerAlt,
   faCalendarAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { api } from "../../../services/api";
+import { api, getRelatorioJornada } from "../../../services/api";
 import SystemStatusBadge from "../../common/SystemStatusBadge/SystemStatusBadge";
 import styles from "./Inicio.module.css";
 import { getSessionIdentity } from "../../../utils/sessionIdentity";
@@ -189,6 +189,12 @@ export default function Inicio() {
   const metricasFunc = resumoFuncionarios?.metricas ?? {};
   const alunosAtrasados = metricasAlunos.atrasados ?? 0;
   const funcionariosPresentes = (metricasFunc.no_horario ?? 0) + (metricasFunc.atrasados ?? 0);
+  const { data: resumoJornada } = useQuery({
+    queryKey: ["inicio", "jornada"],
+    queryFn: () => getRelatorioJornada({ data_inicio: new Date().toISOString().slice(0, 10) }),
+    staleTime: 1000 * 60,
+  });
+  const pendenciasJornada = resumoJornada?.resumo_pendencias?.total ?? resumoJornada?.pendencias?.length ?? 0;
 
   const atalhos = [
     { to: "/pessoas", label: "Pessoas", desc: "Alunos, professores e mais", icon: faUsers },
@@ -297,6 +303,13 @@ export default function Inicio() {
               <FontAwesomeIcon icon={faUserTie} className={styles.insightIcon} />
               <span className={styles.insightLabel}>Funcionários presentes hoje</span>
               <span className={styles.insightValue}>{funcionariosPresentes}</span>
+            </div>
+            </Link>
+            <Link to="/relatorios/jornada" className={styles.insightLink} aria-label="Ver pendências de jornada">
+            <div className={styles.insightItem}>
+              <FontAwesomeIcon icon={faClock} className={styles.insightIcon} />
+              <span className={styles.insightLabel}>Pendências de jornada</span>
+              <span className={styles.insightValue}>{pendenciasJornada}</span>
             </div>
             </Link>
           </div>

@@ -309,6 +309,17 @@ export const getRelatorioTurmas = async () => {
   return get('/relatorios/turmas');
 };
 
+export const getRelatorioJornada = async (filtros = {}) => {
+  const params = new URLSearchParams();
+  if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
+  if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
+  if (filtros.pessoa_id) params.append('pessoa_id', filtros.pessoa_id);
+  if (filtros.turma_id && filtros.turma_id !== 'TODOS') params.append('turma_id', filtros.turma_id);
+  if (filtros.grupo) params.append('grupo', filtros.grupo);
+  const qs = params.toString();
+  return get(`/relatorios/jornada${qs ? `?${qs}` : ''}`);
+};
+
 /**
  * Sincroniza Presenca a partir de Acesso (backfill).
  * Útil quando há acessos históricos mas Presenca estava vazio.
